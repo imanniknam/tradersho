@@ -1,0 +1,15 @@
+export interface Bar {time:number;open:number;high:number;low:number;close:number;volume:number}
+export interface Anchor {time:number;price:number}
+export interface Drawing {id:string;type:string;anchors:Anchor[];color:string;width:number;dash:boolean;hidden:boolean;locked:boolean;text:string}
+export type IndicatorId='ema'|'sma'|'wma'|'hma'|'bands'|'donchian'|'vwap'|'rsi'|'macd'|'atr'|'stoch'|'cci'|'roc'|'obv'|'volume'
+export interface Settings {type:'candles'|'hollow'|'bars'|'line'|'area'|'heikin';indicators:IndicatorId[];period:number;grid:boolean;scale:'normal'|'log'|'percent';magnet:boolean;keepDrawing:boolean;hideDrawings:boolean;up:string;down:string;frame:string;compare:boolean}
+export const defaults:Settings={type:'candles',indicators:['volume'],period:20,grid:true,scale:'normal',magnet:false,keepDrawing:false,hideDrawings:false,up:'#36c5a3',down:'#f3778c',frame:'15m',compare:false}
+export const indicatorList:{id:IndicatorId;name:string;category:string;note?:string}[]=[
+{id:'ema',name:'Exponential Moving Average · EMA',category:'روند'}, {id:'sma',name:'Simple Moving Average · SMA',category:'روند'}, {id:'wma',name:'Weighted Moving Average · WMA',category:'روند'}, {id:'hma',name:'Hull Moving Average · HMA',category:'روند'}, {id:'bands',name:'Bollinger Bands · 2σ',category:'روند'}, {id:'donchian',name:'Donchian Channels',category:'روند'}, {id:'vwap',name:'Session VWAP · UTC',category:'حجم',note:'با حجم فایل واردشده؛ برای دادهٔ بدون حجم تعریف نمی‌شود.'}, {id:'rsi',name:'Relative Strength Index · RSI 14',category:'نوسانگر'}, {id:'macd',name:'MACD · 12 / 26 / 9',category:'نوسانگر'}, {id:'atr',name:'Average True Range · ATR 14',category:'نوسانگر'}, {id:'stoch',name:'Stochastic · 14 / 3',category:'نوسانگر'}, {id:'cci',name:'Commodity Channel Index · CCI 20',category:'نوسانگر'}, {id:'roc',name:'Rate of Change · ROC 12',category:'نوسانگر'}, {id:'obv',name:'On Balance Volume · OBV',category:'حجم',note:'فقط با حجم معتبر؛ حجم دمو مصنوعی است.'}, {id:'volume',name:'Volume · حجم فایل',category:'حجم'}]
+export interface Dataset{id:string;name:string;symbol:string;kind:'synthetic'|'imported';source:string;first:number;last:number;total:number;frames:string[]}
+export interface Position{id:string;side:'buy'|'sell';units:number;entry:number;opened:number;stop:number|null;target:number|null;unrealized:string;closing:boolean}
+export interface Trade extends Position{exit:number;closed:number;profit:string;reason:string}
+export interface Paper{balance:string;initial:string;equity:string;unrealized:string;free:string;positions:Position[];orders:{id:string;kind:string;side?:string;units?:number;status:string;reason?:string}[];trades:Trade[];net:string;drawdown:string;wins:number}
+export interface Session{id:string;dataset:Dataset;cursor:number;startCursor:number;time:number;hasNext:boolean;version:number;drawingVersion:number;drawings:Drawing[];settings:Partial<Settings>;frame:string;bars:Bar[];paper:Paper}
+export const dateTime=(t:number)=>new Date(t*1000).toISOString().slice(0,16).replace('T',' ')
+export const usd=(n:string)=>Number(n).toLocaleString('en-US',{style:'currency',currency:'USD'})

@@ -1,0 +1,57 @@
+import { chromium } from 'playwright-core'
+import { mkdir } from 'node:fs/promises'
+const base = 'http://127.0.0.1:5173'
+const out = new URL('../qa/', import.meta.url)
+await mkdir(out, { recursive: true })
+const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--no-sandbox', '--disable-gpu'] })
+const issues = []
+async function checkOverflow(page, label) {
+ const v = await page.evaluate(() => ({ inner: window.innerWidth, doc: document.documentElement.scrollWidth, body: document.body.scrollWidth }))
+ if (Math.max(v.doc, v.body) > v.inner + 2) issues.push(`${label}: horizontal overflow ${JSON.stringify(v)}`)
+}
+async function run(viewport, suffix) {
+ const context = await browser.newContext({ viewport, reducedMotion: 'reduce' })
+ const page = await context.newPage()
+ page.on('pageerror', e => issues.push(`${suffix} page error: ${e.message}`))
+ await page.goto(`${base}/auth`, { waitUntil: 'networkidle' })
+ await page.screenshot({ path: new URL(`auth-${suffix}.png`, out).pathname, fullPage: true })
+ await checkOverflow(page, `auth ${suffix}`)
+ await page.getByRole('button', { name: 'ثبت‌نام' }).click()
+ await page.getByRole('textbox', { name: 'نام و نام خانوادگی' }).waitFor()
+ await page.screenshot({ path: new URL(`signup-${suffix}.png`, out).pathname, fullPage: true })
+ await checkOverflow(page, `signup ${suffix}`)
+ await page.getByRole('button', { name: 'ورود', exact: true }).click()
+ await page.getByRole('textbox', { name: 'ایمیل' }).fill('demo@tradersho.local')
+ await page.getByPlaceholder('رمز عبور').fill('DemoPass123!')
+ await page.getByRole('button', { name: 'ورود به پنل' }).click()
+ await page.waitForURL(`${base}/panel`)
+ await page.getByText('همه‌چیز در یک نگاه').waitFor()
+ await page.screenshot({ path: new URL(`dashboard-${suffix}.png`, out).pathname, fullPage: true })
+ await checkOverflow(page, `dashboard ${suffix}`)
+ await page.locator('.main-scroll').evaluate(el => { el.scrollTop = el.scrollHeight })
+ await page.screenshot({ path: new URL(`dashboard-lower-${suffix}.png`, out).pathname })
+ await page.goto(`${base}/panel/tools`, { waitUntil: 'networkidle' })
+ await page.getByRole('heading', { name: 'مرکز ابزارها' }).waitFor()
+ await page.screenshot({ path: new URL(`tools-${suffix}.png`, out).pathname, fullPage: true })
+ await checkOverflow(page, `tools ${suffix}`)
+ await page.getByRole('button', { name: 'اشتراکی', exact: true }).click()
+ if (await page.locator('.featured-tool').count()) issues.push(`${suffix}: featured free tool visible under premium filter`)
+ if (await page.locator('.tool-card').count() !== 2) issues.push(`${suffix}: expected two premium tools`)
+ await page.screenshot({ path: new URL(`tools-premium-${suffix}.png`, out).pathname })
+ await page.goto(`${base}/panel/tools/journal`, { waitUntil: 'networkidle' })
+ await page.getByText('اشتراک فعال لازم است').waitFor()
+ await page.screenshot({ path: new URL(`tool-detail-${suffix}.png`, out).pathname, fullPage: true })
+ await checkOverflow(page, `tool detail ${suffix}`)
+ if (suffix === 'mobile') await page.locator('.mobile-tool-switch').getByRole('link', { name: /ماشین‌حساب ریسک/ }).click()
+ else await page.getByRole('link', { name: /ماشین‌حساب ریسک/ }).last().click()
+ await page.waitForURL(`${base}/panel/tools/calculator`)
+ await page.getByText('محاسبهٔ اندازهٔ موقعیت').waitFor()
+ if (!(await page.getByText('0.50 lot').count())) issues.push(`${suffix}: calculator result missing`)
+ await checkOverflow(page, `calculator ${suffix}`)
+ await page.getByRole('button', { name: 'بازگشت به صفحهٔ قبل' }).click()
+ await page.waitForURL(`${base}/panel/tools/journal`)
+ await context.close()
+}
+try { await run({ width: 1440, height: 900 }, 'desktop'); await run({ width: 390, height: 844, isMobile: true }, 'mobile'); await run({ width: 768, height: 1024 }, 'tablet'); await run({ width: 360, height: 780, isMobile: true }, 'small') } finally { await browser.close() }
+console.log(JSON.stringify({ ok: issues.length === 0, issues, screenshots: out.pathname }, null, 2))
+if (issues.length) process.exitCode = 1
