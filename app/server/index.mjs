@@ -155,6 +155,8 @@ const server = http.createServer(async (req, res) => {
     if (path === '/api/session' && method === 'GET') return json(res, 200, { user: await publicUser(user) })
     if (path === '/api/tools' && method === 'GET') return json(res, 200, { tools: toolCatalog })
     if (!subscriptionsEnabled && ['/api/subscription', '/api/plan-interest'].includes(path)) return fail(res, 409, 'بخش اشتراک فعلاً فعال نیست.')
+    if (path.startsWith('/api/candles/') || path.startsWith('/api/replay/') || path.startsWith('/api/market/')) return fail(res, 409, 'محیط قبلی فعلاً در نسخهٔ اولیه فعال نیست.')
+    if (method !== 'GET' && ['/api/rebates', '/api/tickets'].includes(path)) return fail(res, 409, 'این بخش فعلاً در حال آماده‌سازی است.')
     if (await candleRoute({ path, method, user, req, res, body, json, fail, rateLimit })) return
     if (await replayRoute({ path, method, user, req, res, body, json, fail, rateLimit })) return
 

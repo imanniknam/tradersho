@@ -1,12 +1,10 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import type { ReactNode } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Bot, Calculator, CalendarDays, ChartNoAxesCombined, Clock3, LayoutGrid, NotebookPen, RefreshCw, Search } from 'lucide-react'
 import { api } from './api'
 import { tools } from './data'
 import type { ToolId } from './data'
-const ReferenceLab = lazy(() => import('./ReferenceLab'))
-const CandleWorkspace = lazy(() => import('./workspace/CandleWorkspace'))
+import TradingViewChart from './TradingViewChart'
 
 type Readiness = 'active' | 'beta' | 'coming_soon' | 'maintenance'
 interface CatalogItem { id: ToolId; status: Readiness; label: string }
@@ -45,23 +43,22 @@ export function ToolsPage() {
     const item = catalog?.find(c => c.id === tool.id)
     return filter === 'all' || (filter === 'ready' ? item?.status === 'active' || item?.status === 'beta' : item?.status === 'coming_soon')
   })
-  return <><div className="page-head"><div><span className="eyebrow">TRADERSHO / TOOL CENTER</span><h1>مرکز ابزارها</h1><p>یک فضای مشخص برای هر کار؛ وضعیت آمادگی هر ابزار را اینجا ببینید.</p></div></div>{error ? <CatalogError message={error} retry={retry}/> : !catalog ? <div className="lab-loading"><div className="loader"/> دریافت ابزارها…</div> : <>
+  return <><div className="page-head"><div><span className="eyebrow">TRADERSHO / TOOL CENTER</span><h1>مرکز ابزار و تحلیل</h1><p>نمودار بازار در دسترس است؛ ابزارهای دیگر پس از نهایی‌شدن اضافه می‌شوند.</p></div></div>{error ? <CatalogError message={error} retry={retry}/> : !catalog ? <div className="lab-loading"><div className="loader"/> دریافت ابزارها…</div> : <>
     <div className="tools-toolbar"><div className="search-field"><Search size={19}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="جستجو در ابزارها..." aria-label="جستجو در ابزارها"/></div><div className="segmented" aria-label="فیلتر وضعیت ابزارها">{[['all','همه'],['ready','آمادهٔ استفاده'],['soon','به‌زودی']].map(([key,label]) => <button key={key} className={filter === key ? 'active' : ''} onClick={() => setFilter(key)}>{label}</button>)}</div></div>
     <div className="tools-result"><span>{filtered.length} ابزار</span><span>هر ابزار پس از تکمیل در همین صفحه فعال می‌شود</span></div>
     {filtered.length ? <div className="tool-cards tool-catalog-grid">{filtered.map(tool => {
       const item = catalog.find(c => c.id === tool.id)
       const ready = item?.status === 'beta' || item?.status === 'active'
       return <Link to={`/panel/tools/${tool.id}`} className={`tool-card catalog-card ${ready ? 'ready' : 'upcoming'}`} key={tool.id}>
-        <div className={`catalog-art catalog-art-${tool.id}`}><ToolIcon id={tool.id} size={42}/><span>{tool.id === 'chart' ? 'REFERENCE / REPLAY' : tool.id === 'calculator' ? 'RISK / CALCULATOR' : 'TRADERSHO / NEXT'}</span><div className="catalog-art-lines"/></div>
+        <div className={`catalog-art catalog-art-${tool.id}`}><ToolIcon id={tool.id} size={42}/><span>{tool.id === 'chart' ? 'MARKET / ANALYSIS' : tool.id === 'calculator' ? 'RISK / CALCULATOR' : 'TRADERSHO / NEXT'}</span><div className="catalog-art-lines"/></div>
         <div className="tool-card-body"><div className="tool-card-meta"><span className={`badge ${ready ? 'badge-violet' : 'badge-muted'}`}>{item?.label || 'در حال بررسی'}</span><span>{tool.category}</span></div><h3>{tool.title}</h3><p>{tool.description}</p><span className="tool-card-link">{ready ? 'ورود به ابزار' : 'دربارهٔ این ابزار'} <ArrowLeft size={16}/></span></div>
       </Link>
     })}</div> : <div className="surface empty-state"><Search size={28}/><h2>ابزاری پیدا نشد</h2><button className="button secondary" onClick={() => { setFilter('all'); setQuery('') }}>نمایش همه</button></div>}
   </>}</>
 }
 
-export function ToolDetail({ calculator }: { calculator: ReactNode }) {
+export function ToolDetail() {
   const { toolId } = useParams()
-  const [searchParams] = useSearchParams()
   const tool = tools.find(t => t.id === toolId)
   const { catalog, error, retry } = useCatalog()
   const [accessError, setAccessError] = useState('')
@@ -78,7 +75,7 @@ export function ToolDetail({ calculator }: { calculator: ReactNode }) {
   if (!tool) return <div className="empty-state"><h1>ابزار پیدا نشد</h1><Link to="/panel/tools">بازگشت به مرکز ابزارها</Link></div>
   const upcoming = item?.status === 'coming_soon' || item?.status === 'maintenance'
   return <><div className="page-head"><div><Link className="back-link" to="/panel/tools"><ArrowRight size={16}/> بازگشت به مرکز ابزارها</Link><span className="eyebrow">TRADERSHO / WORKSPACE</span><h1>{tool.title}</h1><p>{tool.description}</p></div><Link to="/panel/tools" className="button secondary"><LayoutGrid size={17}/> همهٔ ابزارها</Link></div>
-    <nav className="tool-switch-bar" aria-label="جابه‌جایی ابزارها">{tools.map(t => <Link key={t.id} className={t.id === toolId ? 'active' : ''} to={`/panel/tools/${t.id}`}><ToolIcon id={t.id} size={16}/>{t.title}</Link>)}</nav>
-    {error ? <CatalogError message={error} retry={retry}/> : !catalog ? <div className="lab-loading"><div className="loader"/> بررسی وضعیت ابزار…</div> : upcoming ? <ComingSoon title={tool.title} description={tool.description + ' این ابزار هنوز منتشر نشده و پس از آماده‌سازی از همین مسیر در دسترس خواهد بود.'}/> : accessError ? <CatalogError message={accessError} retry={() => { setAllowed(false); retry() }}/> : !allowed ? <div className="lab-loading"><div className="loader"/> در حال آماده‌سازی…</div> : toolId === 'chart' ? <Suspense fallback={<div className="lab-loading">دریافت فضای تمرین…</div>}>{searchParams.get('view') === 'reference' ? <ReferenceLab/> : <CandleWorkspace/>}</Suspense> : toolId === 'calculator' ? <section className="surface detail-surface"><div className="surface-head"><div><span className="eyebrow">RISK MANAGEMENT</span><h2>محاسبهٔ اندازهٔ موقعیت</h2></div><span className="badge badge-violet">بر پایهٔ ورودی شما</span></div>{calculator}</section> : <ComingSoon title={tool.title}/>}
+    <nav className="tool-switch-bar" aria-label="جابه‌جایی ابزارها">{tools.map(t => <Link key={t.id} className={t.id === toolId ? 'active' : ''} to={`/panel/tools/${t.id}`}><ToolIcon id={t.id} size={16}/>{t.title}{t.id !== 'chart' && <small>به‌زودی</small>}</Link>)}</nav>
+    {error ? <CatalogError message={error} retry={retry}/> : !catalog ? <div className="lab-loading"><div className="loader"/> بررسی وضعیت ابزار…</div> : upcoming ? <ComingSoon title={tool.title} description={tool.description + ' این ابزار هنوز منتشر نشده و پس از آماده‌سازی از همین مسیر در دسترس خواهد بود.'}/> : accessError ? <CatalogError message={accessError} retry={() => { setAllowed(false); retry() }}/> : !allowed ? <div className="lab-loading"><div className="loader"/> در حال آماده‌سازی…</div> : toolId === 'chart' ? <TradingViewChart/> : <ComingSoon title={tool.title}/>}
   </>
 }
