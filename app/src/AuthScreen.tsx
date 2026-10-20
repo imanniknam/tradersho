@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Activity, ArrowLeft, BookOpen, Eye, EyeOff, Info, KeyRound, Mail, ShieldCheck } from 'lucide-react'
+import { Activity, ArrowLeft, BookOpen, Eye, EyeOff, Info, KeyRound, Mail, Pause, Play, ShieldCheck } from 'lucide-react'
 import { api } from './api'
 import { ThemeToggle } from './theme'
 import type { User } from './api'
@@ -23,6 +23,7 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
+  const [motionPaused, setMotionPaused] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const errorRef=useRef<HTMLDivElement>(null)
@@ -44,13 +45,13 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
     finally { setBusy(false) }
   }
   if (loading) return spinner
-  return <main className={`auth-wrap auth-${mode}`} id="auth-main">
+  return <main className={`auth-wrap auth-${mode}`} id="auth-main" data-motion={motionPaused?'paused':'running'}>
     <section className="auth-visual" aria-hidden="true">
       <div className="auth-visual-top">{brand}</div>
       <div className="auth-visual-content"><span className="overline">TRADERSHO / MEMBER SPACE</span><h1>به تریدر شو<br/><em>خوش آمدید.</em></h1><p>برای دسترسی به پنل و نمودار تحلیل بازار، وارد حساب خود شوید.</p><div className="auth-stats"><span><ShieldCheck size={20}/> دسترسی امن</span><span><BookOpen size={20}/> مدرسه فارکس</span><span><Activity size={20}/> ابزارهای کاربردی</span></div></div>
 
     </section>
-    <section className="auth-form-side"><div className="auth-form-top"><div className="auth-mobile-brand">{mobileBrand}</div><span className="auth-product-label">پنل کاربری تریدر شو</span><ThemeToggle/></div><div className="auth-card">
+    <section className="auth-form-side"><div className="auth-form-top"><div className="auth-mobile-brand">{mobileBrand}</div><span className="auth-product-label">پنل کاربری تریدر شو</span><div className="auth-display-controls"><button type="button" className="icon-button auth-motion-toggle" onClick={()=>setMotionPaused(v=>!v)} aria-pressed={motionPaused} aria-label={motionPaused?'فعال کردن حرکت پس‌زمینه':'توقف حرکت پس‌زمینه'} title={motionPaused?'فعال کردن حرکت پس‌زمینه':'توقف حرکت پس‌زمینه'}>{motionPaused?<Play size={17}/>:<Pause size={17}/>}</button><ThemeToggle/></div></div><div className="auth-card">
       <h1>{mode === 'login' ? 'ورود به حساب کاربری' : 'ساخت حساب کاربری'}</h1><p className="muted">{mode === 'login' ? 'ایمیل و رمز عبور خود را وارد کنید.' : 'با ایمیل و یک رمز عبور امن ثبت‌نام کنید.'}</p>
       <div className="auth-tabs" role="tablist" aria-label="ورود یا ثبت‌نام" onKeyDown={event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const target=event.key==='Home'?'login':event.key==='End'?'signup':mode==='login'?'signup':'login';setMode(target);setError('');document.getElementById('auth-tab-'+target)?.focus()}}}><button type="button" disabled={busy} role="tab" id="auth-tab-login" aria-selected={mode==='login'} aria-controls="auth-fields" tabIndex={mode==='login'?0:-1} className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setError('') }}>ورود</button><button type="button" disabled={busy} role="tab" id="auth-tab-signup" aria-selected={mode==='signup'} aria-controls="auth-fields" tabIndex={mode==='signup'?0:-1} className={mode === 'signup' ? 'active' : ''} onClick={() => { setMode('signup'); setError('') }}>ثبت‌نام</button></div>
       <form onSubmit={submit} className="auth-form" id="auth-fields" role="tabpanel" aria-labelledby={'auth-tab-'+mode} aria-busy={busy}>

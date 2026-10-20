@@ -4,13 +4,14 @@ import {mkdir,writeFile} from 'node:fs/promises'
 import {chromium} from 'playwright-core'
 import axe from 'axe-core'
 const mobile=process.env.MOBILE_AUDIT==='1'
+const wide=process.env.WIDE_AUDIT==='1'
 const base=process.env.E2E_BASE_URL||'http://127.0.0.1:5183'
 if(!base.includes(':5183')||!new URL(process.env.DATABASE_URL||'http://none').pathname.endsWith('_qa'))throw new Error('Use isolated QA server and DATABASE_URL ending _qa')
 const {pool}=await import('../server/db.mjs')
 const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true})
-const folder=new URL(mobile?'../qa/mobile/':'../qa/audit/',import.meta.url);await mkdir(folder,{recursive:true})
+const folder=new URL(mobile?'../qa/mobile/':wide?'../qa/wide/':'../qa/audit/',import.meta.url);await mkdir(folder,{recursive:true})
 const failures=[],cases=[],errors=[]
-const sizes=mobile?[[320,640],[360,740],[375,667],[390,844],[414,896],[430,932],[568,320],[844,390],[768,1024]]:[[320,740],[360,800],[390,844],[768,1024],[1024,768],[1280,720],[1366,768],[1440,900],[1920,1080],[640,360]]
+const sizes=wide?[[1280,720],[1440,900],[1920,1080],[2560,1440],[3440,1440],[3840,2160],[5120,1440]]:mobile?[[320,640],[360,740],[375,667],[390,844],[414,896],[430,932],[568,320],[844,390],[768,1024]]:[[320,740],[360,800],[390,844],[768,1024],[1024,768],[1280,720],[1366,768],[1440,900],[1920,1080],[640,360]]
 const api=async(ctx,path,method='GET',data)=>{const r=await ctx.request.fetch(base+'/api'+path,{method,data});return {status:r.status(),body:await r.json()}}
 const capture=async(p,name)=>p.screenshot({path:new URL(name+'.png',folder).pathname,fullPage:false})
 async function geometry(p,label,{desktopFit=false}={}){
@@ -18,6 +19,14 @@ async function geometry(p,label,{desktopFit=false}={}){
  const v=await p.evaluate(()=>({width:innerWidth,height:innerHeight,docWidth:document.documentElement.scrollWidth,docHeight:document.documentElement.scrollHeight,main:Array.from(document.querySelectorAll('main')).map(el=>({scroll:el.scrollWidth,client:el.clientWidth})),submit:Array.from(document.querySelectorAll('button[type=submit]')).map(el=>({text:el.textContent,bottom:el.getBoundingClientRect().bottom})),clipped:Array.from(document.querySelectorAll('input,textarea,select,button,.auth-card h1')).filter(el=>el.checkVisibility()&&!el.closest('[inert]')).filter(el=>{const r=el.getBoundingClientRect();return r.left<-2||r.right>innerWidth+2}).map(el=>el.outerHTML.slice(0,140))}))
  if(v.docWidth>v.width+2||v.main.some(m=>m.scroll>m.client+2)||v.clipped.length)failures.push({label,type:'overflow',v})
  if(desktopFit&&v.docHeight>v.height+2)failures.push({label,type:'auth-not-fitting',v})
+ if(wide){
+  const layout=await p.evaluate(()=>{
+   const shell=document.querySelector('.app-shell,.auth-wrap,.privacy-page'),r=shell?.getBoundingClientRect(),button=document.querySelector('.logout'),style=button&&getComputedStyle(button),inner=document.querySelector('.main-inner');
+   return {shell:r&&{x:r.x,width:r.width,height:r.height},logout:style&&{top:style.paddingTop,bottom:style.paddingBottom,left:style.paddingLeft,right:style.paddingRight},contentWidth:inner?.getBoundingClientRect().width,canvas:document.querySelector('.main-scroll')&&getComputedStyle(document.querySelector('.main-scroll')).backgroundColor}
+  })
+  if(!layout.shell||Math.abs(layout.shell.x)>1||Math.abs(layout.shell.width-v.width)>2||layout.shell.height<v.height-2||layout.contentWidth>1801||(layout.logout&&(layout.logout.top!==layout.logout.bottom||layout.logout.left!==layout.logout.right)))failures.push({label,type:'wide-layout',layout})
+  cases.push({label,type:'wide-layout'})
+ }
  if(mobile&&v.width<=600){
   const metrics=await p.evaluate(()=>({
    headings:[...document.querySelectorAll('h1,h2,h3')].filter(e=>e.checkVisibility()).map(e=>({text:e.textContent.slice(0,65),size:parseFloat(getComputedStyle(e).fontSize),tag:e.tagName})),
@@ -44,7 +53,7 @@ try{
   await p.goto(base+'/auth');await p.getByRole('tab',{name:'ثبت‌نام',exact:true}).waitFor()
   for(const mode of ['login','signup']){
    await p.getByRole('tab',{name:mode==='login'?'ورود':'ثبت‌نام',exact:true}).click()
-   for(const [width,height] of sizes){await p.setViewportSize({width,height});await p.evaluate(()=>document.fonts.ready);await geometry(p,`${theme}-auth-${mode}-${width}x${height}`,{desktopFit:width>=1024&&height>=680});if([390,1280,1440].includes(width))await capture(p,`${theme}-auth-${mode}-${width}`)}
+   for(const [width,height] of sizes){await p.setViewportSize({width,height});await p.evaluate(()=>document.fonts.ready);await geometry(p,`${theme}-auth-${mode}-${width}x${height}`,{desktopFit:width>=1024&&height>=680});if((wide?[1920,3840]:[390,1280,1440]).includes(width))await capture(p,`${theme}-auth-${mode}-${width}`)}
    await p.setViewportSize({width:1440,height:900});await access(p,`${theme}-auth-${mode}`)
    if(mode==='signup'){await p.getByPlaceholder('رمز عبور قوی').fill('QaSample#2026');await p.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill('QaSample#2026');await access(p,`${theme}-password-met`);await capture(p,`${theme}-password-met`)}
   }
@@ -63,8 +72,8 @@ try{
    await page.setViewportSize({width:1440,height:900});await page.goto(base+route);await page.locator('main').waitFor();await page.evaluate(()=>document.fonts.ready)
    if(route.includes('/chart'))await page.locator('.tv-host iframe').waitFor({timeout:30000})
    if(route.includes('/support')&&!route.endsWith('/new'))await page.locator('.ticket-list,.conversation').waitFor()
-   for(const [width,height] of sizes.filter(([w])=>mobile||[320,390,768,1024,1440].includes(w))){await page.setViewportSize({width,height});await geometry(page,`${theme}-${route}-${width}`)}
-   for(const width of [390,1440]){await page.setViewportSize({width,height:900});await access(page,`${theme}-${route}-${width}`);if(mobile||['/panel','/panel/tools','/panel/account','/panel/support/new','/admin/support'].includes(route))await capture(page,`${theme}-${route.replaceAll('/','-')}-${width}`)}
+   for(const [width,height] of sizes.filter(([w])=>mobile||wide||[320,390,768,1024,1440].includes(w))){await page.setViewportSize({width,height});await geometry(page,`${theme}-${route}-${width}`)}
+   for(const width of (wide?[1920,3840]:[390,1440])){await page.setViewportSize({width,height:900});await access(page,`${theme}-${route}-${width}`);if(mobile||wide||['/panel','/panel/tools','/panel/account','/panel/support/new','/admin/support'].includes(route))await capture(page,`${theme}-${route.replaceAll('/','-')}-${width}`)}
   }
   if(mobile){
    for(const route of ['/panel/support/new','/panel/account','/panel/support/'+ticket.body.id,'/admin/support/'+ticket.body.id]){
@@ -88,6 +97,9 @@ try{
   for(let n=0;n<15;n++){await page.keyboard.press('Tab');assert.ok(await page.evaluate(()=>!!document.activeElement?.closest('.sidebar')))}
   await page.keyboard.press('Escape');assert.equal(await page.getByRole('button',{name:'باز کردن منو',exact:true}).evaluate(el=>el===document.activeElement),true)
   await ctx.close();console.log(`Completed ${theme}: auth, all customer/admin pages, hover, mobile navigation`)
+ }
+ if(wide){
+  const motionContext=await browser.newContext({viewport:{width:1440,height:900},reducedMotion:'no-preference'});const motionPage=await motionContext.newPage();await motionPage.goto(base+'/auth');const pause=motionPage.getByRole('button',{name:'توقف حرکت پس‌زمینه',exact:true});await pause.waitFor();assert.notEqual(await motionPage.locator('.auth-visual').evaluate(e=>getComputedStyle(e,'::before').animationName),'none');await pause.click();assert.equal(await motionPage.locator('.auth-visual').evaluate(e=>getComputedStyle(e,'::before').animationPlayState),'paused');await motionPage.emulateMedia({reducedMotion:'reduce'});assert.equal(await motionPage.locator('.auth-visual').evaluate(e=>getComputedStyle(e,'::before').animationName),'none');assert.equal(await motionPage.locator('.auth-motion-toggle').isVisible(),false);cases.push({type:'motion-pause-reduced-preference'});await motionContext.close()
  }
  await writeFile(new URL('report.json',folder),JSON.stringify({cases:cases.length,failures,errors},null,2))
  console.log(JSON.stringify({cases:cases.length,failures:failures.length,errors,details:failures.map(f=>({label:f.label,type:f.type,nodes:f.nodes?.map(n=>n.target),v:f.v,metrics:f.metrics}))}))
