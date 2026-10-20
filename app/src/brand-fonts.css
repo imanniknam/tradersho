@@ -1,0 +1,7 @@
+/* Brand webfonts retrieved from Tradersho's existing website for this panel.
+   Source URLs and deployment notes: public/fonts/README.md. */
+@font-face{font-family:'Yekan Bakh';src:url('/fonts/YekanBakhFaNum-Light.woff') format('woff');font-weight:300;font-style:normal;font-display:swap}
+@font-face{font-family:'Yekan Bakh';src:url('/fonts/YekanBakhFaNum-Regular.woff') format('woff');font-weight:400 500;font-style:normal;font-display:swap}
+@font-face{font-family:'Yekan Bakh';src:url('/fonts/YekanBakhFaNum-SemiBold.woff') format('woff');font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:'Yekan Bakh';src:url('/fonts/YekanBakhFaNum-Bold.woff') format('woff');font-weight:700 900;font-style:normal;font-display:swap}
+:root{font-family:'Yekan Bakh','Vazirmatn',Tahoma,sans-serif}

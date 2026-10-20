@@ -23,13 +23,13 @@ export default function TradingViewChart() {
     const credit=document.createElement('div')
     credit.className='tradingview-widget-copyright'
     const link=document.createElement('a')
-    link.href='https://www.tradingview.com/symbols/EURUSD/?utm_source=tradersho&utm_medium=widget_new&utm_campaign=advanced-chart'
-    link.target='_blank';link.rel='noopener nofollow';link.textContent='EURUSD chart by TradingView'
+    link.href='https://www.tradingview.com/symbols/XAUUSD/?utm_source=tradersho&utm_medium=widget_new&utm_campaign=advanced-chart'
+    link.target='_blank';link.rel='noopener nofollow';link.textContent='XAUUSD chart by TradingView'
     credit.append(link)
     const script=document.createElement('script')
     script.src='https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js'
     script.async=true
-    script.textContent=JSON.stringify({autosize:true,symbol:'FX:EURUSD',interval:'60',timezone:'Etc/UTC',theme,style:'1',locale:'en',allow_symbol_change:true,hide_top_toolbar:false,hide_side_toolbar:false,withdateranges:true,calendar:false,save_image:true,support_host:'https://www.tradingview.com',backgroundColor:theme==='light'?'#ffffff':'#0d1b2e'})
+    script.textContent=JSON.stringify({autosize:true,symbol:'OANDA:XAUUSD',interval:'60',timezone:'Etc/UTC',theme,style:'1',locale:'en',allow_symbol_change:true,hide_top_toolbar:false,hide_side_toolbar:false,withdateranges:true,calendar:false,save_image:true,support_host:'https://www.tradingview.com',backgroundColor:theme==='light'?'#ffffff':'#0d1b2e'})
     script.onerror=()=>{if(alive)setStatus('error')}
     // Mounting confirms embedding only; cross-origin feed availability stays with TradingView.
     const observer=new MutationObserver(()=>{
@@ -54,8 +54,8 @@ export default function TradingViewChart() {
   return <section ref={region} tabIndex={-1} className={`tv-chart surface ${expanded?'tv-expanded':''}`} aria-label="محیط تحلیل بازار">
     <div className="tv-toolbar"><span><i className="tv-dot"/> نمودار TradingView</span><div><button className="icon-button" onClick={()=>setAttempt(n=>n+1)} aria-label="بارگذاری دوباره نمودار"><RefreshCw size={18}/></button><button ref={expandButton} className="button secondary small" aria-pressed={expanded} onClick={()=>setExpanded(v=>!v)}>{expanded?<Minimize2 size={17}/>:<Maximize2 size={17}/>} {expanded?'بازگشت به پنل':'نمای تمام‌صفحه'}</button></div></div>
     {status==='loading' && <p className="tv-status" role="status">در حال اتصال به TradingView…</p>}
-    {(status==='error'||status==='slow') && <div className="tv-status" role="alert">{status==='error'?'اتصال به TradingView برقرار نشد.':'بارگذاری نمودار بیشتر از معمول طول کشیده است.'} <button onClick={()=>setAttempt(n=>n+1)}>تلاش دوباره</button><a href="https://www.tradingview.com/chart/?symbol=FX%3AEURUSD" target="_blank" rel="noopener noreferrer">باز کردن TradingView</a></div>}
+    {(status==='error'||status==='slow') && <div className="tv-status" role="alert">{status==='error'?'اتصال به TradingView برقرار نشد.':'بارگذاری نمودار بیشتر از معمول طول کشیده است.'} <button onClick={()=>setAttempt(n=>n+1)}>تلاش دوباره</button><a href="https://www.tradingview.com/chart/?symbol=FX%3AXAUUSD" target="_blank" rel="noopener noreferrer">باز کردن TradingView</a></div>}
     <div ref={host} className="tradingview-widget-container tv-host"/>
-    <p className="tv-disclosure">داده و امکانات نمودار توسط TradingView ارائه می‌شود. دسترسی به نمادها و میزان تأخیر به بازار و منبع داده بستگی دارد. <a href="https://www.tradingview.com/chart/?symbol=FX%3AEURUSD" target="_blank" rel="noopener noreferrer">باز کردن در TradingView</a></p>
+    <p className="tv-disclosure">داده و امکانات نمودار توسط TradingView ارائه می‌شود. دسترسی به نمادها و میزان تأخیر به بازار و منبع داده بستگی دارد. <a href="https://www.tradingview.com/chart/?symbol=FX%3AXAUUSD" target="_blank" rel="noopener noreferrer">باز کردن در TradingView</a></p>
   </section>
 }

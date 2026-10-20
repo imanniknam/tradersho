@@ -1,3 +1,4 @@
+import { migrateSupport } from './support.mjs'
 import pg from 'pg'
 
 if (!process.env.DATABASE_URL) {
@@ -146,6 +147,7 @@ export async function migrate() {
       ALTER TABLE reference_replay_sessions ADD COLUMN IF NOT EXISTS simulation jsonb;
 
     `)
+    await migrateSupport(client)
     await client.query('COMMIT')
   } catch (error) {
     await client.query('ROLLBACK')

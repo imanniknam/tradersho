@@ -18,3 +18,7 @@ dist/
 /AGENTS.md
 /concepts/
 /docs/
+
+# Brand-owned deployment fonts; public redistribution license not supplied
+/app/public/fonts/*.woff
+/app/public/fonts/*.woff2

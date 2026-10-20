@@ -28,7 +28,7 @@ try{
  await page.getByRole('button',{name:'ایجاد حساب',exact:true}).click()
  await page.waitForURL(base+'/panel/tools/chart')
  await page.locator('iframe[title="نمودار تحلیل بازار TradingView"]').waitFor({timeout:30000})
- await page.frameLocator('.tv-host iframe').getByText('Euro / U.S. Dollar',{exact:false}).first().waitFor({timeout:30000})
+ await page.frameLocator('.tv-host iframe').getByText('Gold',{exact:false}).first().waitFor({timeout:30000})
  const frame=page.locator('.tv-host iframe')
  console.log('Official widget iframe:',await frame.getAttribute('src'))
  // Network availability is reported separately from embedding correctness.
@@ -39,24 +39,25 @@ try{
  assert.equal(await page.locator('.tv-expanded').count(),1)
  await overflow();await shot('chart-fullscreen')
  await page.keyboard.press('Escape');assert.equal(await page.locator('.tv-expanded').count(),0)
- const tools=await api('/tools');assert.equal(tools.body.tools.find(t=>t.id==='chart').status,'active');assert.equal(tools.body.tools.find(t=>t.id==='calculator').status,'coming_soon')
- for(const path of ['/tools/calculator/access','/candles/datasets','/replay/session'])assert.equal((await api(path)).status,409)
- for(const path of ['/tickets','/rebates'])assert.equal((await api(path,'POST',{})).status,409)
+ const tools=await api('/tools');assert.equal(tools.body.tools.find(t=>t.id==='chart').status,'active');assert.deepEqual(tools.body.tools.map(t=>t.id),['chart','expert']);assert.equal(tools.body.tools.find(t=>t.id==='expert').status,'coming_soon')
+ assert.equal((await api('/tools/calculator/access')).status,404)
+ for(const path of ['/tools/expert/access','/candles/datasets','/replay/session'])assert.equal((await api(path)).status,409)
+ for(const path of ['/rebates'])assert.equal((await api(path,'POST',{})).status,409)
  assert.equal((await api('/auth/signup','POST',{email,password,confirmPassword:password})).status,409)
  assert.equal((await api('/auth/signup','POST',{email:'weak-'+email,password:'weak',confirmPassword:'weak'})).status,400)
  await page.goto(base+'/panel');await page.getByRole('heading',{name:/خوش آمدید/}).waitFor()
- assert.equal(await page.locator('main a').count(),1)
+ assert.equal(await page.locator('main a[href^="/panel/tools"]').count(),1)
  assert.ok(!(await page.locator('main').innerText()).includes('میانبر'))
  await shot('dashboard-light')
  await page.getByRole('button',{name:'فعال کردن حالت تیره'}).click();await shot('dashboard-dark');await page.reload();assert.equal(await page.locator('html').getAttribute('data-theme'),'dark')
  await page.getByRole('button',{name:'فعال کردن حالت روشن'}).click()
- for(const path of ['courses','courses/basics','wallet','rebate','support','tools/calculator']){await page.goto(base+'/panel/'+path);await page.getByRole('heading',{name:/در حال آماده‌سازی است/}).waitFor();assert.ok(!(await page.locator('main').innerText()).includes('دوره'))}
+ for(const path of ['courses','courses/basics','wallet','rebate','tools/expert']){await page.goto(base+'/panel/'+path);await page.getByRole('heading',{name:/در حال آماده‌سازی است/}).waitFor();assert.ok(!(await page.locator('main').innerText()).includes('دوره'))}
  await page.goto(base+'/panel/account');await page.getByRole('heading',{name:'امنیت حساب'}).waitFor();await shot('account-light')
  const nameField=page.getByLabel('نام و نام خانوادگی');await nameField.fill('کاربر تست');await page.getByRole('button',{name:'ذخیرهٔ تغییرات'}).click();await page.getByRole('status').waitFor()
  for(const width of [360,390,768,1440]){
   await page.setViewportSize({width,height:900})
-  for(const path of ['','tools','account','tools/chart']){await page.goto(base+'/panel'+(path?'/'+path:''));await page.locator('main').waitFor();await overflow()}
-  if(width===390){await page.frameLocator('.tv-host iframe').getByText('Euro / U.S. Dollar',{exact:false}).first().waitFor({timeout:30000});await page.waitForTimeout(1500);await shot('chart-mobile');await page.getByRole('button',{name:'نمای تمام‌صفحه'}).click();await overflow();await page.waitForTimeout(1500);await shot('chart-mobile-fullscreen');await page.keyboard.press('Escape');await page.goto(base+'/panel');await shot('dashboard-mobile');await page.getByRole('button',{name:'باز کردن منو'}).click();await page.getByRole('navigation',{name:'ناوبری اصلی'}).getByRole('link',{name:/مدرسه فارکس/}).click();await page.getByRole('heading',{name:'مدرسه فارکس',exact:true}).waitFor()}
+  for(const path of ['','tools','account','support','support/new','tools/chart']){await page.goto(base+'/panel'+(path?'/'+path:''));await page.locator('main').waitFor();await overflow()}
+  if(width===390){await page.frameLocator('.tv-host iframe').getByText('Gold',{exact:false}).first().waitFor({timeout:30000});await page.waitForTimeout(1500);await shot('chart-mobile');await page.getByRole('button',{name:'نمای تمام‌صفحه'}).click();await overflow();await page.waitForTimeout(1500);await shot('chart-mobile-fullscreen');await page.keyboard.press('Escape');await page.goto(base+'/panel');await shot('dashboard-mobile');await page.getByRole('button',{name:'باز کردن منو'}).click();await page.getByRole('navigation',{name:'ناوبری اصلی'}).getByRole('link',{name:/مدرسه فارکس/}).click();await page.getByRole('heading',{name:'مدرسه فارکس',exact:true}).waitFor()}
  }
  await page.goto(base+'/panel/tools/chart')
  await context.route('https://s3.tradingview.com/**',route=>route.abort())
@@ -68,5 +69,5 @@ try{
  for(const width of [360,390,768,1440]){await page.setViewportSize({width,height:900});await overflow();if(width===390)await shot('login-mobile')}
  await page.getByPlaceholder('name@example.com').fill(email);await page.getByPlaceholder('رمز عبور', {exact:true}).fill(password);await page.getByRole('button',{name:'ورود به پنل'}).click();await page.waitForURL(url=>url.pathname.startsWith('/panel'))
  assert.deepEqual(errors,[])
- console.log('PASS: registration/login, strong password, session, minimalist dashboard, theme persistence, official iframe, focus fullscreen/Escape, readiness server controls, navigation, mobile 360/390/768/1440, network failure/retry, profile, logout. No runtime errors.')
+ console.log('PASS: registration/login, strong password, session, dashboard with single tools gateway, theme persistence, official iframe, focus fullscreen/Escape, readiness server controls, navigation, mobile 360/390/768/1440, network failure/retry, profile, logout. No runtime errors.')
 }finally{await browser.close()}

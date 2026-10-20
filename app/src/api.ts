@@ -1,4 +1,4 @@
-export interface User { id: string; name: string; email: string; plan: 'free' | 'plus' | 'pro'; createdAt: string; progress: Record<string, number> }
+export interface User { isSupportAgent: boolean; id: string; name: string; email: string; plan: 'free' | 'plus' | 'pro'; createdAt: string; progress: Record<string, number> }
 export interface Ticket { id: string; subject: string; message: string; status: string; createdAt: string }
 export interface RebateRequest { id: string; broker: string; account: string; status: string; createdAt: string }
 export async function api<T>(path: string, method = 'GET', body?: unknown): Promise<T> {

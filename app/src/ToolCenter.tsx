@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Bot, Calculator, CalendarDays, ChartNoAxesCombined, Clock3, LayoutGrid, NotebookPen, RefreshCw, Search } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bot, ChartNoAxesCombined, Clock3, LayoutGrid, RefreshCw, Search } from 'lucide-react'
 import { api } from './api'
 import { tools } from './data'
 import type { ToolId } from './data'
@@ -23,7 +23,7 @@ function useCatalog() {
 }
 
 function ToolIcon({ id, size = 22 }: { id: ToolId; size?: number }) {
-  const Icon = { chart: ChartNoAxesCombined, calculator: Calculator, calendar: CalendarDays, journal: NotebookPen, expert: Bot }[id]
+  const Icon = { chart: ChartNoAxesCombined, expert: Bot }[id]
   return <Icon size={size} strokeWidth={1.7}/>
 }
 
@@ -50,7 +50,7 @@ export function ToolsPage() {
       const item = catalog.find(c => c.id === tool.id)
       const ready = item?.status === 'beta' || item?.status === 'active'
       return <Link to={`/panel/tools/${tool.id}`} className={`tool-card catalog-card ${ready ? 'ready' : 'upcoming'}`} key={tool.id}>
-        <div className={`catalog-art catalog-art-${tool.id}`}><ToolIcon id={tool.id} size={42}/><span>{tool.id === 'chart' ? 'MARKET / ANALYSIS' : tool.id === 'calculator' ? 'RISK / CALCULATOR' : 'TRADERSHO / NEXT'}</span><div className="catalog-art-lines"/></div>
+        <div className={`catalog-art catalog-art-${tool.id}`}><ToolIcon id={tool.id} size={42}/><span>{tool.id === 'chart' ? 'MARKET / ANALYSIS' : 'TRADERSHO / NEXT'}</span><div className="catalog-art-lines"/></div>
         <div className="tool-card-body"><div className="tool-card-meta"><span className={`badge ${ready ? 'badge-violet' : 'badge-muted'}`}>{item?.label || 'در حال بررسی'}</span><span>{tool.category}</span></div><h3>{tool.title}</h3><p>{tool.description}</p><span className="tool-card-link">{ready ? 'ورود به ابزار' : 'دربارهٔ این ابزار'} <ArrowLeft size={16}/></span></div>
       </Link>
     })}</div> : <div className="surface empty-state"><Search size={28}/><h2>ابزاری پیدا نشد</h2><button className="button secondary" onClick={() => { setFilter('all'); setQuery('') }}>نمایش همه</button></div>}

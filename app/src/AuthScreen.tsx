@@ -26,7 +26,7 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const next = params.get('next')
-  const destination = next?.startsWith('/panel') && !next.startsWith('//') ? next : '/panel'
+  const destination = next && /^\/(panel|admin)(\/|$)/.test(next) ? next : '/panel'
   useEffect(() => { if (!loading && user) navigate(destination, { replace: true }) }, [loading, user, destination, navigate])
   const submit = async (event: FormEvent) => {
     event.preventDefault()

@@ -1,3 +1,4 @@
+import { supportRoute } from './support.mjs'
 import http from 'node:http'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { readFile, stat } from 'node:fs/promises'
@@ -66,7 +67,8 @@ const activePlan = async userId => {
 }
 const publicUser = async user => {
   const { rows } = await pool.query('SELECT course_id, completed_lessons FROM course_progress WHERE user_id = $1', [user.id])
-  return { id: user.id, name: user.name, email: user.email, plan: await activePlan(user.id), createdAt: user.created_at, progress: Object.fromEntries(rows.map(row => [row.course_id, row.completed_lessons])) }
+  const agent = await pool.query('SELECT 1 FROM support_agents WHERE user_id=$1', [user.id])
+  return { isSupportAgent: agent.rowCount > 0, id: user.id, name: user.name, email: user.email, plan: await activePlan(user.id), createdAt: user.created_at, progress: Object.fromEntries(rows.map(row => [row.course_id, row.completed_lessons])) }
 }
 const sessionUser = async req => {
   const token = cookies(req).tradersho_session
@@ -153,10 +155,14 @@ const server = http.createServer(async (req, res) => {
     const user = await sessionUser(req)
     if (!user) return fail(res, 401, 'برای ادامه وارد حساب خود شوید.')
     if (path === '/api/session' && method === 'GET') return json(res, 200, { user: await publicUser(user) })
+    if (path === '/api/admin/session' && method === 'GET') {
+      const agent=await pool.query('SELECT 1 FROM support_agents WHERE user_id=$1',[user.id])
+      return agent.rowCount ? json(res,200,{allowed:true}) : fail(res,403,'دسترسی به پنل مدیریت مجاز نیست.')
+    }
     if (path === '/api/tools' && method === 'GET') return json(res, 200, { tools: toolCatalog })
     if (!subscriptionsEnabled && ['/api/subscription', '/api/plan-interest'].includes(path)) return fail(res, 409, 'بخش اشتراک فعلاً فعال نیست.')
     if (path.startsWith('/api/candles/') || path.startsWith('/api/replay/') || path.startsWith('/api/market/')) return fail(res, 409, 'محیط قبلی فعلاً در نسخهٔ اولیه فعال نیست.')
-    if (method !== 'GET' && ['/api/rebates', '/api/tickets'].includes(path)) return fail(res, 409, 'این بخش فعلاً در حال آماده‌سازی است.')
+    if (method !== 'GET' && path === '/api/rebates') return fail(res, 409, 'این بخش فعلاً در حال آماده‌سازی است.')
     if (await candleRoute({ path, method, user, req, res, body, json, fail, rateLimit })) return
     if (await replayRoute({ path, method, user, req, res, body, json, fail, rateLimit })) return
 
@@ -192,18 +198,7 @@ const server = http.createServer(async (req, res) => {
       const { rows } = await pool.query('UPDATE users SET name = $1, updated_at = now() WHERE id = $2 RETURNING *', [name, user.id])
       return json(res, 200, { user: await publicUser(rows[0]) })
     }
-    if (path === '/api/tickets' && method === 'GET') {
-      const { rows } = await pool.query('SELECT id, subject, message, status, created_at AS "createdAt" FROM support_tickets WHERE user_id = $1 ORDER BY created_at DESC', [user.id])
-      return json(res, 200, { tickets: rows })
-    }
-    if (path === '/api/tickets' && method === 'POST') {
-      const input = await body(req)
-      const subject = String(input.subject || '').trim().slice(0, 100)
-      const message = String(input.message || '').trim().slice(0, 2000)
-      if (subject.length < 3 || message.length < 10) return fail(res, 400, 'موضوع و پیام را کامل وارد کنید.')
-      const { rows } = await pool.query('INSERT INTO support_tickets (id, user_id, subject, message) VALUES ($1, $2, $3, $4) RETURNING id, subject, message, status, created_at AS "createdAt"', [randomUUID(), user.id, subject, message])
-      return json(res, 201, { ticket: rows[0] })
-    }
+    if (await supportRoute({path,method,user,req,res,body,json,fail,rateLimit})) return
     if (path === '/api/rebates' && method === 'GET') {
       const { rows } = await pool.query('SELECT id, broker, account, status, created_at AS "createdAt" FROM rebate_requests WHERE user_id = $1 ORDER BY created_at DESC', [user.id])
       return json(res, 200, { requests: rows })
