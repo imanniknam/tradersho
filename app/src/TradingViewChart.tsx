@@ -47,15 +47,15 @@ export default function TradingViewChart() {
     const overflow=document.body.style.overflow
     document.body.style.overflow='hidden'
     region.current?.focus()
-    const close=(e:KeyboardEvent)=>{if(e.key==='Escape')setExpanded(false)}
+    const close=(e:KeyboardEvent)=>{if(e.key==='Escape')setExpanded(false);if(e.key==='Tab'){const nodes=Array.from(region.current?.querySelectorAll<HTMLElement>('button,a[href],iframe')||[]).filter(n=>n.getClientRects().length);const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&(document.activeElement===first||document.activeElement===region.current)){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}}
     window.addEventListener('keydown',close)
     return()=>{document.body.style.overflow=overflow;window.removeEventListener('keydown',close);(previous?.isConnected?previous:expandButton.current)?.focus()}
   },[expanded])
-  return <section ref={region} tabIndex={-1} className={`tv-chart surface ${expanded?'tv-expanded':''}`} aria-label="محیط تحلیل بازار">
+  return <section ref={region} role={expanded?'dialog':undefined} aria-modal={expanded?true:undefined} tabIndex={-1} className={`tv-chart surface ${expanded?'tv-expanded':''}`} aria-label="محیط تحلیل بازار">
     <div className="tv-toolbar"><span><i className="tv-dot"/> نمودار TradingView</span><div><button className="icon-button" onClick={()=>setAttempt(n=>n+1)} aria-label="بارگذاری دوباره نمودار"><RefreshCw size={18}/></button><button ref={expandButton} className="button secondary small" aria-pressed={expanded} onClick={()=>setExpanded(v=>!v)}>{expanded?<Minimize2 size={17}/>:<Maximize2 size={17}/>} {expanded?'بازگشت به پنل':'نمای تمام‌صفحه'}</button></div></div>
     {status==='loading' && <p className="tv-status" role="status">در حال اتصال به TradingView…</p>}
-    {(status==='error'||status==='slow') && <div className="tv-status" role="alert">{status==='error'?'اتصال به TradingView برقرار نشد.':'بارگذاری نمودار بیشتر از معمول طول کشیده است.'} <button onClick={()=>setAttempt(n=>n+1)}>تلاش دوباره</button><a href="https://www.tradingview.com/chart/?symbol=FX%3AXAUUSD" target="_blank" rel="noopener noreferrer">باز کردن TradingView</a></div>}
+    {(status==='error'||status==='slow') && <div className="tv-status" role="alert">{status==='error'?'اتصال به TradingView برقرار نشد.':'بارگذاری نمودار بیشتر از معمول طول کشیده است.'} <button onClick={()=>setAttempt(n=>n+1)}>تلاش دوباره</button><a href="https://www.tradingview.com/chart/?symbol=OANDA%3AXAUUSD" target="_blank" rel="noopener noreferrer">باز کردن TradingView</a></div>}
     <div ref={host} className="tradingview-widget-container tv-host"/>
-    <p className="tv-disclosure">داده و امکانات نمودار توسط TradingView ارائه می‌شود. دسترسی به نمادها و میزان تأخیر به بازار و منبع داده بستگی دارد. <a href="https://www.tradingview.com/chart/?symbol=FX%3AXAUUSD" target="_blank" rel="noopener noreferrer">باز کردن در TradingView</a></p>
+    <p className="tv-disclosure">داده و امکانات نمودار توسط TradingView ارائه می‌شود. دسترسی به نمادها و میزان تأخیر به بازار و منبع داده بستگی دارد. <a href="https://www.tradingview.com/chart/?symbol=OANDA%3AXAUUSD" target="_blank" rel="noopener noreferrer">باز کردن در TradingView</a></p>
   </section>
 }

@@ -16,7 +16,7 @@ const request=async(ctx,path,method='GET',data)=>{const r=await ctx.request.fetc
 const shot=async(name,p=page)=>p.screenshot({path:new URL('../qa/support-'+name+'.png',import.meta.url).pathname,fullPage:true})
 const overflow=async(p=page)=>assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2&&[...document.querySelectorAll('main')].every(e=>e.scrollWidth<=e.clientWidth+2)))
 try{
- await page.goto(base+'/auth');await page.getByRole('button',{name:'ثبت‌نام',exact:true}).click();await page.getByPlaceholder('name@example.com').fill(email);await page.getByPlaceholder('رمز عبور قوی').fill(password);await page.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill(password);await page.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await page.waitForURL(base+'/panel')
+ await page.goto(base+'/auth');await page.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await page.getByPlaceholder('name@example.com').fill(email);await page.getByPlaceholder('رمز عبور قوی').fill(password);await page.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill(password);await page.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await page.waitForURL(base+'/panel')
  const user=(await request(customer,'/session')).body.user
  assert.equal(user.isSupportAgent,false)
  assert.equal((await request(customer,'/admin/session')).status,403)

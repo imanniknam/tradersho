@@ -21,7 +21,7 @@ try{
  await page.getByRole('button',{name:'فعال کردن حالت تیره'}).click()
  await page.reload();assert.equal(await page.locator('html').getAttribute('data-theme'),'dark')
  await page.getByRole('button',{name:'فعال کردن حالت روشن'}).click()
- await page.getByRole('button',{name:'ثبت‌نام',exact:true}).click()
+ await page.getByRole('tab',{name:'ثبت‌نام',exact:true}).click()
  await page.getByPlaceholder('name@example.com').fill(email)
  await page.getByPlaceholder('رمز عبور قوی').fill(password)
  await page.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill(password)
