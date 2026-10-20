@@ -18,7 +18,8 @@
     "test:e2e:support": "node scripts/e2e-support.mjs",
     "test:e2e:legacy": "node scripts/e2e.mjs",
     "test:unit": "node --test src/analysis/indicators.test.ts server/simulation.test.mjs server/candle.test.mjs src/workspace/indicators.test.ts",
-    "test:e2e:candles": "node scripts/e2e-candles.mjs"
+    "test:e2e:candles": "node scripts/e2e-candles.mjs",
+    "test:ui:mobile": "MOBILE_AUDIT=1 node scripts/audit-ui.mjs"
   },
   "dependencies": {
     "@fontsource/vazirmatn": "^5.2.8",

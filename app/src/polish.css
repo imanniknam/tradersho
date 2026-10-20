@@ -43,3 +43,6 @@ input[dir=ltr],input[type=email],.profile-top p,.support-message time{font-famil
 
 /* The welcome logo is a brand signature, not a faded watermark. */
 .home-welcome-mark{opacity:1}
+
+/* Widget injects a low-contrast attribution style after loading. Keep its visible link readable. */
+.tv-chart .tradingview-widget-copyright a,.tv-chart .tradingview-widget-copyright a:visited{color:var(--secondary)!important}

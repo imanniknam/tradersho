@@ -1,0 +1,87 @@
+/* Compact mobile hierarchy, with readable form text and 44px touch controls. */
+@media(max-width:600px){
+  .main-inner{padding:16px 14px 28px}
+  .page-head{gap:12px;margin-bottom:18px}
+  .empty-state h1,.splash h1{font-size:22px;line-height:1.65}
+  .empty-state h2{font-size:19px;line-height:1.7}
+  .page-head h1,.support-heading h1,.conversation-head h1{font-size:22px;line-height:1.6;letter-spacing:0}
+  .page-head p,.support-heading p{font-size:14px;line-height:1.85}
+  .eyebrow{font-size:10px;letter-spacing:.06em}
+  .button{font-size:14px;min-height:44px;padding:10px 14px;line-height:1.65}
+  .icon-button{min-width:44px;min-height:44px}
+  .user-pill{min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center}
+  .topbar{gap:6px}.topbar-right{gap:4px}.topbar-left{gap:2px}
+  .breadcrumb{font-size:11px}
+  .home-welcome{padding:18px;min-height:0;gap:12px;border-radius:15px}
+  .home-welcome h1{font-size:22px;line-height:1.65;margin:6px 0}
+  .home-welcome p{font-size:13px;line-height:1.85}
+  .home-tools-entry{padding:128px 18px 20px;background-size:auto 155px;border-radius:15px;margin-top:12px}
+  .home-tools-entry:before{background:linear-gradient(180deg,#0b172805 0,#0b172830 65px,#0b1728 145px)}
+  .home-tools-copy h2{font-size:20px;line-height:1.65;margin:8px 0}
+  .home-tools-copy p{font-size:14px;line-height:1.85;margin-bottom:16px}
+  .home-service-grid{gap:10px;margin:12px 0}
+  .home-service{padding:16px;gap:10px;border-radius:15px}
+  .home-service h2{font-size:16px;line-height:1.65}
+  .home-service p{font-size:12px;line-height:1.8}
+  .home-service a{font-size:13px;min-height:44px}
+  .home-service-icon{width:40px;height:40px;border-radius:11px}
+  .home-recent,.home-school{padding:18px}
+  .home-section-title h2,.home-school h2{font-size:17px;line-height:1.7}
+  .home-school p,.home-empty p{font-size:13px;line-height:1.85}
+  .home-empty{padding:18px 0 4px}.home-empty h3{font-size:15px}
+  .home-ticket strong{font-size:14px}.home-ticket{gap:8px}
+  .tools-toolbar{gap:12px;margin-bottom:14px}
+  .segmented button{font-size:13px;padding-inline:9px;flex:1;min-width:0}
+  .tools-result{font-size:12px;line-height:1.8;gap:8px}
+  .tool-detail-heading>div{width:100%;min-width:0}
+  .tool-detail-heading>.button{display:none}
+  .tool-detail-heading .eyebrow{display:block;margin-top:8px}
+  .tool-detail-heading .back-link{font-size:13px}
+  .tool-switch-bar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0;margin-bottom:16px}
+  .tool-switch-bar a{min-width:0;justify-content:center;gap:5px;padding:8px;font-size:12px;flex-wrap:wrap}
+  .tool-switch-bar small{font-size:10px}
+  .catalog-art{height:88px}.catalog-art>svg{width:32px;height:32px}
+  .tool-card-body{padding:16px}.tool-card-body h3{font-size:18px;line-height:1.7;margin:10px 0 6px}
+  .tool-card-body>p{font-size:14px;line-height:1.85;min-height:0;margin-bottom:12px}
+  .tool-card-meta,.tool-card-link{font-size:13px}.tool-card-link{min-height:44px}
+  .coming-soon{padding:26px 18px;min-height:0;gap:12px}
+  .coming-soon h2{font-size:19px;line-height:1.7}
+  .coming-soon p{font-size:14px;line-height:1.85}
+  .coming-soon>div:last-child{width:100%;display:grid;gap:8px}
+  .profile-surface,.security-surface{padding:18px}
+  .profile-top{gap:12px;padding-bottom:16px;margin-bottom:16px}
+  .profile-top h2{font-size:18px}.profile-top p{font-size:13px;line-height:1.8}
+  .profile-avatar{width:44px;height:44px;font-size:20px}
+  .stack-form{gap:16px}.stack-form label,.support-compose label,.reply-form label{font-size:14px;font-weight:600;gap:6px}
+  .stack-form input,.stack-form textarea,.stack-form select,.auth-form input{font-size:16px;font-weight:400;line-height:1.7;min-height:48px}
+  .stack-form input::placeholder,.stack-form textarea::placeholder{font-weight:400}
+  .stack-form .button{width:100%;justify-self:stretch}
+  .auth-card h1{font-size:23px;line-height:1.6}.auth-card>.muted{font-size:14px}
+  .auth-form-side{padding:18px 20px;gap:20px}.auth-mobile-brand .brand-logo{width:124px}
+  .auth-submit,.auth-tabs button{font-size:14px}.auth-form label>span{font-size:14px}
+  .security-surface>p{font-size:13px;line-height:1.85;margin-bottom:16px}
+  .security-surface h3{font-size:17px}.security-surface small{font-size:12px}
+  .support-list-actions{margin-bottom:16px}.support-stats{margin:16px 0;gap:8px}
+  .support-stats>div{padding:12px 8px;gap:4px}.support-stats strong{font-size:21px}
+  .ticket-filter select,.status-form select{font-size:16px;font-weight:400}
+  .ticket-filter{padding:16px 0;gap:10px}.ticket-filter h2{font-size:17px}
+  .ticket-row-copy strong{font-size:15px;line-height:1.8}.ticket-row-copy small{font-size:12px}
+  .ticket-row{padding:14px 0}.ticket-row>.ticket-badge{margin-inline-start:50px}
+  .support-compose{padding:18px;gap:16px}.support-compose textarea{height:160px;min-height:160px}
+  .support-guidance{padding:18px}.support-guidance h2{font-size:17px}.support-guidance p{font-size:13px;line-height:1.85}
+  .conversation-head{flex-wrap:wrap}.conversation-head p{font-size:12px}
+  .conversation-messages{padding:16px 12px;gap:14px}
+  .support-message{padding:14px;width:97%}.support-message p{font-size:14px;line-height:1.95}
+  .support-message header{font-size:13px}.support-message time{font-size:11px}
+  .reply-form{padding:18px 14px}.reply-form textarea{min-height:120px}
+  .reply-form .button{width:auto}.status-form .button{width:auto}
+  .tv-toolbar{flex-wrap:wrap;padding:10px;row-gap:4px}
+  .tv-toolbar>div{margin-inline-start:auto}.tv-toolbar .button{font-size:12px}
+  .tv-host{height:clamp(360px,62dvh,520px)!important}
+  .tv-expanded .tv-host{height:0!important}
+  .tv-disclosure{font-size:12px;line-height:1.85}
+  .privacy-page{padding:16px}.privacy-page article{padding:20px}
+  .privacy-page h1{font-size:22px}.privacy-page h2{font-size:18px}.privacy-page p{font-size:14px;line-height:1.95}
+}
+@media(min-width:360px) and (max-width:600px){.support-form-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+@media(max-width:360px){.main-inner{padding-inline:12px}.home-welcome h1{font-size:20px}.breadcrumb{max-width:116px}.auth-form-side{padding-inline:16px}}
