@@ -22,6 +22,7 @@ import './brand-fonts.css'
 import './polish.css'
 import './mobile.css'
 import './refinements.css'
+import './gradient-polish.css'
 import PrivacyPage from './PrivacyPage'
 
 interface AuthValue { user:User|null; loading:boolean; setUser:(u:User|null)=>void }
