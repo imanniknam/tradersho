@@ -3,18 +3,14 @@
 .button.primary:disabled svg{color:currentColor}
 .logout{background:var(--tint);color:var(--accent);text-decoration:none;transition:background .2s,color .2s}
 .logout:hover,.logout:focus-visible{background:#543aff;color:#fff;text-decoration:none}
-/* A quiet gradient edge at rest, moving only during deliberate interaction. */
-@property --edge-angle{syntax:'<angle>';initial-value:125deg;inherits:false}
-:root{--edge-a:#7767bb;--edge-b:#346c87;--edge-c:#86698b;--card-fill:var(--surface)}
-[data-theme=light]{--edge-a:#c3b5f5;--edge-b:#b9dce8;--edge-c:#ebc7df}
-.home-service,.home-recent,.home-school,.catalog-card,.profile-surface,.security-surface,.ticket-list,.support-compose,.support-guidance,.conversation{
- border:1px solid transparent;
- background:linear-gradient(var(--card-fill),var(--card-fill)) padding-box,conic-gradient(from var(--edge-angle),var(--line),var(--edge-a),var(--edge-b),var(--edge-c),var(--line)) border-box;
-}
-.home-service:hover,.home-recent:hover,.home-school:hover,.catalog-card:hover,.profile-surface:focus-within,.security-surface:focus-within,.support-compose:focus-within,.conversation:focus-within{animation:edge-orbit 6s linear infinite}
-.catalog-card:hover{border-color:transparent}
-@keyframes edge-orbit{to{--edge-angle:485deg}}
-.home-welcome{background:radial-gradient(ellipse at 8% 15%,#8973ff18,transparent 65%),linear-gradient(115deg,var(--tint),var(--canvas));border-color:var(--edge-a)}
+/* Brand-only, single-color card outlines. */
+:root{--card-edge:#403867}
+[data-theme=light]{--card-edge:#ded8f2}
+.home-service,.home-recent,.home-school,.catalog-card,.profile-surface,.security-surface,.ticket-list,.support-compose,.support-guidance,.conversation{border:1px solid var(--card-edge);background:var(--surface);animation:none}
+.catalog-card:hover,.profile-surface:focus-within,.security-surface:focus-within,.support-compose:focus-within,.conversation:focus-within{border-color:#543aff;animation:none}
+.home-welcome{border-color:var(--card-edge)}
+.security-logout{background:transparent;color:var(--secondary);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-height:46px;width:100%;justify-content:center}
+.security-logout:hover,.security-logout:focus-visible{background:var(--tint);border-color:#543aff;color:var(--ink)}
 [data-theme=dark] .catalog-art{background:radial-gradient(ellipse at 80% 20%,#38bde830,transparent 60%),linear-gradient(135deg,#292054,#18263f 65%,#25305b);color:#dce8ff}
 [data-theme=dark] .catalog-art-chart{background:radial-gradient(ellipse at 80% 15%,#7454ff66,transparent 60%),linear-gradient(135deg,#30215d,#14283f)}
 [data-theme=dark] .catalog-art-lines{opacity:.6}
