@@ -1,39 +1,37 @@
-/* Living banner + animated gradient edges. Loaded last; brand violet/sky/orange only. */
-@property --edge-angle{syntax:'<angle>';inherits:false;initial-value:0deg}
-:root{--edge-rest:var(--card-edge,#403867);--edge-1:#7b61ff;--edge-2:#49a7c2;--edge-3:#ff8f4d;--edge-fill:var(--surface);--mp-c1:#7b61ff;--mp-c2:#49a7c2;--mp-c3:#b5a7ff;--mp-up:#8f7cff;--mp-down:#ff8f4d;--mp-base:#0a1426}
-[data-theme=light]{--edge-rest:#e0dcf3;--edge-1:#543aff;--edge-2:#3aa3d6;--edge-3:#ff8f4d;--mp-c1:#543aff;--mp-c2:#3aa3d6;--mp-c3:#9d8cff;--mp-up:#6a52ff;--mp-down:#ff8f4d;--mp-base:#f6f5ff}
+/* Brand-book violets only (#543AFF #4C0FA3 #1A0047 #061A32 #BAB8F9 #D6D9FC #F5F5FF). No edge bars: soft drifting gradient light inside surfaces. */
+@property --gx{syntax:'<percentage>';inherits:false;initial-value:15%}
+@property --gy{syntax:'<percentage>';inherits:false;initial-value:0%}
+:root{--glow:#543aff30;--glow-2:#4c0fa340;--glow-hover:#543aff4d;--mp-c1:#543aff;--mp-c2:#4c0fa3;--mp-c3:#bab8f9;--mp-up:#8f7cff;--mp-down:#bab8f9;--mp-base:#061a32;--mp-base-2:#1a0047}
+[data-theme=light]{--glow:#bab8f975;--glow-2:#d6d9fcb0;--glow-hover:#bab8f9a6;--mp-c1:#543aff;--mp-c2:#bab8f9;--mp-c3:#d6d9fc;--mp-up:#543aff;--mp-down:#4c0fa3;--mp-base:#f5f5ff;--mp-base-2:#d6d9fc}
 
-/* Animated gradient edge: padding-box keeps the card fill, border-box carries a rotating comet. */
-.surface,.home-welcome,.home-service,.home-recent,.home-school,.catalog-card,.profile-surface,.security-surface,.ticket-list,.support-compose,.support-guidance,.conversation,.recovery-card,.status-card,.tool-card{
-  --edge-fill:var(--surface);
-  border:1px solid transparent!important;
-  background:linear-gradient(var(--edge-fill),var(--edge-fill)) padding-box,
-    conic-gradient(from var(--edge-angle),var(--edge-rest) 0 52%,var(--edge-1) 66%,var(--edge-2) 78%,var(--edge-3) 88%,var(--edge-rest) 96% 100%) border-box!important;
-  animation:edge-spin 9s linear infinite!important;
-}
-.home-welcome{--edge-fill:var(--tint)}
-.surface:nth-child(2n),.home-service:nth-child(2n){animation-duration:11s!important;animation-delay:-3s!important}
-.surface:nth-child(3n),.home-service:nth-child(3n){animation-duration:13s!important;animation-delay:-6s!important}
-.surface:hover,.surface:focus-within,.catalog-card:hover,.home-service:hover,.tool-card:hover{animation-duration:3.5s!important;
-  background:linear-gradient(var(--edge-fill),var(--edge-fill)) padding-box,
-    conic-gradient(from var(--edge-angle),var(--edge-1) 0,var(--edge-2) 25%,var(--edge-3) 45%,var(--edge-rest) 60%,var(--edge-1) 100%) border-box!important;
-  box-shadow:0 14px 40px color-mix(in srgb,var(--edge-1) 18%,transparent)}
-@keyframes edge-spin{to{--edge-angle:360deg}}
-.home-service,.catalog-card,.tool-card,.surface{transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s}
+.surface,.home-service,.home-recent,.home-school,.catalog-card,.profile-surface,.security-surface,.ticket-list,.support-compose,.support-guidance,.conversation,.recovery-card,.tool-card{
+  border:1px solid var(--card-edge,var(--line))!important;
+  background:radial-gradient(560px circle at var(--gx) var(--gy),var(--glow),transparent 62%),radial-gradient(420px circle at calc(100% - var(--gx)) 115%,var(--glow-2),transparent 60%),var(--surface)!important;
+  animation:glow-drift 16s ease-in-out infinite!important;
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .25s,box-shadow .3s}
+.surface:nth-child(2n),.home-service:nth-child(2n){animation-duration:20s!important;animation-delay:-5s!important}
+.surface:nth-child(3n),.home-service:nth-child(3n){animation-duration:24s!important;animation-delay:-11s!important}
+.surface:hover,.surface:focus-within,.catalog-card:hover,.home-service:hover,.tool-card:hover{border-color:#543aff!important;
+  background:radial-gradient(560px circle at var(--gx) var(--gy),var(--glow-hover),transparent 62%),radial-gradient(420px circle at calc(100% - var(--gx)) 115%,var(--glow-2),transparent 60%),var(--surface)!important;
+  box-shadow:0 14px 40px #543aff1f}
 .home-service:hover,.catalog-card:hover,.tool-card:hover{transform:translateY(-3px)}
+@keyframes glow-drift{0%,100%{--gx:12%;--gy:-5%}50%{--gx:88%;--gy:25%}}
+
+/* Welcome: animated brand gradient section */
+.home-welcome{border:1px solid var(--card-edge,var(--line))!important;background:radial-gradient(520px circle at var(--gx) var(--gy),#543aff59,transparent 60%),linear-gradient(115deg,#1a0047,#2b1380 55%,#1a0047)!important;background-size:auto,100% 100%;animation:glow-drift 14s ease-in-out infinite!important}
+[data-theme=light] .home-welcome{background:radial-gradient(520px circle at var(--gx) var(--gy),#bab8f9b3,transparent 62%),linear-gradient(115deg,#f5f5ff,#e9e8ff 55%,#f5f5ff)!important}
+[data-theme=light] .home-welcome p{color:#43506b}
 
 /* Banner: no photo, a living market scene. */
-.home-tools-entry{--edge-fill:var(--mp-base);background-image:none;background-color:var(--mp-base);isolation:isolate;min-height:310px}
-.home-tools-entry,[data-theme=light] .home-tools-entry{
-  background:linear-gradient(var(--mp-base),var(--mp-base)) padding-box,
-    conic-gradient(from var(--edge-angle),var(--edge-rest) 0 52%,var(--edge-1) 66%,var(--edge-2) 78%,var(--edge-3) 88%,var(--edge-rest) 96% 100%) border-box!important}
+.home-tools-entry,[data-theme=light] .home-tools-entry{isolation:isolate;min-height:310px;animation:none!important;border:1px solid var(--card-edge,var(--line))!important;
+  background:linear-gradient(120deg,var(--mp-base),var(--mp-base-2))!important}
 .home-tools-entry:before,[data-theme=light] .home-tools-entry:before{background:radial-gradient(ellipse at 100% 50%,color-mix(in srgb,var(--mp-base) 92%,transparent) 0,color-mix(in srgb,var(--mp-base) 80%,transparent) 45%,transparent 75%)}
 .home-tools-copy{position:relative;z-index:2}
 .market-pulse{position:absolute;inset:0 auto 0 0;width:54%;z-index:0;pointer-events:none;overflow:hidden;direction:ltr;--px:0;--py:0}
 .mp-aurora{position:absolute;border-radius:50%;filter:blur(48px);opacity:.55;will-change:transform}
 .mp-aurora-a{width:340px;height:340px;left:-60px;top:-90px;background:radial-gradient(circle,var(--mp-c1),transparent 68%);animation:mp-drift 14s ease-in-out infinite alternate}
 .mp-aurora-b{width:300px;height:300px;left:34%;bottom:-120px;background:radial-gradient(circle,var(--mp-c2),transparent 68%);animation:mp-drift 17s ease-in-out -5s infinite alternate-reverse}
-.mp-aurora-c{width:220px;height:220px;left:18%;top:20%;background:radial-gradient(circle,var(--mp-down),transparent 70%);opacity:.22;animation:mp-drift 20s ease-in-out -9s infinite alternate}
+.mp-aurora-c{width:220px;height:220px;left:18%;top:20%;background:radial-gradient(circle,var(--mp-c3),transparent 70%);opacity:.3;animation:mp-drift 20s ease-in-out -9s infinite alternate}
 [data-theme=light] .mp-aurora{opacity:.4}
 @keyframes mp-drift{from{transform:translate3d(-20px,10px,0) scale(1)}to{transform:translate3d(60px,-30px,0) scale(1.18)}}
 .mp-scene{position:absolute;inset:0;width:100%;height:100%;transform:translate3d(calc(var(--px)*-14px),calc(var(--py)*-10px),0);transition:transform .35s ease-out}
@@ -67,7 +65,7 @@
   .home-tools-entry:before,[data-theme=light] .home-tools-entry:before{background:linear-gradient(180deg,transparent 0,transparent 90px,var(--mp-base) 150px)}
 }
 @media(prefers-reduced-motion:reduce){
-  .surface,.home-welcome,.home-service,.home-recent,.home-school,.catalog-card,.profile-surface,.security-surface,.ticket-list,.support-compose,.support-guidance,.conversation,.recovery-card,.status-card,.tool-card,.home-tools-entry{animation:none!important}
+  .surface,.home-welcome,.home-service,.home-recent,.home-school,.catalog-card,.profile-surface,.security-surface,.ticket-list,.support-compose,.support-guidance,.conversation,.recovery-card,.tool-card{animation:none!important}
   .mp-aurora,.mp-candle,.mp-chip,.mp-area{animation:none!important}
   .mp-trace,.mp-glow{animation:none!important;stroke-dashoffset:0}
   .mp-dot,.mp-halo{display:none}.mp-scene,.mp-chip{transform:none}
