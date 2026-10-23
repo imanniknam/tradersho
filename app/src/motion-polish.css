@@ -1,0 +1,74 @@
+/* Living banner + animated gradient edges. Loaded last; brand violet/sky/orange only. */
+@property --edge-angle{syntax:'<angle>';inherits:false;initial-value:0deg}
+:root{--edge-rest:var(--card-edge,#403867);--edge-1:#7b61ff;--edge-2:#49a7c2;--edge-3:#ff8f4d;--edge-fill:var(--surface);--mp-c1:#7b61ff;--mp-c2:#49a7c2;--mp-c3:#b5a7ff;--mp-up:#8f7cff;--mp-down:#ff8f4d;--mp-base:#0a1426}
+[data-theme=light]{--edge-rest:#e0dcf3;--edge-1:#543aff;--edge-2:#3aa3d6;--edge-3:#ff8f4d;--mp-c1:#543aff;--mp-c2:#3aa3d6;--mp-c3:#9d8cff;--mp-up:#6a52ff;--mp-down:#ff8f4d;--mp-base:#f6f5ff}
+
+/* Animated gradient edge: padding-box keeps the card fill, border-box carries a rotating comet. */
+.surface,.home-welcome,.home-service,.home-recent,.home-school,.catalog-card,.profile-surface,.security-surface,.ticket-list,.support-compose,.support-guidance,.conversation,.recovery-card,.status-card,.tool-card{
+  --edge-fill:var(--surface);
+  border:1px solid transparent!important;
+  background:linear-gradient(var(--edge-fill),var(--edge-fill)) padding-box,
+    conic-gradient(from var(--edge-angle),var(--edge-rest) 0 52%,var(--edge-1) 66%,var(--edge-2) 78%,var(--edge-3) 88%,var(--edge-rest) 96% 100%) border-box!important;
+  animation:edge-spin 9s linear infinite!important;
+}
+.home-welcome{--edge-fill:var(--tint)}
+.surface:nth-child(2n),.home-service:nth-child(2n){animation-duration:11s!important;animation-delay:-3s!important}
+.surface:nth-child(3n),.home-service:nth-child(3n){animation-duration:13s!important;animation-delay:-6s!important}
+.surface:hover,.surface:focus-within,.catalog-card:hover,.home-service:hover,.tool-card:hover{animation-duration:3.5s!important;
+  background:linear-gradient(var(--edge-fill),var(--edge-fill)) padding-box,
+    conic-gradient(from var(--edge-angle),var(--edge-1) 0,var(--edge-2) 25%,var(--edge-3) 45%,var(--edge-rest) 60%,var(--edge-1) 100%) border-box!important;
+  box-shadow:0 14px 40px color-mix(in srgb,var(--edge-1) 18%,transparent)}
+@keyframes edge-spin{to{--edge-angle:360deg}}
+.home-service,.catalog-card,.tool-card,.surface{transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s}
+.home-service:hover,.catalog-card:hover,.tool-card:hover{transform:translateY(-3px)}
+
+/* Banner: no photo, a living market scene. */
+.home-tools-entry{--edge-fill:var(--mp-base);background-image:none;background-color:var(--mp-base);isolation:isolate;min-height:310px}
+.home-tools-entry,[data-theme=light] .home-tools-entry{
+  background:linear-gradient(var(--mp-base),var(--mp-base)) padding-box,
+    conic-gradient(from var(--edge-angle),var(--edge-rest) 0 52%,var(--edge-1) 66%,var(--edge-2) 78%,var(--edge-3) 88%,var(--edge-rest) 96% 100%) border-box!important}
+.home-tools-entry:before,[data-theme=light] .home-tools-entry:before{background:radial-gradient(ellipse at 100% 50%,color-mix(in srgb,var(--mp-base) 92%,transparent) 0,color-mix(in srgb,var(--mp-base) 80%,transparent) 45%,transparent 75%)}
+.home-tools-copy{position:relative;z-index:2}
+.market-pulse{position:absolute;inset:0 auto 0 0;width:54%;z-index:0;pointer-events:none;overflow:hidden;direction:ltr;--px:0;--py:0}
+.mp-aurora{position:absolute;border-radius:50%;filter:blur(48px);opacity:.55;will-change:transform}
+.mp-aurora-a{width:340px;height:340px;left:-60px;top:-90px;background:radial-gradient(circle,var(--mp-c1),transparent 68%);animation:mp-drift 14s ease-in-out infinite alternate}
+.mp-aurora-b{width:300px;height:300px;left:34%;bottom:-120px;background:radial-gradient(circle,var(--mp-c2),transparent 68%);animation:mp-drift 17s ease-in-out -5s infinite alternate-reverse}
+.mp-aurora-c{width:220px;height:220px;left:18%;top:20%;background:radial-gradient(circle,var(--mp-down),transparent 70%);opacity:.22;animation:mp-drift 20s ease-in-out -9s infinite alternate}
+[data-theme=light] .mp-aurora{opacity:.4}
+@keyframes mp-drift{from{transform:translate3d(-20px,10px,0) scale(1)}to{transform:translate3d(60px,-30px,0) scale(1.18)}}
+.mp-scene{position:absolute;inset:0;width:100%;height:100%;transform:translate3d(calc(var(--px)*-14px),calc(var(--py)*-10px),0);transition:transform .35s ease-out}
+.mp-grid line{stroke:var(--mp-c3);stroke-opacity:.14;stroke-width:1}
+.mp-candle line{stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.mp-candle rect{fill:currentColor;fill-opacity:.82}
+.mp-candle.up{color:var(--mp-up)}.mp-candle.down{color:var(--mp-down)}
+.mp-candle{transform-box:fill-box;transform-origin:50% 100%;animation:mp-breathe 6.6s ease-in-out infinite}
+@keyframes mp-breathe{0%,100%{opacity:.55}50%{opacity:1}}
+.mp-area{fill:url(#mp-area);animation:mp-area 7s ease-in-out infinite}
+.mp-trace,.mp-glow{fill:none;stroke:url(#mp-line);stroke-width:3.5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:mp-draw 7s cubic-bezier(.5,0,.2,1) infinite}
+.mp-glow{stroke-width:9;opacity:.75}
+.mp-dot{fill:#fff}.mp-halo{fill:var(--mp-c1);opacity:.28}
+@keyframes mp-draw{0%{stroke-dashoffset:1}62%,88%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+@keyframes mp-area{0%,10%{opacity:0}62%,88%{opacity:1}100%{opacity:0}}
+.mp-chip{position:absolute;display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:99px;font-size:13px;font-weight:700;color:var(--ink);background:color-mix(in srgb,var(--surface) 62%,transparent);border:1px solid color-mix(in srgb,var(--mp-c3) 45%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 8px 24px color-mix(in srgb,var(--mp-c1) 20%,transparent);animation:mp-float 6s ease-in-out infinite;transform:translate3d(calc(var(--px)*22px),calc(var(--py)*16px),0)}
+.mp-chip svg{color:var(--mp-c1)}
+[data-theme=dark] .mp-chip svg{color:var(--mp-c3)}
+.mp-chip-a{left:8%;top:16%}.mp-chip-b{left:42%;top:12%;animation-delay:-2s}.mp-chip-c{left:30%;bottom:12%;animation-delay:-4s}
+@keyframes mp-float{0%,100%{margin-top:0}50%{margin-top:-9px}}
+.mp-chip{transition:transform .35s ease-out}
+
+/* Reveal on load */
+.dashboard-home>*,.home-service-grid>*,.home-lower-grid>*{animation-name:rise-in}
+@keyframes rise-in{from{opacity:0;translate:0 14px}to{opacity:1;translate:0 0}}
+
+@media(max-width:900px){.market-pulse{width:100%;height:190px;inset:0 0 auto 0;opacity:.9}.mp-chip-b{left:46%}}
+@media(max-width:600px){
+  .home-tools-entry{display:block;padding:152px 22px 24px}
+  .market-pulse{height:140px}.mp-chip{font-size:12px;padding:6px 10px}.mp-chip-a{left:5%;top:10%}.mp-chip-b{left:40%;top:8%}.mp-chip-c{left:16%;bottom:10%}
+  .home-tools-entry:before,[data-theme=light] .home-tools-entry:before{background:linear-gradient(180deg,transparent 0,transparent 90px,var(--mp-base) 150px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .surface,.home-welcome,.home-service,.home-recent,.home-school,.catalog-card,.profile-surface,.security-surface,.ticket-list,.support-compose,.support-guidance,.conversation,.recovery-card,.status-card,.tool-card,.home-tools-entry{animation:none!important}
+  .mp-aurora,.mp-candle,.mp-chip,.mp-area{animation:none!important}
+  .mp-trace,.mp-glow{animation:none!important;stroke-dashoffset:0}
+  .mp-dot,.mp-halo{display:none}.mp-scene,.mp-chip{transform:none}
+}
