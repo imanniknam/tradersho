@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { Bot, LineChart, ShieldCheck } from 'lucide-react'
 
 const candles = [
   [18, 70, 40, 'up'], [16, 64, 52, 'down'], [22, 80, 44, 'up'], [14, 58, 40, 'up'], [20, 66, 50, 'down'], [26, 92, 56, 'up'],
@@ -58,9 +57,6 @@ export default function MarketPulse() {
           <circle r="14" className="mp-halo"><animateMotion dur="7s" repeatCount="indefinite" path={path} keyPoints="0;1;1" keyTimes="0;.62;1" calcMode="linear" /></circle>
         </g>
       </svg>
-      <span className="mp-chip mp-chip-a"><LineChart size={16} />نمودار</span>
-      <span className="mp-chip mp-chip-b"><Bot size={16} />اکسپرت</span>
-      <span className="mp-chip mp-chip-c"><ShieldCheck size={16} />مدیریت ریسک</span>
     </div>
   )
 }
