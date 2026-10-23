@@ -47,7 +47,7 @@ try{
  assert.equal(r1.body.id,r2.body.id);assert.equal((await request(customer,'/tickets/'+r1.body.id)).body.messages.length,1)
  assert.equal((await request(customer,'/tickets','POST',{...replayPayload,subject:'موضوع عوض شده'})).status,409)
  await desk.goto(base+'/admin/support');await desk.getByRole('heading',{name:'میز پشتیبانی',exact:true}).waitFor();await desk.getByRole('link',{name:/مشکل نمایش نمودار طلا/}).click();await desk.getByLabel('پاسخ شما').fill('لطفاً نمودار را از گزینهٔ نمای تمام‌صفحه باز کنید.');await desk.getByRole('button',{name:'ارسال پاسخ',exact:true}).click();await desk.getByText('لطفاً نمودار را از گزینهٔ نمای تمام‌صفحه باز کنید.',{exact:true}).waitFor();await shot('staff-desktop',desk)
- await page.getByRole('button',{name:'تازه‌سازی',exact:true}).click();await page.getByText('لطفاً نمودار را از گزینهٔ نمای تمام‌صفحه باز کنید.',{exact:true}).waitFor()
+ await page.getByRole('button',{name:'بررسی پاسخ‌ها',exact:true}).click();await page.getByText('لطفاً نمودار را از گزینهٔ نمای تمام‌صفحه باز کنید.',{exact:true}).waitFor()
  await page.getByLabel('پاسخ شما').fill('ممنون، بررسی می‌کنم. <script>window.bad=true</script>');await page.getByRole('button',{name:'ارسال پاسخ',exact:true}).click();await page.getByText('ممنون، بررسی می‌کنم. <script>window.bad=true</script>',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>Object.hasOwn(window,'bad')),false)
  conversation=(await request(customer,'/tickets/'+id)).body
  const payload={message:'پیام آزمایش تکرار پاسخ',version:conversation.ticket.version,requestId:randomUUID()}
@@ -64,6 +64,18 @@ try{
  for(let n=0;n<26;n++)await pool.query('INSERT INTO support_tickets(id,user_id,subject,message) VALUES($1,$2,$3,$4)',[randomUUID(),user.id,'QA pagination '+n,'پیام دادهٔ تست صفحه‌بندی'])
  const paged=await request(customer,'/tickets?page=2');assert.equal(paged.body.tickets.length,3);assert.equal(paged.body.total,28)
  assert.equal((await request(other,'/tickets')).body.summary.total,0)
+ const searchPath='/tickets?q='+encodeURIComponent('مشکل نمایش')+'&category=technical&status=in_progress'
+ assert.equal((await request(customer,searchPath)).body.total,1)
+ assert.equal((await request(other,searchPath)).body.total,0)
+ assert.equal((await request(customer,'/tickets?q=%25')).body.total,0)
+ assert.equal((await request(customer,'/tickets?category=invalid')).status,400)
+ await page.getByLabel('وضعیت',{exact:true}).selectOption('all')
+ await page.getByLabel('جستجو در موضوع تیکت‌ها').fill('مشکل نمایش')
+ await page.getByLabel('فیلتر موضوعی').selectOption('technical')
+ await page.getByRole('link',{name:/مشکل نمایش نمودار طلا/}).waitFor()
+ await page.getByLabel('فیلتر موضوعی').selectOption('account')
+ await page.getByRole('heading',{name:'تیکتی با این فیلترها پیدا نشد'}).waitFor()
+
  for(const width of [360,390,768,1440]){
   await page.setViewportSize({width,height:900});await desk.setViewportSize({width,height:900})
   for(const path of ['/panel','/panel/tools','/panel/support','/panel/support/new','/panel/support/'+id,'/panel/account']){await page.goto(base+path);await page.locator('main').waitFor();await overflow();if(width===390)await shot('mobile-'+path.split('/').pop())}

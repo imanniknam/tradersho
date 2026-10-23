@@ -19,3 +19,23 @@
 [data-theme=dark] .catalog-card .tool-card-link{color:#eef1ff}
 .home-service-icon,.entry-icon{background:linear-gradient(135deg,var(--tint),color-mix(in srgb,var(--tint) 65%,var(--canvas)))}
 @media(prefers-reduced-motion:reduce){.home-service,.home-recent,.home-school,.catalog-card,.profile-surface,.security-surface,.support-compose,.conversation{animation:none!important}}
+
+:root{--danger-bg:#152237;--danger-line:#925765;--danger:#ffc6cc}
+:root[data-theme=light]{--danger-bg:#fffafb;--danger-line:#c37882;--danger:#982e40}
+.form-error,.support-error{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-line);box-shadow:none}
+.forgot-link{display:block;width:fit-content;margin:12px 0 0;color:var(--accent);font-size:14px;text-underline-offset:4px}
+.forgot-link:hover{text-decoration:underline}
+.recovery-page{min-height:100dvh;background:var(--canvas);padding:24px clamp(16px,4vw,64px);direction:rtl}
+.recovery-page>header{max-width:960px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.recovery-card{width:100%;max-width:480px;margin:clamp(24px,7vh,80px) auto;padding:clamp(20px,4vw,36px);border-radius:20px;border:1px solid var(--line)}
+.recovery-card h1{font-size:26px;line-height:1.6;margin:0 0 12px}
+.recovery-card p{color:var(--secondary);line-height:1.9;margin:0 0 24px}
+.recovery-card form{display:grid;gap:20px}
+.recovery-card label{display:grid;gap:8px;color:var(--ink)}
+.recovery-card input{width:100%;min-width:0;min-height:48px;border:1px solid var(--line);border-radius:10px;background:var(--canvas);color:var(--ink);padding:10px 14px;font-size:16px;font-weight:400}
+.recovery-card .button{min-height:48px;justify-content:center}
+.ticket-filter{display:grid;grid-template-columns:minmax(180px,1fr) minmax(140px,.65fr) minmax(140px,.65fr);gap:16px;align-items:end}
+.ticket-filter h2{grid-column:1/-1;margin:0}
+.ticket-filter label{display:grid;justify-content:stretch;align-items:stretch;width:100%;gap:8px;min-width:0;color:var(--secondary);font-size:14px}
+.ticket-filter input,.ticket-filter select{width:100%;min-width:0;min-height:46px;background:var(--canvas);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;font-weight:400}
+@media(max-width:600px){.recovery-page{padding:16px}.recovery-card{margin:24px auto;padding:20px}.recovery-card h1{font-size:22px}.ticket-filter{grid-template-columns:1fr 1fr;gap:12px}.ticket-filter .ticket-search{grid-column:1/-1}.forgot-link{font-size:14px}}

@@ -9,7 +9,7 @@ html,body,#root{width:100%;min-height:100%;background:var(--canvas)}
 .logout{padding:12px 14px;min-height:48px;border-radius:10px;font-size:14px;line-height:1.7;align-items:center}
 .logout:hover,.logout:focus-visible{background:var(--tint);border-radius:10px}
 /* A separate daylight image and neutral text for light surfaces. */
-[data-theme=light] .home-tools-entry{background-color:#f8f9ff;background-image:url('/assets/market-tradingview-light-v8.png');border-color:var(--line)}
+[data-theme=light] .home-tools-entry{background-color:#f8f9ff;background-image:url('/assets/market-user-light-v9.png');border-color:var(--line)}
 [data-theme=light] .home-tools-entry:before{background:linear-gradient(270deg,#f8f9ff 0%,#f8f9fffa 35%,#f8f9ffb3 57%,#f8f9ff05 100%)}
 [data-theme=light] .home-tools-copy h2{color:var(--ink)}
 [data-theme=light] .home-tools-copy .eyebrow,[data-theme=light] .home-tools-copy p{color:var(--secondary)}
@@ -45,4 +45,4 @@ html,body,#root{width:100%;min-height:100%;background:var(--canvas)}
 }
 @media(prefers-reduced-motion:reduce){.auth-visual:before,.auth-visual:after{animation:none!important;will-change:auto}.auth-motion-toggle{display:none}}
 
-[data-theme=dark] .home-tools-entry{background-image:url('/assets/market-tradingview-dark-v8.png')}
+[data-theme=dark] .home-tools-entry{background-image:url('/assets/market-user-dark-v9.png')}

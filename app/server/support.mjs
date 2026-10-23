@@ -36,13 +36,15 @@ export async function supportRoute({path,method,user,req,res,body,json,fail,rate
   if(list&&method==='GET'){
     const url=new URL(req.url,'http://localhost'),status=url.searchParams.get('status')||'all'
     if(status!=='all'&&!statuses.includes(status)){fail(res,400,'وضعیت نامعتبر است.');return true}
+    const category=url.searchParams.get('category')||'all',query=(url.searchParams.get('q')||'').trim()
+    if(!['all','general','technical','account'].includes(category)||query.length>100){fail(res,400,'فیلتر نامعتبر است.');return true}
     const page=Math.max(1,Math.min(200,Number(url.searchParams.get('page'))||1))
     if(!Number.isInteger(page)){fail(res,400,'صفحه نامعتبر است.');return true}
     const owner=agentPath?null:user.id
-    const where=`($1::text IS NULL OR t.user_id=$1) AND ($2::text='all' OR t.status=$2)`
-    const {rows}=await pool.query(`SELECT ${ticketColumns},(SELECT count(*)::int FROM support_messages m WHERE m.ticket_id=t.id) AS "messageCount" FROM support_tickets t JOIN users u ON u.id=t.user_id WHERE ${where} ORDER BY t.updated_at DESC,t.id LIMIT 25 OFFSET $3`,[owner,status,(page-1)*25])
+    const where=`($1::text IS NULL OR t.user_id=$1) AND ($2::text='all' OR t.status=$2) AND ($3::text='all' OR t.category=$3) AND ($4::text='' OR position(lower($4) in lower(t.subject))>0)`
+    const {rows}=await pool.query(`SELECT ${ticketColumns},(SELECT count(*)::int FROM support_messages m WHERE m.ticket_id=t.id) AS "messageCount" FROM support_tickets t JOIN users u ON u.id=t.user_id WHERE ${where} ORDER BY t.updated_at DESC,t.id LIMIT 25 OFFSET $5`,[owner,status,category,query,(page-1)*25])
     const count=await pool.query(`SELECT count(*)::int AS total,count(*) FILTER(WHERE t.status!='closed')::int AS active,count(*) FILTER(WHERE t.status='answered')::int AS answered FROM support_tickets t WHERE ($1::text IS NULL OR t.user_id=$1)`,[owner])
-    const filtered=await pool.query(`SELECT count(*)::int AS total FROM support_tickets t WHERE ${where}`,[owner,status])
+    const filtered=await pool.query(`SELECT count(*)::int AS total FROM support_tickets t WHERE ${where}`,[owner,status,category,query])
     json(res,200,{tickets:rows,summary:count.rows[0],total:filtered.rows[0].total,page});return true
   }
   if(path==='/api/tickets'&&method==='POST'){

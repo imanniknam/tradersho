@@ -1,3 +1,4 @@
+import {recoveryRoute} from './recovery.mjs'
 import { supportRoute } from './support.mjs'
 import http from 'node:http'
 import { randomBytes, randomUUID } from 'node:crypto'
@@ -114,6 +115,7 @@ const server = http.createServer(async (req, res) => {
       await pool.query('SELECT 1')
       return json(res, 200, { ok: true, database: 'ready' })
     }
+    if(await recoveryRoute({path,method,req,res,body,json,fail,rateLimit}))return
     if (path === '/api/auth/signup' && method === 'POST') {
       const input = await body(req)
       const name = typeof input.name === 'string' && input.name.trim().length >= 2 ? input.name.trim().slice(0, 80) : 'کاربر تریدر شو'

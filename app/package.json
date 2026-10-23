@@ -20,7 +20,8 @@
     "test:unit": "node --test src/analysis/indicators.test.ts server/simulation.test.mjs server/candle.test.mjs src/workspace/indicators.test.ts",
     "test:e2e:candles": "node scripts/e2e-candles.mjs",
     "test:ui:mobile": "MOBILE_AUDIT=1 node scripts/audit-ui.mjs",
-    "test:ui:wide": "WIDE_AUDIT=1 node scripts/audit-ui.mjs"
+    "test:ui:wide": "WIDE_AUDIT=1 node scripts/audit-ui.mjs",
+    "test:e2e:recovery": "node scripts/e2e-recovery.mjs"
   },
   "dependencies": {
     "@fontsource/vazirmatn": "^5.2.8",

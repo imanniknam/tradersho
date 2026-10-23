@@ -70,3 +70,11 @@ DATABASE_URL باید تنظیم شده باشد. هیچ حساب پیش‌فر�
 `npm run test:ui:mobile` همان ممیزی را با حالت mobile/لمسی در Chromium، ۹ اندازهٔ عمودی/افقی و هر دو تم گسترش می‌دهد. اندازهٔ متن و ورودی‌ها، اهداف لمس ۴۴ پیکسلی، چگالی بنر، دکمه‌های انتهای فرم و تمام‌صفحهٔ چارت نیز بررسی می‌شوند. گزارش و تصاویر این اجرا جدا در `qa/mobile/` ذخیره می‌شوند. تنظیمات QA همان تست اصلی است؛ دستگاه واقعی را شبیه‌سازی کامل نمی‌کند. قواعد جمع‌وجور موبایل در `src/mobile.css` و فقط زیر عرض ۶۰۰ پیکسل فعال‌اند.
 
 `npm run test:ui:wide` همهٔ صفحات را در عرض‌های ۱۲۸۰ تا ۵۱۲۰ با هر دو تم بررسی می‌کند؛ از جمله پوشش viewport، سقف عرض محتوا، تقارن دکمهٔ خروج و توقف/کاهش حرکت پس‌زمینه ورود. نتایج در `qa/wide/` هستند. قواعد تم تصویر و نمایشگر بزرگ در `src/refinements.css` نگهداری می‌شوند.
+
+### Password recovery email adapter
+
+Recovery is disabled (HTTP 503 with a clear user-facing message) until `APP_PUBLIC_URL`, `RECOVERY_EMAIL_URL` and `RECOVERY_EMAIL_SECRET` are configured. No reset tokens are returned to the browser or logged. Configure an HTTPS mail adapter endpoint that accepts `POST` JSON `{to, subject, text}` and `Authorization: Bearer <RECOVERY_EMAIL_SECRET>`, sends the text email through your chosen provider, and returns a 2xx status only after accepting delivery. Store the secret only in server environment variables. Use the public HTTPS panel origin for `APP_PUBLIC_URL` (localhost allowed for QA).
+
+The email contains `/reset-password#<token>`; tokens expire after 15 minutes, are stored only as hashes, replace earlier recovery links, and cannot be reused. Reset validates the strong password and confirmation, rejects links issued before a password change, and revokes all sessions. Responses never disclose whether an account exists. Provider failures invalidate the new token and produce a generic operational log without personal data; monitor delivery at the adapter. Requests are throttled per account and IP. There is deliberately no demo reset bypass.
+
+Run `DATABASE_URL=<database ending _qa> npm run test:e2e:recovery` with the QA server on port 5183 and email delivery disabled. The test uses a local mock adapter; it sends no real emails.

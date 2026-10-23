@@ -60,7 +60,7 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
         {mode === 'signup' && <><div className="password-rules" id="password-requirements" aria-label="شرایط رمز عبور">{rules.map(rule => <span key={rule.label} className={rule.test(password) ? 'met' : ''}><span aria-hidden="true">{rule.test(password) ? '✓' : '○'}</span>{rule.label}</span>)}</div><label><span>تکرار رمز عبور</span><div className="input-icon"><KeyRound size={19}/><input disabled={busy} required maxLength={128} type={showPass ? 'text' : 'password'} autoComplete="new-password" dir="ltr" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} placeholder="رمز عبور را دوباره وارد کنید" /></div></label>{confirmPassword && <span className={password === confirmPassword ? 'password-match' : 'password-mismatch'}>{password === confirmPassword ? 'رمزها یکسان هستند' : 'رمزها یکسان نیستند'}</span>}</>}
         {error && <div ref={errorRef} tabIndex={-1} className="form-error" role="alert"><Info size={17}/>{error}</div>}
         <button type="submit" className="button primary auth-submit" disabled={busy}>{busy ? 'لطفاً صبر کنید…' : mode === 'login' ? 'ورود به پنل' : 'ایجاد حساب'}<ArrowLeft size={18}/></button>
-      </form></div><div className="auth-note"><ShieldCheck size={18}/><span>برای امنیت حساب، از رمز عبور منحصربه‌فرد استفاده کنید.</span></div>
+      </form>{mode==='login'&&<Link className="forgot-link" to="/forgot-password">رمز عبور را فراموش کرده‌اید؟</Link>}</div><div className="auth-note"><ShieldCheck size={18}/><span>برای امنیت حساب، از رمز عبور منحصربه‌فرد استفاده کنید.</span></div>
     </div><footer className="auth-side-bottom"><Link to="/privacy">حریم خصوصی</Link><span>© ۲۰۲۶ تریدر شو</span></footer></section>
   </main>
 }

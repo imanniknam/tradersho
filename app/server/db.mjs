@@ -1,3 +1,4 @@
+import {migrateRecovery} from './recovery.mjs'
 import { migrateSupport } from './support.mjs'
 import pg from 'pg'
 
@@ -148,6 +149,7 @@ export async function migrate() {
 
     `)
     await migrateSupport(client)
+    await migrateRecovery(client)
     await client.query('COMMIT')
   } catch (error) {
     await client.query('ROLLBACK')
