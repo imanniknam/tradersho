@@ -1,0 +1,22 @@
+{$PANEL_DOMAIN:my.tradersho.com} {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+    reverse_proxy app:3001 {
+        header_up X-Forwarded-Host {host}
+        header_up X-Forwarded-For {remote_host}
+    }
+}
+# Never serve credential forms over unencrypted IP access.
+http://{$SERVER_IP:109.122.254.172} {
+    @health path /api/health
+    handle @health {
+        reverse_proxy app:3001
+    }
+    handle {
+        redir https://{$PANEL_DOMAIN:my.tradersho.com}{uri} 302
+    }
+}

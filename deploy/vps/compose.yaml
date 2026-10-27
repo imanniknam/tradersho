@@ -1,0 +1,78 @@
+name: tradersho
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tradersho
+      POSTGRES_DB: tradersho
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U tradersho -d tradersho']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    mem_limit: 1g
+    logging: *logging
+  app:
+    image: ${APP_IMAGE:?Set APP_IMAGE to immutable release tag}
+    pull_policy: never
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      TRUST_PROXY: '1'
+      CAPTCHA_MODE: internal
+      CAPTCHA_SECRET: ${CAPTCHA_SECRET:?Set CAPTCHA_SECRET}
+      HOST: 0.0.0.0
+      PORT: '3001'
+      DATABASE_URL: postgresql://tradersho:${POSTGRES_PASSWORD}@db:5432/tradersho
+      APP_PUBLIC_URL: https://${PANEL_DOMAIN:-my.tradersho.com}
+      RECOVERY_EMAIL_URL: ${RECOVERY_EMAIL_URL:-}
+      RECOVERY_EMAIL_SECRET: ${RECOVERY_EMAIL_SECRET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ${DEPLOY_ROOT:-/opt/tradersho}/brand-fonts:/app/dist/fonts:ro
+    ports:
+      - 127.0.0.1:8080:3001
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 768m
+    pids_limit: 128
+    stop_grace_period: 30s
+    logging: *logging
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      PANEL_DOMAIN: ${PANEL_DOMAIN:-my.tradersho.com}
+      SERVER_IP: ${SERVER_IP:-109.122.254.172}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    mem_limit: 256m
+    logging: *logging
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

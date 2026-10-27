@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import CaptchaField from './CaptchaField'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Activity, ArrowLeft, BookOpen, Eye, EyeOff, Info, KeyRound, Mail, Pause, Play, ShieldCheck } from 'lucide-react'
@@ -26,6 +27,8 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
   const [motionPaused, setMotionPaused] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [captcha,setCaptcha]=useState({captchaId:'',captchaAnswer:''}),[captchaReady,setCaptchaReady]=useState(false),[captchaRevision,setCaptchaRevision]=useState(0)
+  const updateCaptcha=useCallback((v:{captchaId:string;captchaAnswer:string})=>setCaptcha(v),[])
   const errorRef=useRef<HTMLDivElement>(null)
   useEffect(()=>{if(error)errorRef.current?.focus()},[error])
   const next = params.get('next')
@@ -38,10 +41,10 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
     if (mode === 'signup' && password !== confirmPassword) return setError('تکرار رمز عبور با رمز اصلی یکسان نیست.')
     setBusy(true)
     try {
-      const data = await api<{ user: User }>(mode === 'login' ? '/auth/login' : '/auth/signup', 'POST', mode === 'login' ? { email, password } : { email, password, confirmPassword })
+      const data = await api<{ user: User }>(mode === 'login' ? '/auth/login' : '/auth/signup', 'POST', mode === 'login' ? { email, password,...captcha } : { email, password, confirmPassword })
       setUser(data.user)
       navigate(destination, { replace: true })
-    } catch (cause) { setError((cause as Error).message) }
+    } catch (cause) { setError((cause as Error).message);if(mode==='login')setCaptchaRevision(v=>v+1) }
     finally { setBusy(false) }
   }
   if (loading) return spinner
@@ -58,8 +61,9 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
         <label><span>ایمیل</span><div className="input-icon"><Mail size={19}/><input disabled={busy} required maxLength={160} inputMode="email" autoCapitalize="none" spellCheck={false} type="email" autoComplete="email" dir="ltr" value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com" /></div></label>
         <label><span>رمز عبور</span><div className="input-icon"><KeyRound size={19}/><input disabled={busy} required maxLength={128} aria-describedby={mode==='signup'?'password-requirements':undefined} minLength={mode === 'signup' ? 8 : undefined} type={showPass ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} dir="ltr" value={password} onChange={event => setPassword(event.target.value)} placeholder={mode === 'signup' ? 'رمز عبور قوی' : 'رمز عبور'} /><button type="button" className="icon-button reveal-pass" onClick={() => setShowPass(!showPass)} aria-pressed={showPass} aria-label={showPass ? 'پنهان کردن رمز' : 'نمایش رمز'}>{showPass ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div></label>
         {mode === 'signup' && <><div className="password-rules" id="password-requirements" aria-label="شرایط رمز عبور">{rules.map(rule => <span key={rule.label} className={rule.test(password) ? 'met' : ''}><span aria-hidden="true">{rule.test(password) ? '✓' : '○'}</span>{rule.label}</span>)}</div><label><span>تکرار رمز عبور</span><div className="input-icon"><KeyRound size={19}/><input disabled={busy} required maxLength={128} type={showPass ? 'text' : 'password'} autoComplete="new-password" dir="ltr" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} placeholder="رمز عبور را دوباره وارد کنید" /></div></label>{confirmPassword && <span className={password === confirmPassword ? 'password-match' : 'password-mismatch'}>{password === confirmPassword ? 'رمزها یکسان هستند' : 'رمزها یکسان نیستند'}</span>}</>}
+        {mode==='login'&&<CaptchaField revision={captchaRevision} disabled={busy} onChange={updateCaptcha} onReady={setCaptchaReady}/>}
         {error && <div ref={errorRef} tabIndex={-1} className="form-error" role="alert"><Info size={17}/>{error}</div>}
-        <button type="submit" className="button primary auth-submit" disabled={busy}>{busy ? 'لطفاً صبر کنید…' : mode === 'login' ? 'ورود به پنل' : 'ایجاد حساب'}<ArrowLeft size={18}/></button>
+        <button type="submit" className="button primary auth-submit" disabled={busy||(mode==='login'&&!captchaReady)}>{busy ? 'لطفاً صبر کنید…' : mode === 'login' ? 'ورود به پنل' : 'ایجاد حساب'}<ArrowLeft size={18}/></button>
       </form>{mode==='login'&&<Link className="forgot-link" to="/forgot-password">رمز عبور را فراموش کرده‌اید؟</Link>}</div><div className="auth-note"><ShieldCheck size={18}/><span>برای امنیت حساب، از رمز عبور منحصربه‌فرد استفاده کنید.</span></div>
     </div><footer className="auth-side-bottom"><Link to="/privacy">حریم خصوصی</Link><span>© ۲۰۲۶ تریدر شو</span></footer></section>
   </main>

@@ -1,6 +1,8 @@
+import {captchaEnabled,issueCaptcha,verifyCaptcha} from './captcha.mjs'
 import {recoveryRoute} from './recovery.mjs'
 import { supportRoute } from './support.mjs'
 import http from 'node:http'
+import {isIP} from 'node:net'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { readFile, stat } from 'node:fs/promises'
 import { join, dirname, extname } from 'node:path'
@@ -10,6 +12,8 @@ import { replayRoute } from './replay.mjs'
 import { candleRoute } from './candle-replay.mjs'
 import { toolCatalog, subscriptionsEnabled, coursesPublished } from './catalog.mjs'
 import { hashPassword, verifyPassword, passwordError, tokenHash } from './auth.mjs'
+
+if(captchaEnabled()&&(!process.env.CAPTCHA_SECRET||process.env.CAPTCHA_SECRET.length<32))throw new Error('CAPTCHA_SECRET must contain at least 32 characters')
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const port = Number(process.env.PORT || 3001)
@@ -48,6 +52,8 @@ const setCookie = (req, token, age) => {
 }
 const clientAddress = req => {
   const direct = String(req.socket.remoteAddress || '')
+  // Enabled only behind the VPS proxy, which overwrites this header.
+  if(process.env.TRUST_PROXY==='1'){const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim();if(isIP(forwarded))return forwarded}
   const cloudflare = req.headers['cf-connecting-ip']
   return ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(direct) && typeof cloudflare === 'string' ? cloudflare : direct
 }
@@ -113,8 +119,9 @@ const server = http.createServer(async (req, res) => {
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && (req.headers['sec-fetch-site'] === 'cross-site' || !sameOrigin(req))) return fail(res, 403, 'مبدأ درخواست مجاز نیست.')
     if (path === '/api/health' && method === 'GET') {
       await pool.query('SELECT 1')
-      return json(res, 200, { ok: true, database: 'ready' })
+      return json(res, 200, { ok: true, database: 'ready', version: process.env.APP_VERSION || 'development' })
     }
+    if(path==='/api/auth/captcha'&&method==='GET'){if(!captchaEnabled())return json(res,200,{enabled:false});if(await rateLimit(req,res,'captcha-ip','',100))return;return json(res,200,await issueCaptcha())}
     if(await recoveryRoute({path,method,req,res,body,json,fail,rateLimit}))return
     if (path === '/api/auth/signup' && method === 'POST') {
       const input = await body(req)
@@ -142,6 +149,7 @@ const server = http.createServer(async (req, res) => {
       if (email.length > 160 || typeof input.password !== 'string' || input.password.length > 128) return fail(res, 401, 'ایمیل یا رمز عبور نادرست است.')
       if (await rateLimit(req, res, 'login-ip', '', 100)) return
       if (await rateLimit(req, res, 'login', email, 10)) return
+      if(!await verifyCaptcha(input.captchaId,input.captchaAnswer))return fail(res,400,'کد امنیتی نادرست یا منقضی است. کد جدید را وارد کنید.')
       const { rows } = await pool.query('SELECT * FROM users WHERE lower(email) = $1', [email])
       const user = rows[0]
       if (!user || !await verifyPassword(input.password, user.password_hash)) return fail(res, 401, 'ایمیل یا رمز عبور نادرست است.')

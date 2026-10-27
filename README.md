@@ -53,3 +53,7 @@ npm run test:unit
 جزئیات اجرا، متغیرهای محیطی و مرز امکانات در [app/README.md](app/README.md) آمده است. برندبوک، اسناد داخلی محصول و اطلاعات محیط‌های محلی در مخزن عمومی قرار نمی‌گیرند.
 
 حقوق برند و دارایی‌های Tradersho متعلق به صاحبان آن‌هاست. انتشار این مخزن به معنی اعطای مجوز استفاده از برند یا تغییر مجوز وابستگی‌ها نیست. انتساب Lightweight Charts و Apache 2.0 در [فایل مجوز](app/public/licenses/lightweight-charts.txt) حفظ شده است.
+
+## VPS and automated delivery
+
+The production target is `my.tradersho.com` on the VPS `109.122.254.172`. See [deployment and operations](deploy/vps/README.md) for Docker Compose, SSH/Actions secrets, DNS/TLS, backups and rollback. Pull requests run build/unit/API/browser checks; a successful main push additionally builds and deploys the immutable release. Private fonts and production environment values remain outside Git.

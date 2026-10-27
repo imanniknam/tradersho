@@ -6,3 +6,6 @@ qa
 server/data.json
 *.log
 .DS_Store
+*.tsbuildinfo
+public/fonts/*.woff
+public/fonts/*.woff2
