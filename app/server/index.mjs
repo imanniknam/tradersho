@@ -134,6 +134,7 @@ const server = http.createServer(async (req, res) => {
       const invalidPassword = passwordError(password, { email, name })
       if (invalidPassword) return fail(res, 400, invalidPassword)
       if (password !== input.confirmPassword) return fail(res, 400, 'تکرار رمز عبور با رمز اصلی یکسان نیست.')
+      if(!await verifyCaptcha(input.captchaId,input.captchaAnswer))return fail(res,400,'کد امنیتی نادرست یا منقضی است. کد جدید را وارد کنید.')
       const id = randomUUID()
       try {
         const { rows } = await pool.query('INSERT INTO users (id, name, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING *', [id, name, email, await hashPassword(password)])

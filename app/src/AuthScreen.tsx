@@ -36,15 +36,16 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
   useEffect(() => { if (!loading && user) navigate(destination, { replace: true }) }, [loading, user, destination, navigate])
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+    if(busy||!captchaReady)return
     setError('')
     if (mode === 'signup' && rules.some(rule => !rule.test(password))) return setError('رمز عبور باید همهٔ شرایط ذکرشده را داشته باشد.')
     if (mode === 'signup' && password !== confirmPassword) return setError('تکرار رمز عبور با رمز اصلی یکسان نیست.')
     setBusy(true)
     try {
-      const data = await api<{ user: User }>(mode === 'login' ? '/auth/login' : '/auth/signup', 'POST', mode === 'login' ? { email, password,...captcha } : { email, password, confirmPassword })
+      const data = await api<{ user: User }>(mode === 'login' ? '/auth/login' : '/auth/signup', 'POST', mode === 'login' ? { email, password,...captcha } : { email, password, confirmPassword,...captcha })
       setUser(data.user)
       navigate(destination, { replace: true })
-    } catch (cause) { setError((cause as Error).message);if(mode==='login')setCaptchaRevision(v=>v+1) }
+    } catch (cause) { setError((cause as Error).message);setCaptchaRevision(v=>v+1) }
     finally { setBusy(false) }
   }
   if (loading) return spinner
@@ -60,10 +61,10 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
       <div id="auth-fields" role="tabpanel" aria-labelledby={'auth-tab-'+mode}><form onSubmit={submit} className="auth-form" aria-busy={busy}>
         <label><span>ایمیل</span><div className="input-icon"><Mail size={19}/><input disabled={busy} required maxLength={160} inputMode="email" autoCapitalize="none" spellCheck={false} type="email" autoComplete="email" dir="ltr" value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com" /></div></label>
         <label><span>رمز عبور</span><div className="input-icon"><KeyRound size={19}/><input disabled={busy} required maxLength={128} aria-describedby={mode==='signup'?'password-requirements':undefined} minLength={mode === 'signup' ? 8 : undefined} type={showPass ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} dir="ltr" value={password} onChange={event => setPassword(event.target.value)} placeholder={mode === 'signup' ? 'رمز عبور قوی' : 'رمز عبور'} /><button type="button" className="icon-button reveal-pass" onClick={() => setShowPass(!showPass)} aria-pressed={showPass} aria-label={showPass ? 'پنهان کردن رمز' : 'نمایش رمز'}>{showPass ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div></label>
-        {mode === 'signup' && <><div className="password-rules" id="password-requirements" aria-label="شرایط رمز عبور">{rules.map(rule => <span key={rule.label} className={rule.test(password) ? 'met' : ''}><span aria-hidden="true">{rule.test(password) ? '✓' : '○'}</span>{rule.label}</span>)}</div><label><span>تکرار رمز عبور</span><div className="input-icon"><KeyRound size={19}/><input disabled={busy} required maxLength={128} type={showPass ? 'text' : 'password'} autoComplete="new-password" dir="ltr" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} placeholder="رمز عبور را دوباره وارد کنید" /></div></label>{confirmPassword && <span className={password === confirmPassword ? 'password-match' : 'password-mismatch'}>{password === confirmPassword ? 'رمزها یکسان هستند' : 'رمزها یکسان نیستند'}</span>}</>}
-        {mode==='login'&&<CaptchaField revision={captchaRevision} disabled={busy} onChange={updateCaptcha} onReady={setCaptchaReady}/>}
+        {mode === 'signup' && <><div className="password-rules" id="password-requirements" aria-label="شرایط رمز عبور">{rules.map(rule => <span key={rule.label} className={rule.test(password) ? 'met' : ''}><span aria-hidden="true">{rule.test(password) ? '✓' : '○'}</span>{rule.label}</span>)}</div><label><span className="confirm-label">تکرار رمز عبور{confirmPassword&&<small aria-live="polite" className={password===confirmPassword?'password-match':'password-mismatch'}>{password===confirmPassword?'رمزها یکسان هستند':'رمزها یکسان نیستند'}</small>}</span><div className="input-icon"><KeyRound size={19}/><input disabled={busy} required maxLength={128} type={showPass ? 'text' : 'password'} autoComplete="new-password" dir="ltr" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} placeholder="رمز عبور را دوباره وارد کنید" /></div></label></>}
+        {<CaptchaField key={mode} revision={captchaRevision} disabled={busy} onChange={updateCaptcha} onReady={setCaptchaReady}/>}
         {error && <div ref={errorRef} tabIndex={-1} className="form-error" role="alert"><Info size={17}/>{error}</div>}
-        <button type="submit" className="button primary auth-submit" disabled={busy||(mode==='login'&&!captchaReady)}>{busy ? 'لطفاً صبر کنید…' : mode === 'login' ? 'ورود به پنل' : 'ایجاد حساب'}<ArrowLeft size={18}/></button>
+        <button type="submit" className="button primary auth-submit" disabled={busy||!captchaReady}>{busy ? 'لطفاً صبر کنید…' : mode === 'login' ? 'ورود به پنل' : 'ایجاد حساب'}<ArrowLeft size={18}/></button>
       </form>{mode==='login'&&<Link className="forgot-link" to="/forgot-password">رمز عبور را فراموش کرده‌اید؟</Link>}</div><div className="auth-note"><ShieldCheck size={18}/><span>برای امنیت حساب، از رمز عبور منحصربه‌فرد استفاده کنید.</span></div>
     </div><footer className="auth-side-bottom"><Link to="/privacy">حریم خصوصی</Link><span>© ۲۰۲۶ تریدر شو</span></footer></section>
   </main>

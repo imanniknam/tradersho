@@ -16,7 +16,15 @@ try{
  const challenge=await request('/auth/captcha');assert.equal(challenge.body.enabled,true);assert.match(challenge.body.image,/^data:image\/png;base64,/);assert.equal(challenge.body.answer,undefined)
  assert.equal((await request('/auth/login','POST',{email,password})).status,400)
  assert.equal((await request('/auth/login','POST',{email,password,captchaId:challenge.body.id,captchaAnswer:'wrong'})).status,400)
- const account=await request('/auth/signup','POST',{email,password,confirmPassword:password});assert.equal(account.status,201);id=account.body.user.id
+ assert.equal((await request('/auth/signup','POST',{email,password,confirmPassword:password})).status,400)
+ const invalid=(await request('/auth/captcha')).body
+ assert.equal((await request('/auth/signup','POST',{email,password,confirmPassword:password,captchaId:invalid.id,captchaAnswer:'00000'})).status,400)
+ assert.equal((await pool.query('SELECT count(*)::int AS count FROM users WHERE email=$1',[email])).rows[0].count,0)
+ const signupCap=(await request('/auth/captcha')).body
+ const signupHash=createHmac('sha256',process.env.CAPTCHA_SECRET).update(signupCap.id+':12345').digest('hex')
+ await pool.query('UPDATE login_captcha SET answer_hash=$1 WHERE id=$2',[signupHash,signupCap.id])
+ const account=await request('/auth/signup','POST',{email,password,confirmPassword:password,captchaId:signupCap.id,captchaAnswer:'۱۲۳۴۵'});assert.equal(account.status,201);id=account.body.user.id
+ assert.equal((await request('/auth/signup','POST',{email:'reuse-'+email,password,confirmPassword:password,captchaId:signupCap.id,captchaAnswer:'12345'})).status,400)
  assert.equal((await request('/session')).body.user.id,id)
  assert.equal((await request('/admin/session')).status,403)
  const ticket=await request('/tickets','POST',{subject:'CI technical chart',message:'A dedicated deployment smoke test ticket.',category:'technical',priority:'normal',requestId:randomUUID()});assert.equal(ticket.status,201)
