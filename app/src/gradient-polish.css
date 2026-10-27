@@ -41,7 +41,7 @@
 @media(max-width:600px){.recovery-page{padding:16px}.recovery-card{margin:24px auto;padding:20px}.recovery-card h1{font-size:22px}.ticket-filter{grid-template-columns:1fr 1fr;gap:12px}.ticket-filter .ticket-search{grid-column:1/-1}.forgot-link{font-size:14px}}
 .captcha-field{display:grid;gap:8px;min-width:0}
 .captcha-heading{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--secondary)}
-.captcha-refresh{display:inline-flex;align-items:center;gap:5px;color:var(--accent);background:transparent;border:0;padding:8px;min-height:40px;cursor:pointer;font:inherit}
+.captcha-refresh{display:inline-flex;align-items:center;gap:5px;color:var(--accent);background:transparent;border:0;padding:8px;min-height:44px;cursor:pointer;font:inherit}
 .captcha-refresh:disabled{opacity:.6;cursor:wait}
 .captcha-row{display:grid;grid-template-columns:190px minmax(0,1fr);direction:ltr;align-items:center;gap:12px}
 .captcha-row img{display:block;width:190px;height:64px;border-radius:10px;border:1px solid var(--line)}
