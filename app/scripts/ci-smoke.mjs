@@ -36,4 +36,4 @@ try{
  assert.equal((await request('/auth/login','POST',{email,password:'ReleaseNew#2027',captchaId:cap.id,captchaAnswer:'12345'})).status,400)
 
  console.log('PASS: PostgreSQL health, signup/password policy, session, admin isolation, ticket filters, recovery/reuse/revocation, CSRF.')
-}finally{if(id)await pool.query('DELETE FROM users WHERE id=$1',[id]);await pool.end()}
+}finally{if(id){await pool.query('DELETE FROM support_tickets WHERE user_id=$1',[id]);await pool.query('DELETE FROM users WHERE id=$1',[id]);}await pool.end()}
