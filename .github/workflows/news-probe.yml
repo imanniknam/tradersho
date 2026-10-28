@@ -1,0 +1,26 @@
+name: News source connectivity probe
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Test public feeds without credentials
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.parse,concurrent.futures,json,xml.etree.ElementTree as ET
+          sources={'fed':'https://www.federalreserve.gov/feeds/press_monetary.xml','bls':'https://www.bls.gov/feed/bls_latest.rss','gdelt':'https://api.gdeltproject.org/api/v2/doc/doc?'+urllib.parse.urlencode({'query':'(forex OR "Federal Reserve" OR "gold prices") sourcelang:persian','mode':'ArtList','format':'json','maxrecords':10,'timespan':'48h'}),'translation':'https://api.mymemory.translated.net/get?'+urllib.parse.urlencode({'q':'Federal Reserve issues FOMC statement','langpair':'en|fa'})}
+          def get(pair):
+              name,url=pair
+              try:
+                  with urllib.request.urlopen(url,timeout=50) as r:data=r.read(2000000)
+                  if name in ['fed','bls']:
+                      doc=ET.fromstring(data);return {'source':name,'ok':True,'items':len(doc.findall('.//item')),'title':doc.findtext('.//item/title')}
+                  doc=json.loads(data)
+                  return {'source':name,'ok':True,'items':len(doc.get('articles',[])),'sample':doc.get('articles',[{}])[0].get('title') if doc.get('articles') else doc.get('responseData',{}).get('translatedText'),'status':doc.get('responseStatus')}
+              except Exception as e:return {'source':name,'ok':False,'error':str(e)}
+          with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
+              for row in ex.map(get,sources.items()):print(json.dumps(row,ensure_ascii=False))
+          PY
