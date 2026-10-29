@@ -70,3 +70,14 @@
   .mp-trace,.mp-glow{animation:none!important;stroke-dashoffset:0}
   .mp-dot,.mp-halo{display:none}.mp-scene,.mp-chip{transform:none}
 }
+
+/* Keep decorative candles and banner copy in separate layout cells. */
+.home-tools-entry,[data-theme=light] .home-tools-entry{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:32px;padding:32px;align-items:stretch}
+.home-tools-entry .home-tools-copy{grid-column:1;grid-row:1;align-self:center;width:100%;max-width:none;min-width:0}
+.home-tools-entry .market-pulse{position:relative;inset:auto;grid-column:2;grid-row:1;width:100%;height:auto;min-height:240px;align-self:stretch}
+@media(max-width:900px){
+ .home-tools-entry,[data-theme=light] .home-tools-entry{display:flex;flex-direction:column;gap:20px;padding:22px;min-height:0}
+ .home-tools-entry .market-pulse{order:0;flex:none;width:100%;height:160px;min-height:160px;inset:auto}
+ .home-tools-entry .home-tools-copy{order:1;width:100%}
+}
+@media(max-width:600px){.home-tools-entry,[data-theme=light] .home-tools-entry{padding:18px;gap:18px}.home-tools-entry .market-pulse{height:140px;min-height:140px}}

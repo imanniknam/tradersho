@@ -40,6 +40,12 @@ try{
   await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))),[],`${width} ${theme} ${path}`)
  }
  await mkdir('qa/tools',{recursive:true})
+ for(const width of [320,390,768,1024,1440,2560])for(const theme of ['light','dark']){
+  await page.setViewportSize({width,height:900});await page.goto(base+'/panel');await page.locator('.home-tools-copy').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(200)
+  const separated=await page.evaluate(()=>{const a=document.querySelector('.market-pulse').getBoundingClientRect(),b=document.querySelector('.home-tools-copy').getBoundingClientRect();return a.right+8<=b.left||a.bottom+8<=b.top})
+  assert.ok(separated,`Banner artwork must not overlap text: ${width} ${theme}`)
+  await page.locator('.home-tools-entry').screenshot({path:`qa/tools/banner-${width}-${theme}.png`})
+ }
  await page.context().route('https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',r=>r.fulfill({contentType:'application/javascript',body:`{const script=document.currentScript;const cfg=JSON.parse(script.textContent);window.__chartConfig=cfg;const frame=document.createElement('iframe');frame.title='نمودار تحلیل بازار TradingView';frame.style='width:100%;height:100%;border:0';frame.srcdoc='<html><body style="background:#f5f5fa;font:16px Arial">XAUUSD · 1h · QA widget</body></html>';script.parentElement.querySelector('.tradingview-widget-container__widget').append(frame)}`}))
  for(const width of [320,390,768,1440,2560])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:1000});await page.goto(base+'/panel/tools');await page.locator('.tv-host iframe').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(150)
@@ -51,5 +57,5 @@ try{
   await page.getByRole('navigation',{name:'ابزارهای تحلیل'}).getByRole('link',{name:'پنل ریسک'}).click();await page.getByRole('heading',{name:'پنل ریسک در حال آماده‌سازی است'}).waitFor();assert.equal(await page.locator('.tv-host').count(),0)
   await page.getByRole('link',{name:'بازگشت به نمای بازار',exact:true}).click();await page.locator('.tv-host iframe').waitFor()
  }
- assert.deepEqual(errors,[]);console.log('PASS: registration through browser, 42 desktop/mobile page/theme combinations, overflow and axe serious/critical checks; 10 tool-workspace sizes/themes with fullscreen, navigation and coming-soon checks. CI uses the published fallback font; private brand fonts are mounted on the VPS.')
+ assert.deepEqual(errors,[]);console.log('PASS: registration through browser, 42 desktop/mobile page/theme combinations, overflow and axe serious/critical checks; 12 banner separation checks; 10 tool-workspace sizes/themes with fullscreen, navigation and coming-soon checks. CI uses the published fallback font; private brand fonts are mounted on the VPS.')
 }finally{await pool.query('DELETE FROM users WHERE email=$1',[email]);await pool.end();await browser.close()}
