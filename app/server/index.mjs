@@ -1,3 +1,4 @@
+import {newsRoute,newsIntegration} from './news.mjs'
 import {captchaEnabled,issueCaptcha,verifyCaptcha} from './captcha.mjs'
 import {recoveryRoute} from './recovery.mjs'
 import { supportRoute } from './support.mjs'
@@ -28,6 +29,7 @@ const json = (res, status, data, headers = {}) => {
 }
 const fail = (res, status, message) => json(res, status, { error: message })
 const body = async (req, limit = 16384) => {
+  req.setEncoding('utf8')
   let input = ''
   for await (const chunk of req) {
     input += chunk
@@ -122,6 +124,7 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, database: 'ready', version: process.env.APP_VERSION || 'development' })
     }
     if(path==='/api/auth/captcha'&&method==='GET'){if(!captchaEnabled())return json(res,200,{enabled:false});if(await rateLimit(req,res,'captcha-ip','',100))return;return json(res,200,await issueCaptcha())}
+    if(await newsIntegration({path,method,req,res,body,json,fail,rateLimit}))return
     if(await recoveryRoute({path,method,req,res,body,json,fail,rateLimit}))return
     if (path === '/api/auth/signup' && method === 'POST') {
       const input = await body(req)
@@ -165,6 +168,7 @@ const server = http.createServer(async (req, res) => {
     }
     const user = await sessionUser(req)
     if (!user) return fail(res, 401, 'برای ادامه وارد حساب خود شوید.')
+    if(await newsRoute({path,method,req,res,json,fail}))return
     if (path === '/api/session' && method === 'GET') return json(res, 200, { user: await publicUser(user) })
     if (path === '/api/admin/session' && method === 'GET') {
       const agent=await pool.query('SELECT 1 FROM support_agents WHERE user_id=$1',[user.id])

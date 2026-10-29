@@ -9,3 +9,6 @@ server/data.json
 *.tsbuildinfo
 public/fonts/*.woff
 public/fonts/*.woff2
+
+__pycache__
+*.pyc

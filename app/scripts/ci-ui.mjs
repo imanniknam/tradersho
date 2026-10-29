@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import {randomUUID,createHmac} from 'node:crypto'
-import {readFile} from 'node:fs/promises'
+import {readFile,mkdir} from 'node:fs/promises'
 import {chromium} from 'playwright-core'
 if(!process.env.DATABASE_URL?.endsWith('_qa'))throw Error('A dedicated _qa database is required')
 const {pool}=await import('../server/db.mjs'),base='http://127.0.0.1:5183',email=`ci-ui-${randomUUID()}@example.test`
@@ -34,10 +34,22 @@ try{
  const answerHash=createHmac('sha256',process.env.CAPTCHA_SECRET).update(cap.id+':12345').digest('hex')
  await pool.query('UPDATE login_captcha SET answer_hash=$1 WHERE id=$2',[answerHash,cap.id])
  await page.getByLabel('کد امنیتی',{exact:true}).fill('12345');await page.getByRole('button',{name:'ورود به پنل',exact:true}).click();await page.waitForURL(base+'/panel')
- for(const width of [320,390,1440])for(const theme of ['light','dark'])for(const path of ['/panel','/panel/tools','/panel/support','/panel/support/new','/panel/account','/forgot-password']){
+ for(const width of [320,390,1440])for(const theme of ['light','dark'])for(const path of ['/panel','/panel/tools','/panel/market','/panel/support','/panel/support/new','/panel/account','/forgot-password']){
   await page.setViewportSize({width,height:900});await page.goto(base+path);await page.locator('h1').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(350)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${width} ${theme} ${path}`)
   await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))),[],`${width} ${theme} ${path}`)
  }
- assert.deepEqual(errors,[]);console.log('PASS: registration through browser, 36 desktop/mobile page/theme combinations, overflow and axe serious/critical checks. CI uses the published fallback font; private brand fonts are mounted on the VPS.')
+ await mkdir('qa/tools',{recursive:true})
+ await page.context().route('https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',r=>r.fulfill({contentType:'application/javascript',body:`{const script=document.currentScript;const cfg=JSON.parse(script.textContent);window.__chartConfig=cfg;const frame=document.createElement('iframe');frame.title='نمودار تحلیل بازار TradingView';frame.style='width:100%;height:100%;border:0';frame.srcdoc='<html><body style="background:#f5f5fa;font:16px Arial">XAUUSD · 1h · QA widget</body></html>';script.parentElement.querySelector('.tradingview-widget-container__widget').append(frame)}`}))
+ for(const width of [320,390,768,1440,2560])for(const theme of ['light','dark']){
+  await page.setViewportSize({width,height:1000});await page.goto(base+'/panel/tools');await page.locator('.tv-host iframe').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(150)
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
+  assert.equal(await page.evaluate(()=>window.__chartConfig.symbol),'OANDA:XAUUSD');assert.equal(await page.evaluate(()=>window.__chartConfig.interval),'60')
+  await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))),[])
+  await page.screenshot({path:`qa/tools/workspace-${width}-${theme}.png`,fullPage:true})
+  await page.getByRole('button',{name:'نمای تمام‌صفحه',exact:true}).click();await page.getByRole('dialog',{name:'محیط تحلیل بازار'}).waitFor();await page.keyboard.press('Escape');assert.equal(await page.locator('.tv-expanded').count(),0)
+  await page.getByRole('navigation',{name:'ابزارهای تحلیل'}).getByRole('link',{name:'پنل ریسک'}).click();await page.getByRole('heading',{name:'پنل ریسک در حال آماده‌سازی است'}).waitFor();assert.equal(await page.locator('.tv-host').count(),0)
+  await page.getByRole('link',{name:'بازگشت به نمای بازار',exact:true}).click();await page.locator('.tv-host iframe').waitFor()
+ }
+ assert.deepEqual(errors,[]);console.log('PASS: registration through browser, 42 desktop/mobile page/theme combinations, overflow and axe serious/critical checks; 10 tool-workspace sizes/themes with fullscreen, navigation and coming-soon checks. CI uses the published fallback font; private brand fonts are mounted on the VPS.')
 }finally{await pool.query('DELETE FROM users WHERE email=$1',[email]);await pool.end();await browser.close()}

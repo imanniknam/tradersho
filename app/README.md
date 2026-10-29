@@ -46,7 +46,7 @@ DATABASE_URL=postgresql://localhost:5432/tradersho_qa npm run test:e2e:support
 
 ```
 
-تست نسخهٔ اولیه فقط پورت 5183 را می‌پذیرد. اسکریپت‌های e2e:legacy و e2e:candles متعلق به امکانات غیرفعال قبلی‌اند و برای نسخهٔ اولیه اجرا نمی‌شوند. آزمون‌ها حساب‌های آزمایشی ایجاد می‌کنند. `qa/` و داده‌های محلی در Git نیستند. CI روی GitHub فقط build و تست‌های واحد را اجرا می‌کند و به دیتابیس واقعی دسترسی ندارد.
+تست نسخهٔ اولیه فقط پورت 5183 را می‌پذیرد. اسکریپت‌های e2e:legacy و e2e:candles متعلق به امکانات غیرفعال قبلی‌اند و برای نسخهٔ اولیه اجرا نمی‌شوند. آزمون‌ها حساب‌های آزمایشی ایجاد می‌کنند. `qa/` و داده‌های محلی در Git نیستند. CI از دیتابیس جداگانهٔ QA برای تست API و مرورگر استفاده می‌کند و به دیتابیس واقعی دسترسی ندارد.
 
 ## میز پشتیبانی و نقش کارشناس
 
@@ -78,3 +78,18 @@ Recovery is disabled (HTTP 503 with a clear user-facing message) until `APP_PUBL
 The email contains `/reset-password#<token>`; tokens expire after 15 minutes, are stored only as hashes, replace earlier recovery links, and cannot be reused. Reset validates the strong password and confirmation, rejects links issued before a password change, and revokes all sessions. Responses never disclose whether an account exists. Provider failures invalidate the new token and produce a generic operational log without personal data; monitor delivery at the adapter. Requests are throttled per account and IP. There is deliberately no demo reset bypass.
 
 Run `DATABASE_URL=<database ending _qa> npm run test:e2e:recovery` with the QA server on port 5183 and email delivery disabled. The test uses a local mock adapter; it sends no real emails.
+
+
+## اخبار و تقویم اقتصادی
+
+مسیر `/panel/market` شامل تیترهای فارسی با جستجو، فیلتر موضوع/منبع/بازه، صفحه‌بندی و لینک اصل خبر است. تقویم در `/panel/market?tab=calendar` ویجت فارسی رسمی CashbackForex است؛ دادهٔ آن استخراج یا بازنشر نمی‌شود. iframe در هر دو تم بارگذاری می‌شود و فقط پیام resize از origin و پنجرهٔ همان ارائه‌دهنده پذیرفته می‌شود. بارگذاری و دسترسی تابع سرویس خارجی است؛ شکست یا تأخیر با retry و لینک منبع نمایش داده می‌شود.
+
+خبرها از GDELT و RSS رسمی Federal Reserve/BLS دریافت و در PostgreSQL نگهداری می‌شوند. نمایش فقط تیتر و لینک با ذکر منبع است؛ تصویر و متن کامل ناشر کپی نمی‌شود. خبر فارسی اصلی، ترجمهٔ ماشینی و عنوان فارسیِ اطلاعیهٔ رسمی برچسب مستقل دارند. خبر فاقد عنوان فارسی پنهان می‌ماند. زمان انتشار از زمان شناسایی/دریافت جداست؛ این سرویس خبر لحظه‌ای یا تضمین دسترسی ندارد. شکست یک منبع آخرین دادهٔ سالم را حذف نمی‌کند. بازهٔ پیش‌فرض ۳۰ روز است و وضعیت منابع در رابط دیده می‌شود.
+
+`collect-news.py` بدون وابستگی Python، تیترهای انگلیسی را با MyMemory رایگان و سقف ۴۸۰۰ کاراکتر در روز ترجمه می‌کند؛ ارقام ترجمه با اصل تطبیق داده می‌شوند. فقط تیتر عمومی به مترجم می‌رود؛ اطلاعات کاربران ارسال نمی‌شود. محدودیت یا اختلال منابع ممکن است بعضی خبرها را تا نوبت بعد بدون ترجمه نگه دارد.
+
+Workflow `Refresh market news` ساعتی و پس از استقرار موفق اجرا می‌شود. `NEWS_INGEST_TOKEN` باید در محیط سرور و GitHub Secrets یکسان و حداقل ۳۲ کاراکتر تصادفی باشد. endpointهای `/api/integrations/news` به این کلید نیاز دارند؛ `/api/news` فقط برای کاربر واردشده است. برای اجرای دستی از workflow_dispatch استفاده کنید. دکمهٔ پنل فقط دادهٔ ذخیره‌شده را مجدد می‌خواند. تنظیم ساعات GitHub ممکن است با تأخیر اجرا شود. GitHub-hosted runner استاندارد برای مخزن عمومی رایگان است؛ تغییر خصوصی‌بودن/پلن را جدا بررسی کنید.
+
+تست‌ها: `python3 scripts/test_collect_news.py` و `npm run test:e2e:news` با DB منتهی به `_qa`، سرور 5183 و کلید QA. E2E از اخبار آزمایشی و iframe کنترل‌شده استفاده می‌کند؛ `node scripts/check-real-calendar.mjs` بررسی اختیاری سرویس واقعی است و به دسترسی اینترنت وابسته است.
+
+منابع: [GDELT](https://www.gdeltproject.org/)، [Fed RSS](https://www.federalreserve.gov/feeds/feeds.htm)، [BLS RSS](https://www.bls.gov/feed/)، [MyMemory](https://mymemory.translated.net/doc/usagelimits.php)، [Calendar widget](https://www.cashbackforex.com/fa/tools/economic-calendar-widget).
