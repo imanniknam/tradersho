@@ -95,7 +95,7 @@ export async function dispatchMail(pool,config,transport){
   }finally{try{if(locked)await client.query('SELECT pg_advisory_unlock(734901,32)')}finally{client.release()}}
 }
 export function startMailWorker(pool){
-  const config=mailConfig();if(!config)return ()=>{}
+  const config=mailConfig();if(!config)return async()=>{}
   const transport=createMailer(config);let stopped=false,running=false,timer
   const tick=async()=>{
     if(stopped||running)return

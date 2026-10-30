@@ -1,7 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {mailAddress,mailConfig,sealMail,openMail,retryMail,supportReplyMail,createMailer} from './mail.mjs'
+import {mailAddress,mailConfig,sealMail,openMail,retryMail,supportReplyMail,createMailer,startMailWorker} from './mail.mjs'
 const env={MAIL_TRANSPORT:'smtp',SMTP_HOST:'smtp.example.test',SMTP_USER:'sender@example.test',SMTP_PASSWORD:'test-only',SMTP_PORT:'587',MAIL_FROM:'sender@example.test',MAIL_REPLY_TO:'support@example.test',MAIL_ENCRYPTION_KEY:'ab'.repeat(32),APP_PUBLIC_URL:'https://panel.example.test'}
+test('disabled mail worker supports asynchronous shutdown without opening a connection',async()=>{
+  const previous=process.env.MAIL_TRANSPORT
+  delete process.env.MAIL_TRANSPORT
+  try{assert.ok(startMailWorker({})() instanceof Promise);await startMailWorker({})()}
+  finally{if(previous!==undefined)process.env.MAIL_TRANSPORT=previous}
+})
 test('SMTP configuration requires complete secrets, safe addresses and secure origin',()=>{
   assert.equal(mailConfig({}),null)
   for(const address of ['a@example.test,b@example.test','a@example.test\r\nBcc: x@example.test','Name <a@example.test>'])assert.equal(mailAddress(address),false)
