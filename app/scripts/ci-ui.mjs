@@ -59,7 +59,7 @@ try{
  }
  assert.equal((await page.context().request.get(base+'/api/news')).status(),410)
  assert.equal((await page.context().request.get(base+'/api/calendar')).status(),200)
- await page.context().route('**/api/calendar',r=>r.fulfill({json:{configured:true,updatedAt:new Date().toISOString(),events:Array.from({length:30},(_,n)=>({id:'calendar-qa-'+n,title:'رویداد آزمایشی '+n,at:new Date(Date.now()+n*60000).toISOString(),country:'US',currency:'USD',impact:'high',actual:{value:'5.05',currency:'EUR',unit:'billion'},forecast:{value:'-12',unit:'thousand'},previous:null,sourceUrl:'https://www.bls.gov/schedule/'}))}}))
+ await page.context().route('**/api/calendar**',r=>r.fulfill({json:{configured:true,updatedAt:new Date().toISOString(),events:Array.from({length:30},(_,n)=>({id:'calendar-qa-'+n,title:'رویداد آزمایشی '+n,at:new Date(Date.now()+n*60000).toISOString(),country:'US',currency:'USD',impact:'high',actual:{value:'5.05',currency:'EUR',unit:'billion'},forecast:{value:'-12',unit:'thousand'},previous:null,sourceUrl:'https://www.bls.gov/schedule/'}))}}))
  for(const width of [320,390,768,1440,2560])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:900});await page.goto(base+'/panel/tools/calendar');await page.getByRole('link',{name:'رویداد آزمایشی 0',exact:true}).waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
