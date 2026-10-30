@@ -1,3 +1,4 @@
+import {mailConfig,startMailWorker} from './mail.mjs'
 import {calendarIntegration,calendarRoute} from './calendar.mjs'
 import {captchaEnabled,issueCaptcha,verifyCaptcha} from './captcha.mjs'
 import {recoveryRoute} from './recovery.mjs'
@@ -264,8 +265,10 @@ const server = http.createServer(async (req, res) => {
   }
 })
 
+mailConfig() // Fail startup on incomplete enabled SMTP configuration.
 await migrate()
+const stopMailWorker=startMailWorker(pool)
 server.listen(port, host, () => console.log('Tradersho API listening on http://' + host + ':' + port))
-const shutdown = () => server.close(() => pool.end())
+const shutdown = () => { void stopMailWorker().then(()=>server.close(() => pool.end())) }
 process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)

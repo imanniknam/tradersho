@@ -23,7 +23,7 @@ NODE_ENV=production npm start
 
 ## وضعیت امکانات
 
-- ثبت‌نام با تکرار رمز، حداقل ۸ کاراکتر شامل حروف کوچک/بزرگ، عدد و کاراکتر خاص؛ نشست در دیتابیس، تغییر رمز و خروج از همهٔ نشست‌ها. تأیید ایمیل و بازیابی رمز در این نسخه وجود ندارند.
+- ثبت‌نام با تکرار رمز، حداقل ۸ کاراکتر شامل حروف کوچک/بزرگ، عدد و کاراکتر خاص؛ نشست در دیتابیس، تغییر رمز و خروج از همهٔ نشست‌ها. بازیابی رمز با اتصال ایمیل فعال می‌شود؛ تأیید ایمیل هنوز پیاده نشده است.
 - تم روشن پیش‌فرض و دارک اختیاری؛ لوگوی شفاف متناسب با تم و حفظ انتخاب در مرورگر.
 - داشبورد با خوشامدگویی، وضعیت خدمات و تیکت‌های واقعی؛ فقط یک ورودی به مرکز ابزارها. مدرسه فارکس، کیف پول و ریبیت همچنان به‌زودی‌اند. کاتالوگ فقط نمودار فعال و اکسپرت به‌زودی را نمایش می‌دهد.
 - `/panel/tools/chart`: ویجت رسمی hosted Advanced Chart از TradingView، نماد اولیه OANDA:XAUUSD، کندل یک‌ساعته، UTC، تغییر نماد/بازه و ابزارهای ارائه‌شده توسط خود ویجت؛ نمای تمام پنجره، Escape، retry و پیوند بیرونی.
@@ -57,7 +57,7 @@ node scripts/support-agent.mjs grant existing-user@example.com
 # Revoke with: node scripts/support-agent.mjs revoke existing-user@example.com
 ```
 
-DATABASE_URL باید تنظیم شده باشد. هیچ حساب پیش‌فرض مدیر و API عمومی ارتقای نقش وجود ندارد. پس از تغییر نقش، صفحهٔ پنل را تازه کنید. پیام‌ها در خود پنل نمایش داده می‌شوند؛ ارسال ایمیل و ضمیمه در این مرحله وجود ندارد.
+DATABASE_URL باید تنظیم شده باشد. هیچ حساب پیش‌فرض مدیر و API عمومی ارتقای نقش وجود ندارد. پس از تغییر نقش، صفحهٔ پنل را تازه کنید. پیام‌ها در خود پنل نمایش داده می‌شوند؛ با اتصال SMTP، پاسخ کارشناس به صاحب تیکت ایمیل اطلاع‌رسانی می‌فرستد. ضمیمه هنوز وجود ندارد.
 
 ## فونت برند
 
@@ -73,7 +73,7 @@ DATABASE_URL باید تنظیم شده باشد. هیچ حساب پیش‌فر�
 
 ### Password recovery email adapter
 
-Recovery is disabled (HTTP 503 with a clear user-facing message) until `APP_PUBLIC_URL`, `RECOVERY_EMAIL_URL` and `RECOVERY_EMAIL_SECRET` are configured. No reset tokens are returned to the browser or logged. Configure an HTTPS mail adapter endpoint that accepts `POST` JSON `{to, subject, text}` and `Authorization: Bearer <RECOVERY_EMAIL_SECRET>`, sends the text email through your chosen provider, and returns a 2xx status only after accepting delivery. Store the secret only in server environment variables. Use the public HTTPS panel origin for `APP_PUBLIC_URL` (localhost allowed for QA).
+Recovery supports direct SMTP or the legacy HTTPS adapter. With both unconfigured it returns HTTP 503 with a clear user-facing message. For the legacy adapter, configure `APP_PUBLIC_URL`, `RECOVERY_EMAIL_URL` and `RECOVERY_EMAIL_SECRET`. No reset tokens are returned to the browser or logged. Configure an HTTPS mail adapter endpoint that accepts `POST` JSON `{to, subject, text}` and `Authorization: Bearer <RECOVERY_EMAIL_SECRET>`, sends the text email through your chosen provider, and returns a 2xx status only after accepting delivery. Store the secret only in server environment variables. Use the public HTTPS panel origin for `APP_PUBLIC_URL` (localhost allowed for QA).
 
 The email contains `/reset-password#<token>`; tokens expire after 15 minutes, are stored only as hashes, replace earlier recovery links, and cannot be reused. Reset validates the strong password and confirmation, rejects links issued before a password change, and revokes all sessions. Responses never disclose whether an account exists. Provider failures invalidate the new token and produce a generic operational log without personal data; monitor delivery at the adapter. Requests are throttled per account and IP. There is deliberately no demo reset bypass.
 
@@ -89,3 +89,15 @@ Run `DATABASE_URL=<database ending _qa> npm run test:e2e:recovery` with the QA s
 قرارداد عدد و تست آن در `src/calendar/format.ts` و `format.test.ts` است. رشته اعشار canonical به‌همراه واحد/ارز مستقل؛ نگهداری دقت بدون گردکردن با تبدیلFloat، عدم حدس مقیاس/درصد و استفاده از bidi isolation. مقدار ناموجود/مبهم به‌صورت — نمایش داده می‌شود. زمان رویداد از UTC به Asia/Tehran نمایش داده خواهد شد. اهمیت یاپیش‌بینی را خودمان حدس نمی‌زنیم.
 
 Official free economic calendar lives in `/panel/tools/calendar`. The shared collector (`scripts/collect-calendar.py`) aggregates 13 official schedules, not consensus/actual feeds. `python3 scripts/collect-calendar.py --output /tmp/calendar.json` is read-only; without `--output`, it uses `CALENDAR_PANEL_URL` (HTTPS) and `CALENDAR_INGEST_TOKEN` to update PostgreSQL through the machine endpoint. Configure the same random token in VPS environment and GitHub Actions secrets. `calendar.yml` runs hourly and after successful deployment; schedules can be delayed by GitHub. Source failures preserve cached records. Titles preserve the original alongside curated Persian labels. No synthetic observations or inferred forecasts/impact/times. Coverage and source links are visible in the calendar. See `docs/31-free-official-calendar.md` in the private working documentation for limitations and attribution.
+
+## Direct organizational SMTP
+
+Set `MAIL_TRANSPORT=smtp`, `APP_PUBLIC_URL` (public HTTPS panel origin), `SMTP_HOST`, `SMTP_PORT` (587 STARTTLS or 465 TLS), `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM`, `MAIL_REPLY_TO`, and `MAIL_ENCRYPTION_KEY` (32 random bytes encoded as 64 hex characters) in the server environment. No separate email provider or HTTPS adapter is needed. Incomplete enabled configuration prevents startup. Certificate verification and encryption are mandatory; use a hostname covered by the SMTP certificate. Keep passwords and the encryption key outside Git and logs. Do not rotate the encryption key while pending jobs exist.
+
+Password recovery queues a 15-minute, single-use reset link in the same transaction as its hashed token. Only the encrypted queue payload contains the raw link. New requests replace older queued links; password changes invalidate earlier links; reset revokes all sessions. Account existence is never disclosed in the response. Recovery jobs expire after 14 minutes to avoid intentionally delivering expired links.
+
+Each committed agent reply queues one notification to the ticket owner with a link to `/panel/support/:id`. It excludes ticket subject/body and agent details. Customer messages, status-only changes, rejected requests and idempotent retries do not create notifications. SMTP failure does not undo a committed reply. Email replies go to `MAIL_REPLY_TO`; they do not add a ticket message.
+
+PostgreSQL `mail_outbox` persists jobs across restarts; AES-256-GCM encrypts queued recipient/content with job-bound authentication. A database advisory lock and persisted clock coordinate workers. Default spacing is 5000ms (at most 12 attempts/minute); `MAIL_INTERVAL_MS` permits 1000–60000ms. Confirm hourly/daily host limits before increasing volume. Temporary failures retry up to five attempts with exponential delay; permanent SMTP 5xx/auth failures stop. Support jobs expire after 24 hours. Sent/failed payloads are cleared; metadata is retained at most seven days. Recovery metadata can disappear sooner through token cleanup. SMTP acceptance is not proof of inbox delivery. A crash after SMTP acceptance and before the database update can repeat a message; retries use a stable Message-ID.
+
+Monitor queue counts by status/purpose and generic `Mail delivery` / `Mail worker unavailable` logs from the secure server. No public mail administration or arbitrary-send endpoint exists. `DATABASE_URL=<dedicated _qa database> npm run test:e2e:mail` tests recovery/notifications, access control, duplicates, encryption, concurrency, expiry and retries using a fake transport, without real emails. CI runs this test automatically.

@@ -1,3 +1,4 @@
+import {migrateMail} from './mail.mjs'
 import {migrateCalendar} from './calendar.mjs'
 import {migrateCaptcha} from './captcha.mjs'
 import {migrateRecovery} from './recovery.mjs'
@@ -152,6 +153,7 @@ export async function migrate() {
     `)
     await migrateSupport(client)
     await migrateRecovery(client)
+    await migrateMail(client)
     await migrateCaptcha(client)
     await migrateCalendar(client)
     await client.query('COMMIT')

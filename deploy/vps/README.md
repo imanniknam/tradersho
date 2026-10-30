@@ -49,7 +49,7 @@ Fresh VPS databases do not automatically contain Render/local accounts or ticket
 docker compose --env-file /opt/tradersho/.env --env-file image.env exec app node scripts/support-agent.mjs grant APPROVED_EMAIL
 ```
 
-Recovery email remains disabled until `RECOVERY_EMAIL_URL` and `RECOVERY_EMAIL_SECRET` are set to an authenticated HTTPS email adapter. `APP_PUBLIC_URL` is derived from the panel domain. After environment edits, recreate app using the same release/deploy script.
+For recovery and agent-reply notifications, set the SMTP variables documented in app/README.md in root-only `/opt/tradersho/.env`; Compose forwards them to the app. `APP_PUBLIC_URL` is derived from the panel domain. TLS and certificate verification are mandatory. Keep `MAIL_ENCRYPTION_KEY` stable while jobs are pending. The legacy HTTPS recovery adapter remains supported with SMTP disabled. After environment edits, recreate app using the same release/deploy script.
 
 Reference: [Docker startup readiness](https://docs.docker.com/compose/how-tos/startup-order/), [Caddy reverse proxy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy), [Docker Ubuntu installation](https://docs.docker.com/engine/install/ubuntu/).
 

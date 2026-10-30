@@ -55,6 +55,7 @@ jobs:
           done
           node scripts/ci-smoke.mjs
           node scripts/ci-calendar.mjs
+          node scripts/ci-mail.mjs
       - name: Desktop and mobile browser checks
         run: CHROME_BIN="$(command -v google-chrome)" node scripts/ci-ui.mjs
       - name: Application diagnostics on failure

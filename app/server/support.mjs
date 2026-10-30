@@ -1,3 +1,4 @@
+import {mailConfig,enqueueMail,supportReplyMail} from './mail.mjs'
 import { randomUUID } from 'node:crypto'
 import { pool } from './db.mjs'
 export async function migrateSupport(client) {
@@ -92,7 +93,12 @@ export async function supportRoute({path,method,user,req,res,body,json,fail,rate
       if(action==='messages'){
         const count=await client.query('SELECT count(*)::int AS n FROM support_messages WHERE ticket_id=$1',[id])
         if(count.rows[0].n>=500){await client.query('ROLLBACK');fail(res,409,'این گفتگو به سقف پیام رسیده است؛ تیکت جدید ایجاد کنید.');return true}
-        await client.query('INSERT INTO support_messages(id,ticket_id,author_id,author_role,body,request_id) VALUES($1,$2,$3,$4,$5,$6)',[randomUUID(),id,user.id,agentPath?'agent':'user',input.message.trim(),input.requestId])
+        const messageId=randomUUID()
+        await client.query('INSERT INTO support_messages(id,ticket_id,author_id,author_role,body,request_id) VALUES($1,$2,$3,$4,$5,$6)',[messageId,id,user.id,agentPath?'agent':'user',input.message.trim(),input.requestId])
+        if(agentPath&&mailConfig()){
+          const owner=(await client.query('SELECT email FROM users WHERE id=$1',[ticket.user_id])).rows[0]
+          await enqueueMail(client,{id:'support-'+messageId,userId:ticket.user_id,purpose:'support_reply',to:owner.email,...supportReplyMail(mailConfig().base,id),messageId})
+        }
       }
       const nextStatus=action==='status'?input.status:agentPath?'answered':'open'
       await client.query('UPDATE support_tickets SET status=$1,version=version+1,updated_at=now() WHERE id=$2',[nextStatus,id])

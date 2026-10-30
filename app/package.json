@@ -17,11 +17,12 @@
     "test:ui:states": "node scripts/qa-ui-states.mjs",
     "test:e2e:support": "node scripts/e2e-support.mjs",
     "test:e2e:legacy": "node scripts/e2e.mjs",
-    "test:unit": "node --test src/analysis/indicators.test.ts server/simulation.test.mjs server/candle.test.mjs src/workspace/indicators.test.ts src/calendar/format.test.ts server/calendar.test.mjs",
+    "test:unit": "node --test src/analysis/indicators.test.ts server/simulation.test.mjs server/candle.test.mjs src/workspace/indicators.test.ts src/calendar/format.test.ts server/calendar.test.mjs server/mail.test.mjs",
     "test:e2e:candles": "node scripts/e2e-candles.mjs",
     "test:ui:mobile": "MOBILE_AUDIT=1 node scripts/audit-ui.mjs",
     "test:ui:wide": "WIDE_AUDIT=1 node scripts/audit-ui.mjs",
-    "test:e2e:recovery": "node scripts/e2e-recovery.mjs"
+    "test:e2e:recovery": "node scripts/e2e-recovery.mjs",
+    "test:e2e:mail": "node scripts/ci-mail.mjs"
   },
   "dependencies": {
     "@fontsource/vazirmatn": "^5.2.8",
@@ -29,6 +30,7 @@
     "gsap": "^3.13.0",
     "lightweight-charts": "^5.2.1",
     "lucide-react": "^0.468.0",
+    "nodemailer": "^10.3.1",
     "pg": "^8.23.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

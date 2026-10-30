@@ -38,6 +38,15 @@ services:
       APP_PUBLIC_URL: https://${PANEL_DOMAIN:-my.tradersho.com}
       RECOVERY_EMAIL_URL: ${RECOVERY_EMAIL_URL:-}
       RECOVERY_EMAIL_SECRET: ${RECOVERY_EMAIL_SECRET:-}
+      MAIL_TRANSPORT: ${MAIL_TRANSPORT:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      MAIL_REPLY_TO: ${MAIL_REPLY_TO:-}
+      MAIL_ENCRYPTION_KEY: ${MAIL_ENCRYPTION_KEY:-}
+      MAIL_INTERVAL_MS: ${MAIL_INTERVAL_MS:-5000}
     depends_on:
       db:
         condition: service_healthy
