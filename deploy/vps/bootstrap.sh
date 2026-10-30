@@ -23,7 +23,6 @@ if [[ ! -f /opt/tradersho/.env ]]; then
     printf 'POSTGRES_PASSWORD=%s\nPANEL_DOMAIN=my.tradersho.com\nSERVER_IP=109.122.254.172\nDEPLOY_ROOT=/opt/tradersho\nRECOVERY_EMAIL_URL=\nRECOVERY_EMAIL_SECRET=\n' "$(openssl rand -hex 32)" > /opt/tradersho/.env
 fi
 if ! grep -q '^CAPTCHA_SECRET=' /opt/tradersho/.env; then printf 'CAPTCHA_SECRET=%s\n' "$(openssl rand -hex 32)" >> /opt/tradersho/.env; fi
-if ! grep -q '^NEWS_INGEST_TOKEN=' /opt/tradersho/.env; then printf 'NEWS_INGEST_TOKEN=%s\n' "$(openssl rand -hex 32)" >> /opt/tradersho/.env; fi
 # Only the proxy is publicly published; DB has no published port, app binds loopback.
 ufw allow 22/tcp
 ufw allow 80/tcp

@@ -1,9 +1,0 @@
-import {test} from 'node:test'
-import assert from 'node:assert/strict'
-import {articleUrl,articleId,validateNewsBatch} from './news-data.mjs'
-const batch=()=>({generatedAt:new Date().toISOString(),sources:['gdelt','fed','bls'].map(provider=>({provider,status:'ok'})),items:[{provider:'gdelt',url:'https://news.example.org/story',originalTitle:'Gold market report',titleFa:'گزارش بازار طلا',category:'gold',translation:'native',detectedAt:new Date().toISOString()}]})
-test('News links reject executable schemes, credentials and local addresses',()=>{for(const url of ['javascript:alert(1)','https://user:pass@example.org','http://127.0.0.1/a','https://[::1]/','http://localhost/a','https://a.local/a','https://a.example.org:9000/a'])assert.equal(articleUrl(url),null);assert.equal(articleUrl('https://news.example.org/a#fragment'),'https://news.example.org/a');assert.equal(articleId('https://a.example.org'),articleId('https://a.example.org'))})
-test('News batch validates source origins, Persian display and real timestamps',()=>{assert.equal(validateNewsBatch(batch()).items.length,1);for(const mutate of [v=>v.items[0].titleFa='English',v=>v.items[0].provider='fed',v=>v.items[0].publishedAt='bad-date',v=>v.sources[1]=null,v=>v.sources[1].provider='gdelt',v=>v.items[0]=null,v=>v.items[0].translation='pending',v=>v.generatedAt='bad-date']){const v=batch();mutate(v);assert.throws(()=>validateNewsBatch(v),e=>e.status===400)}})
-test('Untranslated headlines are retained as pending, not passed off as Persian',()=>{const v=batch();v.items[0].titleFa=null;v.items[0].translation='pending';assert.equal(validateNewsBatch(v).items[0].fa,null)})
-
-test('Repeated official release URLs retain separate publication dates',()=>{assert.notEqual(articleId('https://www.bls.gov/news.release/cpi.htm','2026-09-01T00:00:00Z'),articleId('https://www.bls.gov/news.release/cpi.htm','2026-10-01T00:00:00Z'))})

@@ -80,16 +80,10 @@ The email contains `/reset-password#<token>`; tokens expire after 15 minutes, ar
 Run `DATABASE_URL=<database ending _qa> npm run test:e2e:recovery` with the QA server on port 5183 and email delivery disabled. The test uses a local mock adapter; it sends no real emails.
 
 
-## اخبار و تقویم اقتصادی
+## تقویم اختصاصی
 
-مسیر `/panel/market` شامل تیترهای فارسی با جستجو، فیلتر موضوع/منبع/بازه، صفحه‌بندی و لینک اصل خبر است. تقویم در `/panel/market?tab=calendar` ویجت فارسی رسمی CashbackForex است؛ دادهٔ آن استخراج یا بازنشر نمی‌شود. iframe در هر دو تم بارگذاری می‌شود و فقط پیام resize از origin و پنجرهٔ همان ارائه‌دهنده پذیرفته می‌شود. بارگذاری و دسترسی تابع سرویس خارجی است؛ شکست یا تأخیر با retry و لینک منبع نمایش داده می‌شود.
+تقویم فقط در `/panel/tools/calendar` داخل پوستهٔ ابزارهاست. صفحه و job خبرها حذف شده‌اند؛ API قدیمی خبر410 می‌دهد و سوابق DB حذف نمی‌شوند. مدرسه فارکس به https://tradersho.com/school متصل است.
 
-خبرها از GDELT و RSS رسمی Federal Reserve/BLS دریافت و در PostgreSQL نگهداری می‌شوند. نمایش فقط تیتر و لینک با ذکر منبع است؛ تصویر و متن کامل ناشر کپی نمی‌شود. خبر فارسی اصلی، ترجمهٔ ماشینی و عنوان فارسیِ اطلاعیهٔ رسمی برچسب مستقل دارند. خبر فاقد عنوان فارسی پنهان می‌ماند. زمان انتشار از زمان شناسایی/دریافت جداست؛ این سرویس خبر لحظه‌ای یا تضمین دسترسی ندارد. شکست یک منبع آخرین دادهٔ سالم را حذف نمی‌کند. بازهٔ پیش‌فرض ۳۰ روز است و وضعیت منابع در رابط دیده می‌شود.
+تقویم native با نوار فرمان sticky، جستجو/فیلتر و قالب مستقل عدد/واحد آماده است. بنا به انتخاب کاربر، منبع خام جدا بررسی می‌شود. تا اتصال منبع معتبر، `/api/calendar` پس از احراز هویت فقط `{configured:false,events:[],updatedAt:null}` می‌دهد؛ UI آماده‌سازی را نشان می‌دهد. این نسخه تقویم داده‌دار یا متصل به CashbackForex نیست. لینک خارجی منبع برای مشاهدهٔ موقت وجود دارد. نمونه‌های رویداد فقط در تست مرورگر mock می‌شوند، نه محصول.
 
-`collect-news.py` بدون وابستگی Python، تیترهای انگلیسی را با MyMemory رایگان و سقف ۴۸۰۰ کاراکتر در روز ترجمه می‌کند؛ ارقام ترجمه با اصل تطبیق داده می‌شوند. فقط تیتر عمومی به مترجم می‌رود؛ اطلاعات کاربران ارسال نمی‌شود. محدودیت یا اختلال منابع ممکن است بعضی خبرها را تا نوبت بعد بدون ترجمه نگه دارد.
-
-Workflow `Refresh market news` ساعتی و پس از استقرار موفق اجرا می‌شود. `NEWS_INGEST_TOKEN` باید در محیط سرور و GitHub Secrets یکسان و حداقل ۳۲ کاراکتر تصادفی باشد. endpointهای `/api/integrations/news` به این کلید نیاز دارند؛ `/api/news` فقط برای کاربر واردشده است. برای اجرای دستی از workflow_dispatch استفاده کنید. دکمهٔ پنل فقط دادهٔ ذخیره‌شده را مجدد می‌خواند. تنظیم ساعات GitHub ممکن است با تأخیر اجرا شود. GitHub-hosted runner استاندارد برای مخزن عمومی رایگان است؛ تغییر خصوصی‌بودن/پلن را جدا بررسی کنید.
-
-تست‌ها: `python3 scripts/test_collect_news.py` و `npm run test:e2e:news` با DB منتهی به `_qa`، سرور 5183 و کلید QA. E2E از اخبار آزمایشی و iframe کنترل‌شده استفاده می‌کند؛ `node scripts/check-real-calendar.mjs` بررسی اختیاری سرویس واقعی است و به دسترسی اینترنت وابسته است.
-
-منابع: [GDELT](https://www.gdeltproject.org/)، [Fed RSS](https://www.federalreserve.gov/feeds/feeds.htm)، [BLS RSS](https://www.bls.gov/feed/)، [MyMemory](https://mymemory.translated.net/doc/usagelimits.php)، [Calendar widget](https://www.cashbackforex.com/fa/tools/economic-calendar-widget).
+قرارداد عدد و تست آن در `src/calendar/format.ts` و `format.test.ts` است. رشته اعشار canonical به‌همراه واحد/ارز مستقل؛ نگهداری دقت بدون گردکردن با تبدیلFloat، عدم حدس مقیاس/درصد و استفاده از bidi isolation. مقدار ناموجود/مبهم به‌صورت — نمایش داده می‌شود. زمان رویداد از UTC به Asia/Tehran نمایش داده خواهد شد. اهمیت یاپیش‌بینی را خودمان حدس نمی‌زنیم.

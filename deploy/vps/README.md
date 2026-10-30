@@ -60,8 +60,5 @@ VPS login and registration require a five-digit raster PNG CAPTCHA (`CAPTCHA_MOD
 The app can run without CAPTCHA when `CAPTCHA_MODE` is unset (legacy/local environments); the VPS Compose explicitly enables it and requires the secret. CI explicitly enables it with an isolated, non-production test secret. Tests seed known challenge hashes only in their dedicated `_qa` database; no answer/debug endpoint exists in production.
 
 
-## Free news ingestion
 
-Set the same random `NEWS_INGEST_TOKEN` (minimum 32 characters) in `/opt/tradersho/.env` and the repository Actions secret. Bootstrap generates a server token if absent; copy it securely to the Actions secret, never a public variable or browser bundle. Recreate the application after environment changes. `Refresh market news` runs hourly and after a successful deployment. Trigger it manually in Actions for a first fill. The collector submits only public headline metadata over HTTPS; no production database credentials are given to runners. The application caches successful results and reports each upstream source independently. Keep the token private and rotate both sides together.
-
-GDELT may throttle requests, and official RSS hosts may restrict connectivity. These are reported as source outages; cached items remain available. There is no bypass, scraped full article content, paid feed or promise of real-time delivery. MyMemory anonymous translation is capped below its free daily allowance. The Persian CashbackForex calendar is an external iframe, with its own availability and content. Recovery mail settings remain unrelated to these news sources.
+News ingestion is retired. Scheduled workflow and public read/import routes are removed (HTTP 410); historical database tables are retained. Native calendar data integration is pending a separately selected raw-data source. No calendar feed/API key is currently required or configured.
