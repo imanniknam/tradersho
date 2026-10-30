@@ -57,14 +57,16 @@ try{
   await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))),[])
   await page.screenshot({path:`qa/tools/workspace-${width}-${theme}.png`,fullPage:true})
   await page.getByRole('button',{name:'نمای تمام‌صفحه',exact:true}).click();await page.getByRole('dialog',{name:'محیط تحلیل بازار'}).waitFor();await page.keyboard.press('Escape');assert.equal(await page.locator('.tv-expanded').count(),0)
+  const railBefore=await page.locator('.analysis-rail').boundingBox()
   await page.getByRole('navigation',{name:'ابزارهای تحلیل'}).getByRole('link',{name:'پنل ریسک'}).click();await page.getByRole('heading',{name:'پنل ریسک در حال آماده‌سازی است'}).waitFor();assert.equal(await page.locator('.tv-host').count(),0)
+  if(width>=1201){const railAfter=await page.locator('.analysis-rail').boundingBox();assert.ok(Math.abs(railBefore.height-railAfter.height)<2&&Math.abs(railBefore.width-railAfter.width)<2&&Math.abs(railBefore.x-railAfter.x)<2&&Math.abs(railBefore.y-railAfter.y)<2,'Tool rail must keep its size across tabs')}
   await page.getByRole('link',{name:'بازگشت به نمای بازار',exact:true}).click();await page.locator('.tv-host iframe').waitFor()
  }
  await page.context().route('**/api/calendar?**',r=>r.fulfill({json:{configured:true,events:Array.from({length:3},(_,n)=>({id:'preview-long-'+n,title:'عنوان طولانی رویداد اقتصادی برای بررسی چیدمان و نمایش در تقویم '.repeat(6),currency:'USD',date:new Date().toISOString().slice(0,10),at:new Date().toISOString(),status:'scheduled'}))}}))
  for(const [width,height] of [[1280,720],[1366,768],[1440,900],[1920,1080],[2560,1440]])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height});await page.goto(base+'/panel/tools');await page.locator('.tv-host iframe').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
   const fit=await page.evaluate(()=>{const host=document.querySelector('.main-scroll'),chart=document.querySelector('.tv-chart').getBoundingClientRect(),cards=[...document.querySelectorAll('.analysis-context>section')].map(n=>n.getBoundingClientRect());return {scroll:host.scrollHeight,client:host.clientHeight,chartBottom:chart.bottom,cardsBottom:Math.max(...cards.map(r=>r.bottom)),height:innerHeight}})
-  assert.ok(fit.scroll<=fit.client+2,JSON.stringify(fit));assert.ok(fit.chartBottom<=height&&fit.cardsBottom<=height,JSON.stringify(fit))
+  assert.ok(fit.scroll<=fit.client+2,JSON.stringify(fit));assert.ok(fit.chartBottom<=height&&fit.cardsBottom<=height,JSON.stringify(fit));assert.ok(Math.abs(fit.cardsBottom-fit.chartBottom)<2,'Context cards must align with chart: '+JSON.stringify(fit))
   assert.equal(await page.locator('.flicker-guide summary').count(),0);assert.ok(await page.getByText('ترس شدید',{exact:true}).isVisible())
  }
  await page.context().unroute('**/api/calendar?**')
