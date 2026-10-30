@@ -57,3 +57,7 @@
  .analysis-market .calendar-preview{flex:1;display:flex;flex-direction:column;justify-content:space-evenly}
  .analysis-market .flicker-frame-wrap{margin-block:auto}
 }
+@media(min-width:1201px) and (min-height:700px){
+ .analysis-market .analysis-context>.context-card:not(.flicker-card){flex:1 1 0;min-height:0}
+ .analysis-market .analysis-context>.flicker-card{flex:0 0 auto}
+}
