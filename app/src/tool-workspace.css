@@ -13,3 +13,35 @@
 .flicker-frame-wrap{max-width:400px;margin-inline:auto}@media(max-width:1200px){.analysis-context{grid-template-columns:minmax(0,1fr)}}
 
 .flicker-guide{font-size:11px;color:var(--secondary);line-height:1.9;margin-top:6px}.flicker-guide summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--ink);text-decoration:underline;text-underline-offset:4px}.flicker-guide dl{margin:0 0 12px}.flicker-guide dl>div{display:flex;justify-content:space-between;gap:12px;padding:5px 0}.flicker-guide dd{margin:0;color:var(--ink)}
+/* The legend is always visible, without modifying the hosted widget. */
+.flicker-guide dl{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;margin:8px 0}.flicker-guide dl>div{display:flex;gap:5px;padding:0;font-size:10px;line-height:1.8}.flicker-guide dt{font-family:Arial,sans-serif}.flicker-guide dd:before{content:'·';margin-inline-end:5px;color:var(--secondary)}
+/* A viewport-sized analysis desk; scrolling remains available for short screens/zoom. */
+@media(min-width:1201px) and (min-height:700px){
+ .tools-shell:has(.analysis-market) .main-inner{height:100%;padding:12px 18px;max-width:none}
+ .analysis-market{height:100%;grid-template-columns:86px minmax(0,1fr);gap:14px}
+ .analysis-market .analysis-body{height:100%;min-height:0;display:flex;flex-direction:column;gap:10px}
+ .analysis-market .analysis-heading{margin:0;min-height:30px;flex:none}.analysis-market .analysis-heading h1{font-size:18px}.analysis-market .analysis-heading p{font-size:12px}
+ .analysis-market .analysis-grid{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:stretch}
+ .analysis-market .analysis-chart{min-height:0}
+ .analysis-market .analysis-chart .tv-chart:not(.tv-expanded){height:100%;min-height:0;display:flex;flex-direction:column}
+ .analysis-market .analysis-chart .tv-chart:not(.tv-expanded) .tv-host{height:0!important;min-height:0;flex:1}
+ .analysis-market .tv-toolbar{padding:7px 10px;flex:none}.analysis-market .tv-toolbar .button{min-height:38px;padding:6px 10px;font-size:11px}
+ .analysis-market .tv-disclosure{padding:7px 10px;margin:0;font-size:10px;line-height:1.7;flex:none}
+ .analysis-market .analysis-context{gap:10px;display:flex;flex-direction:column;min-height:0}
+ .analysis-market .context-card{padding:10px 12px;flex:none}.analysis-market .context-card h2{font-size:14px}.analysis-market .context-card header svg{width:18px;height:18px}
+ .analysis-market .context-caption{font-size:10px;margin:4px 0 6px;line-height:1.7}
+ .analysis-market .calendar-preview{padding:6px 0}.analysis-market .calendar-preview-event{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
+ .analysis-market .calendar-preview-event:nth-child(n+3){display:none}
+ .analysis-market .calendar-preview-event>span{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:2px;align-items:flex-end;margin:0;font-size:9px;white-space:nowrap}
+ .analysis-market .calendar-preview-event p{grid-column:1;grid-row:1;font-size:11px;line-height:1.7}
+ .analysis-market .calendar-preview-event+.calendar-preview-event{padding-top:6px;margin-top:6px}
+ .analysis-market .context-link{min-height:28px;font-size:10px;margin-top:4px}.analysis-market .flicker-attribution{padding-top:5px}
+ .analysis-market .flicker-frame-wrap{min-height:0}
+ .analysis-market .flicker-guide dl{margin:4px 0;gap:2px 9px}
+ .analysis-market .analysis-rail{height:100%;position:static;gap:3px;padding:6px;min-height:0}
+ .analysis-market .analysis-rail a{min-height:0;flex:1;padding:5px 2px;font-size:11px;gap:4px}.analysis-market .analysis-rail a svg{width:20px;height:20px}
+}
+@media(min-width:1600px) and (min-height:700px){.analysis-market .analysis-grid{grid-template-columns:minmax(0,1fr) 360px}}
+
+.flicker-guide dl>div{font-size:11px;white-space:nowrap}
+@media(min-width:1201px) and (min-height:700px){.analysis-market .flicker-card>.context-caption{display:none}.analysis-market .flicker-frame-wrap{margin-top:4px}}
