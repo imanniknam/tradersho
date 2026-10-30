@@ -45,3 +45,5 @@
 
 .flicker-guide dl>div{font-size:11px;white-space:nowrap}
 @media(min-width:1201px) and (min-height:700px){.analysis-market .flicker-card>.context-caption{display:none}.analysis-market .flicker-frame-wrap{margin-top:4px}}
+
+@media(min-width:1201px) and (min-height:700px){.analysis-market .calendar-preview-event p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}}
