@@ -7,6 +7,7 @@ const {pool}=await import('../server/db.mjs'),base='http://127.0.0.1:5183',email
 const browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true})
 const page=await browser.newPage({reducedMotion:'reduce'}),axe=await readFile('node_modules/axe-core/axe.min.js','utf8'),errors=[]
 await page.context().route('**/fonts/**',r=>r.abort())
+await page.context().route('https://flicker.finance/embed/**',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html lang="en"><head><title>QA gold widget</title></head><body>Gold Ounce · XAU — widget QA fixture</body></html>'}))
 page.on('pageerror',e=>errors.push(e.message))
 try{
  await page.goto(base+'/auth');await page.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await page.getByPlaceholder('name@example.com').fill(email);await page.getByPlaceholder('رمز عبور قوی').fill('UiRelease#2026');await page.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill('UiRelease#2026');await page.getByAltText('تصویر کد امنیتی پنج‌رقمی').waitFor();await page.getByLabel('کد امنیتی',{exact:true}).fill('00000');await page.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await page.getByRole('alert').waitFor()
@@ -50,6 +51,8 @@ try{
  for(const width of [320,390,768,1440,2560])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:1000});await page.goto(base+'/panel/tools');await page.locator('.tv-host iframe').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(150)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
+  assert.ok((await page.locator('.flicker-card iframe').getAttribute('src')).startsWith('https://flicker.finance/embed/en/xau/fear-greed?'));assert.equal(await page.locator('.analysis-context > section').count(),2)
+  assert.ok(await page.evaluate(()=>{const cards=document.querySelectorAll('.analysis-context > section');return cards[1].getBoundingClientRect().top>=cards[0].getBoundingClientRect().bottom}),'Gold sentiment stays beneath calendar')
   assert.equal(await page.evaluate(()=>window.__chartConfig.symbol),'OANDA:XAUUSD');assert.equal(await page.evaluate(()=>window.__chartConfig.interval),'60')
   await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))),[])
   await page.screenshot({path:`qa/tools/workspace-${width}-${theme}.png`,fullPage:true})
