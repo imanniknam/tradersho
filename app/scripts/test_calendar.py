@@ -23,4 +23,36 @@ class CalendarTest(unittest.TestCase):
   try:
    rows,state=c.collect('bls',dt.date(2026,10,30));self.assertEqual(rows,[]);self.assertEqual(state['status'],'error')
   finally:c.fetch=old
+
+# Provider adapter tests are independent of the network and exercise economic semantics.
+persian_spec=importlib.util.spec_from_file_location('persian',pathlib.Path(__file__).with_name('collect-persianfx.py'));p=importlib.util.module_from_spec(persian_spec);persian_spec.loader.exec_module(p)
+class PersianCalendarTest(unittest.TestCase):
+ def row(self,**extra):
+  return {'id':1,'date':'2026-11-02','event_name':'ISM Manufacturing','event_name_fa':'شاخص تولید','currency':'USD','time':'18:30:00','impact':'high','status':'waiting','actual':None,'forecast':'51.2','previous':'51.0',**extra}
+ def parse(self,row):return p.parse_day({'status':'success','date':'2026-11-02','count':1,'events':[row]},'2026-11-02')
+ def test_amount_units_null_zero_and_sign(self):
+  for raw,expected in [('0%',{'value':'0','unit':'percent'}),('-12K',{'value':'-12','unit':'thousand'}),('€5.05B',{'value':'5.05','unit':'billion','currency':'EUR'}),('1,234.50',{'value':'1234.50','unit':'number'}),('−۲٫۵',None)]:
+   if expected is None:
+    with self.assertRaises(ValueError):p.amount(raw)
+   else:self.assertEqual(p.amount(raw),expected)
+  self.assertIsNone(p.amount(None));self.assertEqual(p.amount('0')['value'],'0')
+  for raw in ['12,34','NaN','1e6','3 million','5K%','1.2.3',True]:
+   with self.assertRaises(ValueError):p.amount(raw)
+ def test_composite_auction_values_are_not_a_decimal(self):
+  self.assertEqual(p.amount('3.1|3.8'),{'components':[{'value':'3.1','unit':'number'},{'value':'3.8','unit':'number'}]})
+ def test_tehran_timestamp_and_revisions(self):
+  e=self.parse(self.row(revised='50.9'))[0];self.assertEqual(e['at'],'2026-11-02T15:00:00+00:00');self.assertEqual(e['previous']['value'],'51.0');self.assertEqual(e['revised']['value'],'50.9');self.assertEqual(e['impact'],'high')
+ def test_all_day_tentative_no_fabricated_midnight(self):
+  e=self.parse(self.row(time_model_name='کل\u200cروز',impact='none'))[0];self.assertTrue(e['allDay']);self.assertIsNone(e['at']);self.assertIsNone(e['impact'])
+  e=self.parse(self.row(time_model_name='نامشخص'))[0];self.assertEqual(e['timeStatus'],'tentative');self.assertIsNone(e['at'])
+ def test_wrong_date_and_schema_rejected(self):
+  for row in [self.row(date='2026-11-03'),self.row(impact='guess'),self.row(time='25:01:00')]:
+   with self.assertRaises(ValueError):self.parse(row)
+ def test_nonforex_excluded(self):self.assertEqual(self.parse(self.row(currency='BML',market_forex=0)),[])
+ def test_partial_window_failure_keeps_cache(self):
+  old=p.fetch_day;p.fetch_day=lambda d:(_ for _ in ()).throw(RuntimeError('blocked'))
+  try:
+   b=p.collect(dt.date(2026,11,2));self.assertEqual(b['events'],[]);self.assertEqual(b['sources'][0]['status'],'error')
+  finally:p.fetch_day=old
+
 if __name__=='__main__':unittest.main()

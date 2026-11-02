@@ -4,7 +4,7 @@ if(!process.env.DATABASE_URL?.endsWith('_qa'))throw Error('Dedicated _qa databas
 const {pool}=await import('../server/db.mjs'),{tokenHash}=await import('../server/auth.mjs'),{calendarSources}=await import('../server/calendar.mjs')
 const base='http://127.0.0.1:5183',token=process.env.CALENDAR_INGEST_TOKEN,user=randomUUID(),session=randomBytes(32).toString('hex'),today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'})
 async function req(path,method='GET',data,auth=true,machine=false){const r=await fetch(base+'/api'+path,{method,headers:{Origin:base,'Content-Type':'application/json',...(auth?{Cookie:'tradersho_session='+session}:{}),...(machine?{Authorization:'Bearer '+token}:{})},body:data?JSON.stringify(data):undefined});return {status:r.status,body:await r.json()}}
-const batch=()=>({generatedAt:new Date().toISOString(),sources:Object.keys(calendarSources).map(provider=>({provider,status:'ok',coverageFrom:today,coverageTo:today})),events:Array.from({length:111},(_,n)=>({provider:'bls',key:'qa-'+n,date:today,at:null,timeStatus:'date_only',status:'scheduled',title:'QA event '+n,originalTitle:'QA '+n,sourceUrl:'https://www.bls.gov/schedule/'}))})
+const batch=()=>({generatedAt:new Date().toISOString(),sources:['persianfx'].map(provider=>({provider,status:'ok',coverageFrom:today,coverageTo:today})),events:Array.from({length:111},(_,n)=>({provider:'persianfx',country:'US',currency:'USD',impact:'high',key:'qa-'+n,date:today,at:null,timeStatus:'date_only',status:'scheduled',title:'QA event '+n,originalTitle:'QA '+n,sourceUrl:'https://persianfx.com/'}))})
 try{
  await pool.query('INSERT INTO users(id,name,email,password_hash) VALUES($1,$2,$3,$4)',[user,'Calendar QA',user+'@example.test','qa-unusable-password-hash'])
  await pool.query("INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '1 hour')",[tokenHash(session),user])
@@ -15,14 +15,16 @@ try{
  assert.equal((await req('/calendar?from='+today+'&to='+today+'&page=2')).body.events.length,11)
  assert.equal((await req('/calendar?from='+today+'&to='+today+'&q=event%20110')).body.total,1)
  assert.equal((await req('/calendar?from='+today+'&to='+today+'&currency=EUR')).body.total,0)
- for(const query of ['from=invalid','from=2026-02-30','page=0','currency=HACK','from=2025-01-01&to=2027-01-01'])assert.equal((await req('/calendar?'+query)).status,400)
+ assert.equal((await req('/calendar?from='+today+'&to='+today+'&impact=high')).body.total,111)
+ assert.equal((await req('/calendar?from='+today+'&to='+today+'&impact=low')).body.total,0)
+ for(const query of ['from=invalid','from=2026-02-30','page=0','currency=HACK','impact=guessed','from=2025-01-01&to=2027-01-01'])assert.equal((await req('/calendar?'+query)).status,400)
  const failed=batch();failed.events=[];
- failed.sources.find(s=>s.provider==='bls').status='error'
+ failed.sources.find(s=>s.provider==='persianfx').status='error'
  assert.equal((await req('/integrations/calendar','POST',failed,false,true)).status,200)
  assert.equal((await req('/calendar?from='+today+'&to='+today)).body.total,111,'upstream failure preserves cached rows')
  const replaced=batch();replaced.events=[{...replaced.events[0],status:'cancelled'}];await req('/integrations/calendar','POST',replaced,false,true)
  const after=(await req('/calendar?from='+today+'&to='+today)).body;assert.equal(after.total,1);assert.equal(after.events[0].status,'cancelled')
- const upcoming=batch();upcoming.events=[-60,60,120,180].map((minutes,n)=>({...upcoming.events[n],key:'qa-timed-'+n,at:new Date(Date.now()+minutes*60000).toISOString(),date:new Date(Date.now()+minutes*60000).toISOString().slice(0,10),timeStatus:'known'}));upcoming.events.push({...upcoming.events[1],key:'qa-cancelled',status:'cancelled'});upcoming.sources.forEach(s=>{s.coverageFrom=new Date(Date.now()-86400000).toISOString().slice(0,10);s.coverageTo=new Date(Date.now()+86400000).toISOString().slice(0,10)});
+ const upcoming=batch();upcoming.events=[-60,60,120,180].map((minutes,n)=>({...upcoming.events[n],key:'qa-timed-'+n,at:new Date(Date.now()+minutes*60000).toISOString(),date:new Date(Date.now()+minutes*60000).toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'}),timeStatus:'known'}));upcoming.events.push({...upcoming.events[1],key:'qa-cancelled',status:'cancelled'});upcoming.sources.forEach(s=>{s.coverageFrom=new Date(Date.now()-86400000).toISOString().slice(0,10);s.coverageTo=new Date(Date.now()+86400000).toISOString().slice(0,10)});
  assert.equal((await req('/integrations/calendar','POST',upcoming,false,true)).status,200)
  const next=(await req('/calendar?upcoming=1')).body.events;assert.equal(next.length,2);assert.deepEqual(next.map(e=>e.originalTitle),['QA 1','QA 2']);assert.ok(next.every(e=>Date.parse(e.at)>Date.now()))
  await req('/integrations/calendar','POST',{...replaced,generatedAt:new Date().toISOString()},false,true)
