@@ -26,7 +26,9 @@ try{
  const after=(await req('/calendar?from='+today+'&to='+today)).body;assert.equal(after.total,1);assert.equal(after.events[0].status,'cancelled')
  const upcoming=batch();upcoming.events=[-60,60,120,180].map((minutes,n)=>({...upcoming.events[n],key:'qa-timed-'+n,at:new Date(Date.now()+minutes*60000).toISOString(),date:new Date(Date.now()+minutes*60000).toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'}),timeStatus:'known'}));upcoming.events.push({...upcoming.events[1],key:'qa-cancelled',status:'cancelled'});upcoming.sources.forEach(s=>{s.coverageFrom=new Date(Date.now()-86400000).toISOString().slice(0,10);s.coverageTo=new Date(Date.now()+86400000).toISOString().slice(0,10)});
  assert.equal((await req('/integrations/calendar','POST',upcoming,false,true)).status,200)
- const next=(await req('/calendar?upcoming=1')).body.events;assert.equal(next.length,2);assert.deepEqual(next.map(e=>e.originalTitle),['QA 1','QA 2']);assert.ok(next.every(e=>Date.parse(e.at)>Date.now()))
+ const next=(await req('/calendar?upcoming=1&q=QA')).body.events;assert.equal(next.length,2);assert.deepEqual(next.map(e=>e.originalTitle),['QA 1','QA 2']);assert.ok(next.every(e=>Date.parse(e.at)>Date.now()))
+ const expanded=(await req('/calendar?upcoming=1&limit=50&q=QA')).body.events;assert.equal(expanded.length,3);assert.ok(expanded.every(e=>Date.parse(e.at)>Date.now()&&e.status==='scheduled'))
+ for(const limit of ['0','51','oops','2.5'])assert.equal((await req('/calendar?upcoming=1&limit='+limit)).status,400)
  await req('/integrations/calendar','POST',{...replaced,generatedAt:new Date().toISOString()},false,true)
  const bad=batch();bad.events[0].sourceUrl='https://evil.example/';assert.equal((await req('/integrations/calendar','POST',bad,false,true)).status,400)
  const stale=batch();stale.generatedAt=new Date(Date.now()-3600000).toISOString();await req('/integrations/calendar','POST',stale,false,true);assert.equal((await req('/calendar?from='+today+'&to='+today)).body.total,1)

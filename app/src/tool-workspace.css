@@ -31,8 +31,6 @@
  .analysis-market .context-card{padding:10px 12px;flex:none}.analysis-market .context-card h2{font-size:14px}.analysis-market .context-card header svg{width:18px;height:18px}
  .analysis-market .context-caption{font-size:10px;margin:4px 0 6px;line-height:1.7}
  .analysis-market .calendar-preview{padding:6px 0}.analysis-market .calendar-preview-event{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
- .analysis-market .calendar-preview-event:nth-child(n+3){display:none}
- .analysis-market .calendar-preview-event>span{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:2px;align-items:flex-end;margin:0;font-size:9px;white-space:nowrap}
  .analysis-market .calendar-preview-event p{grid-column:1;grid-row:1;font-size:11px;line-height:1.7}
  .analysis-market .calendar-preview-event+.calendar-preview-event{padding-top:6px;margin-top:6px}
  .analysis-market .context-link{min-height:28px;font-size:10px;margin-top:4px}.analysis-market .flicker-attribution{padding-top:5px}
@@ -54,10 +52,34 @@
  .analysis-center .analysis-rail a{min-height:0;flex:1;padding:5px 2px;font-size:11px;gap:4px}.analysis-center .analysis-rail a svg{width:20px;height:20px}
  .analysis-market .analysis-context>.context-card{flex:1 0 auto;display:flex;flex-direction:column}
  .analysis-market .analysis-context>.flicker-card{flex-grow:2}
- .analysis-market .calendar-preview{flex:1;display:flex;flex-direction:column;justify-content:space-evenly}
+ .analysis-market .calendar-preview{flex:1;min-height:0}
  .analysis-market .flicker-frame-wrap{margin-block:auto}
 }
 @media(min-width:1201px) and (min-height:700px){
  .analysis-market .analysis-context>.context-card:not(.flicker-card){flex:1 1 0;min-height:0}
  .analysis-market .analysis-context>.flicker-card{flex:0 0 auto}
 }
+
+/* Compact chronological rows; the preview grows its row count with the available height. */
+.event-country{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;color:var(--secondary);font-size:11px;margin:0}
+.country-flag{font:17px/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;flex:none}
+.event-currency{font:11px/1.6 Arial,sans-serif;font-variant-numeric:tabular-nums}
+.calendar-preview-card .calendar-preview{padding:0;display:flex;flex-direction:column;justify-content:flex-start;border-block:1px solid var(--line)}
+.calendar-preview-card .calendar-preview-event{display:grid;grid-template-columns:46px 56px minmax(0,1fr) 8px;gap:7px;align-items:center;min-height:42px;height:42px;flex:none;padding:4px 0;margin:0;border:0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.calendar-preview-card .calendar-preview-event:last-child{border-bottom:0}
+.calendar-preview-card .calendar-preview-event:hover{background:var(--tint)}
+.calendar-preview-card .calendar-preview-event time{font-size:11px;line-height:1.6;color:var(--secondary);white-space:nowrap;font-variant-numeric:tabular-nums}
+.calendar-preview-card .calendar-preview-event time small{display:block;font-size:9px}
+.calendar-preview-card .calendar-preview-event .event-country{grid-column:auto;grid-row:auto;display:inline-flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:4px;margin:0;white-space:nowrap}
+.calendar-preview-card .preview-event-title{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:1.8}
+.preview-impact{width:7px;height:7px;display:block;border-radius:50%;background:var(--secondary)}.preview-impact.high{background:#ff5d00}.preview-impact.medium{background:#543aff}.preview-impact.unknown{background:transparent;border:1px solid var(--secondary)}
+.preview-count{margin-inline-start:auto;color:var(--secondary);font-size:10px;font-variant-numeric:tabular-nums}
+@media(min-width:1201px) and (min-height:700px){.analysis-market .calendar-preview-card .calendar-preview{overflow:hidden;min-height:0;flex:1;padding:0}.analysis-market .calendar-preview-card .context-link{flex:none}.analysis-market .calendar-preview-card .calendar-preview-event{display:grid}}
+@media(min-width:1900px) and (min-height:700px){.analysis-market .analysis-grid{grid-template-columns:minmax(0,1fr) clamp(380px,23vw,540px)}.calendar-preview-card .preview-event-title{font-size:12px}.calendar-preview-card .calendar-preview-event{grid-template-columns:48px 58px minmax(0,1fr) 8px}}
+@media(max-width:600px){.calendar-preview-card .calendar-preview-event{grid-template-columns:42px 51px minmax(0,1fr) 7px;gap:5px}.calendar-preview-card .preview-event-title{font-size:12px}}
+
+.calendar-preview-card .calendar-preview-event>span{grid-column:auto;grid-row:1;margin:0}.calendar-preview-card .calendar-preview-event time{grid-column:1;grid-row:1}
+.calendar-preview-card .calendar-preview-event+.calendar-preview-event{margin:0;padding:4px 0}
+.calendar-preview-card .calendar-preview-event .event-country{grid-column:2;grid-row:1}
+.calendar-preview-card .calendar-preview-event .preview-event-title{grid-column:3;grid-row:1}
+.calendar-preview-card .calendar-preview-event .preview-impact{grid-column:4;grid-row:1}

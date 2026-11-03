@@ -12,3 +12,37 @@
 .economic-composite{display:inline-flex;align-items:baseline;gap:5px;flex-wrap:wrap}.economic-composite>span{display:inline-flex;gap:5px;align-items:baseline}.composite-divider{color:var(--secondary);font-family:Arial,sans-serif}
 
 .amount-percent{direction:ltr}
+
+/* Readable data density, with country and both titles in a single desktop row. */
+.native-calendar-table tbody td,.native-calendar-table tbody th{padding:10px 12px;vertical-align:middle;line-height:1.7}
+.native-calendar-table tbody tr:hover{background:var(--tint)}
+.native-calendar-table tbody th.calendar-event-title{min-width:200px}
+.calendar-event-time time{display:flex;align-items:center;gap:9px;white-space:nowrap;font-size:11px}
+.calendar-event-time .event-time{font-size:12px;font-weight:700;margin:0;color:var(--ink)}
+.calendar-event-country .event-country{display:inline-flex;gap:6px;align-items:center;white-space:nowrap;margin:0}
+.calendar-event-country .country-name{font-size:11px}
+.event-titles{min-width:0}.event-titles a{font-size:13px;line-height:1.8;overflow-wrap:anywhere}.event-titles .event-original{font-size:11px;line-height:1.7;margin-top:2px;max-width:none}
+.calendar-event-meta .event-impact{margin-bottom:2px}.calendar-event-meta .event-status{font-size:10px;line-height:1.6;max-width:150px}
+.native-calendar-table thead th{padding:12px}
+@media(min-width:1800px){
+ .event-titles{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:18px}
+ .event-titles .event-original{text-align:left;margin:0;font-size:12px;direction:ltr}
+ .native-calendar-table tbody td,.native-calendar-table tbody th{padding-block:8px}
+ .calendar-event-meta{white-space:nowrap}.calendar-event-meta .event-impact{display:inline-flex;margin-inline-end:10px}.calendar-event-meta .event-status{max-width:none}
+ .calendar-event-country{width:155px}.calendar-event-time{width:170px}
+}
+@media(max-width:1100px) and (min-width:601px){.calendar-event-time time{flex-direction:column;gap:2px;align-items:flex-start}.calendar-event-country .country-name{display:none}}
+@media(max-width:600px){
+ .native-calendar-table tbody td,.native-calendar-table tbody th{padding:0;line-height:1.8}
+ .native-calendar-table tbody tr{padding:14px;gap:10px}
+ .native-calendar-table .calendar-event-time{grid-column:1;grid-row:1}
+ .native-calendar-table .calendar-event-country{grid-column:2/4;grid-row:1;justify-self:end}
+ .native-calendar-table tbody th.calendar-event-title{grid-column:1/-1;grid-row:2;min-width:0}
+ .native-calendar-table .calendar-event-meta{grid-column:1/-1;grid-row:3}
+ .native-calendar-table tbody td[data-label]{grid-column:auto;grid-row:4}
+ .calendar-event-time time{flex-direction:column;gap:2px;align-items:flex-start;white-space:normal}
+ .calendar-event-country .event-country{flex-wrap:wrap;justify-content:flex-end;white-space:normal;gap:5px}
+ .event-titles a{font-size:13px}.event-titles .event-original{font-size:11px;margin-top:4px}
+ .calendar-event-meta .event-impact{margin-inline-end:10px}.native-calendar-table tbody tr:hover{background:transparent}
+}
+@media(min-width:2400px){.event-titles a{font-size:15px}.event-titles .event-original,.native-calendar-table tbody td[data-label]{font-size:14px}.calendar-event-country .country-name,.calendar-event-time time{font-size:12px}.calendar-event-meta .event-status{font-size:11px}.country-flag{font-size:20px}}

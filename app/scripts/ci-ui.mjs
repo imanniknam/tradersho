@@ -48,7 +48,7 @@ try{
   await page.locator('.home-tools-entry').screenshot({path:`qa/tools/banner-${width}-${theme}.png`})
  }
  await page.context().route('https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',r=>r.fulfill({contentType:'application/javascript',body:`{const script=document.currentScript;const cfg=JSON.parse(script.textContent);window.__chartConfig=cfg;const frame=document.createElement('iframe');frame.title='نمودار تحلیل بازار TradingView';frame.style='width:100%;height:100%;border:0';frame.srcdoc='<html><body style="background:#f5f5fa;font:16px Arial">XAUUSD · 1h · QA widget</body></html>';script.parentElement.querySelector('.tradingview-widget-container__widget').append(frame)}`}))
- for(const width of [320,390,768,1440,2560])for(const theme of ['light','dark']){
+ for(const width of [320,390,768,1024,1440,1920,2560,3440,3840])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:1000});await page.goto(base+'/panel/tools');await page.locator('.tv-host iframe').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(150)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
   assert.ok((await page.locator('.flicker-card iframe').getAttribute('src')).startsWith('https://flicker.finance/embed/en/xau/fear-greed?'));assert.equal(await page.locator('.analysis-context > section').count(),2)
@@ -62,24 +62,40 @@ try{
   if(width>=1201){const railAfter=await page.locator('.analysis-rail').boundingBox();assert.ok(Math.abs(railBefore.height-railAfter.height)<2&&Math.abs(railBefore.width-railAfter.width)<2&&Math.abs(railBefore.x-railAfter.x)<2&&Math.abs(railBefore.y-railAfter.y)<2,'Tool rail must keep its size across tabs')}
   await page.getByRole('link',{name:'بازگشت به نمای بازار',exact:true}).click();await page.locator('.tv-host iframe').waitFor()
  }
- await page.context().route('**/api/calendar?**',r=>r.fulfill({json:{configured:true,events:Array.from({length:3},(_,n)=>({id:'preview-long-'+n,title:'عنوان طولانی رویداد اقتصادی برای بررسی چیدمان و نمایش در تقویم '.repeat(6),currency:'USD',date:new Date().toISOString().slice(0,10),at:new Date().toISOString(),status:'scheduled'}))}}))
- for(const [width,height] of [[1280,720],[1366,768],[1440,900],[1920,1080],[2560,1440]])for(const theme of ['light','dark']){
+ await page.context().route('**/api/calendar?**',r=>r.fulfill({json:{configured:true,events:Array.from({length:50},(_,n)=>({id:'preview-long-'+n,title:'عنوان طولانی رویداد اقتصادی برای بررسی چیدمان و نمایش در تقویم '.repeat(6),country:'US',currency:'USD',impact:'high',date:new Date().toISOString().slice(0,10),at:new Date(Date.now()+n*60000).toISOString(),status:'scheduled'}))}}))
+ for(const [width,height] of [[1280,720],[1366,768],[1440,900],[1920,1080],[2560,1440],[3440,1440],[3840,2160]])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height});await page.goto(base+'/panel/tools');await page.locator('.tv-host iframe').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
   const fit=await page.evaluate(()=>{const host=document.querySelector('.main-scroll'),chart=document.querySelector('.tv-chart').getBoundingClientRect(),cards=[...document.querySelectorAll('.analysis-context>section')].map(n=>n.getBoundingClientRect());return {scroll:host.scrollHeight,client:host.clientHeight,chartBottom:chart.bottom,cardsBottom:Math.max(...cards.map(r=>r.bottom)),height:innerHeight}})
   assert.ok(fit.scroll<=fit.client+2,JSON.stringify(fit));assert.ok(fit.chartBottom<=height&&fit.cardsBottom<=height,JSON.stringify(fit));assert.ok(Math.abs(fit.cardsBottom-fit.chartBottom)<2,'Context cards must align with chart: '+JSON.stringify(fit))
+  const previewCount=await page.locator('.calendar-preview-event').count();assert.ok(previewCount>=1&&previewCount<=50);if(height>=1080)assert.ok(previewCount>2,'Tall screens display more than two upcoming events')
+  assert.ok(await page.evaluate(()=>[...document.querySelectorAll('.analysis-center .surface')].every(n=>{const s=getComputedStyle(n);return s.animationName==='none'&&s.backgroundImage==='none'})),'Data panels have no animated purple background')
+  const previewFits=await page.evaluate(()=>{const region=document.querySelector('.calendar-preview').getBoundingClientRect();return [...document.querySelectorAll('.calendar-preview-event')].every(n=>{const r=n.getBoundingClientRect();return r.top>=region.top-1&&r.bottom<=region.bottom+1})});assert.ok(previewFits,'All preview rows fit their region')
+  const columnsFit=await page.evaluate(()=>[...document.querySelectorAll('.calendar-preview-event')].every(n=>{const time=n.querySelector('time').getBoundingClientRect(),country=n.querySelector('.event-country').getBoundingClientRect(),title=n.querySelector('.preview-event-title').getBoundingClientRect(),impact=n.querySelector('.preview-impact').getBoundingClientRect();return title.width>=100&&impact.right<=title.left+1&&title.right<=country.left+1&&country.right<=time.left+1}));assert.ok(columnsFit,'Time, currency/flag, title and importance remain separate on each preview row')
+  await page.screenshot({path:`qa/tools/calendar-preview-${width}x${height}-${theme}.png`})
   assert.equal(await page.locator('.flicker-guide summary').count(),0);assert.ok(await page.getByText('ترس شدید',{exact:true}).isVisible())
  }
+ await page.context().route('**/api/calendar?**',r=>{const now=Date.now();return r.fulfill({json:{configured:true,serverNow:new Date(now).toISOString(),total:6,events:[
+  {id:'past',title:'رویداد گذشته QA',currency:'USD',country:'US',at:new Date(now-60000).toISOString(),date:new Date(now).toISOString().slice(0,10),status:'scheduled'},
+  {id:'cancel',title:'رویداد لغوشده QA',currency:'USD',country:'US',at:new Date(now+60000).toISOString(),date:new Date(now).toISOString().slice(0,10),status:'cancelled'},
+  {id:'released',title:'رویداد منتشرشده QA',currency:'USD',country:'US',at:new Date(now+60000).toISOString(),date:new Date(now).toISOString().slice(0,10),status:'released'},
+  {id:'untimed',title:'رویداد بدون ساعت QA',currency:'USD',country:'US',at:null,date:new Date(now).toISOString().slice(0,10),status:'scheduled'},
+  {id:'soon',title:'رویداد نزدیک QA',currency:'USD',country:'US',at:new Date(now+5000).toISOString(),date:new Date(now).toISOString().slice(0,10),status:'scheduled'},
+  {id:'future',title:'رویداد آینده QA',currency:'USD',country:'US',at:new Date(now+600000).toISOString(),date:new Date(now).toISOString().slice(0,10),status:'scheduled'}]}})})
+ await page.goto(base+'/panel/tools');await page.getByText('رویداد نزدیک QA',{exact:true}).waitFor();assert.equal(await page.locator('.calendar-preview-event').count(),2)
+ await page.waitForFunction(()=>![...document.querySelectorAll('.calendar-preview-event')].some(n=>n.textContent.includes('رویداد نزدیک QA')),{},{timeout:8000});assert.equal(await page.locator('.calendar-preview-event').count(),1);assert.ok(await page.getByText('رویداد آینده QA',{exact:true}).isVisible())
  await page.context().unroute('**/api/calendar?**')
  assert.equal((await page.context().request.get(base+'/api/news')).status(),410)
  assert.equal((await page.context().request.get(base+'/api/calendar')).status(),200)
- await page.context().route('**/api/calendar**',r=>r.fulfill({json:{configured:true,updatedAt:new Date().toISOString(),events:Array.from({length:30},(_,n)=>({id:'calendar-qa-'+n,title:'رویداد آزمایشی '+n,at:new Date(Date.now()+n*60000).toISOString(),country:'US',currency:'USD',impact:'high',actual:{value:'5.05',currency:'EUR',unit:'billion'},forecast:{value:'-12',unit:'thousand'},previous:null,sourceUrl:'https://www.bls.gov/schedule/'}))}}))
- for(const width of [320,390,768,1440,2560])for(const theme of ['light','dark']){
+ await page.context().route('**/api/calendar**',r=>r.fulfill({json:{configured:true,updatedAt:new Date().toISOString(),events:Array.from({length:30},(_,n)=>({id:'calendar-qa-'+n,title:'رویداد آزمایشی '+n,originalTitle:'US Economic Release '+n,at:new Date(Date.now()+n*60000).toISOString(),country:'US',currency:'USD',impact:'high',actual:{value:'5.05',currency:'EUR',unit:'billion'},forecast:{value:'-12',unit:'thousand'},previous:null,sourceUrl:'https://www.bls.gov/schedule/'}))}}))
+ for(const width of [320,390,768,1024,1440,1920,2560,3440,3840])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:900});await page.goto(base+'/panel/tools/calendar');await page.getByRole('link',{name:'رویداد آزمایشی 0',exact:true}).waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
   assert.equal(await page.getByRole('navigation',{name:'ابزارهای تحلیل'}).getByRole('link',{name:'اخبار',exact:true}).count(),0)
   assert.equal(await page.locator('.side-nav a[href="https://tradersho.com/school"]').count(),1)
   assert.equal(await page.locator('.side-nav a[href="/panel/market"]').count(),0)
   assert.equal(await page.locator('.economic-amount bdi').first().innerText(),'EUR 5.05');assert.equal(await page.locator('.amount-unit').first().innerText(),'میلیارد')
+  assert.equal(await page.locator('.calendar-event-country .country-flag').count(),30)
+  if(width>=1800){const compact=await page.evaluate(()=>{const row=document.querySelector('.event-titles'),fa=row.querySelector('a').getBoundingClientRect(),en=row.querySelector('.event-original').getBoundingClientRect();return Math.abs(fa.top-en.top)<5&&getComputedStyle(row).display==='grid'});assert.ok(compact,'Bilingual titles share a desktop row')}
   await page.evaluate(()=>document.querySelector('.main-scroll').scrollTop=700);await page.waitForTimeout(150)
   const pinned=await page.evaluate(()=>{const bar=document.querySelector('.calendar-command').getBoundingClientRect(),host=document.querySelector('.main-scroll').getBoundingClientRect();return Math.abs(bar.top-host.top)<3})
   assert.ok(pinned,`Calendar command remains sticky at ${width} ${theme}`)
@@ -87,5 +103,5 @@ try{
   await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))),[])
   await page.screenshot({path:`qa/tools/calendar-native-${width}-${theme}.png`})
  }
- assert.deepEqual(errors,[]);console.log('PASS: registration through browser, 42 desktop/mobile page/theme combinations, overflow and axe serious/critical checks; 12 banner separation checks; 10 tool-workspace sizes/themes with fullscreen, navigation and coming-soon checks; 10 native-calendar variants with sticky controls, unit isolation and school/news routing checks; 10 desktop viewport-fit checks with long calendar titles and an always-visible Persian guide. CI uses the published fallback font; private brand fonts are mounted on the VPS.')
+ assert.deepEqual(errors,[]);console.log('PASS: registration through browser, 42 desktop/mobile page/theme combinations, overflow and axe serious/critical checks; 12 banner separation checks; 18 tool-workspace sizes/themes with fullscreen, navigation and coming-soon checks; 18 native-calendar variants with sticky controls, unit isolation and school/news routing checks; 14 desktop viewport-fit checks with long calendar titles and an always-visible Persian guide; upcoming-only preview expiration and flat backgrounds. CI uses the published fallback font; private brand fonts are mounted on the VPS.')
 }finally{await pool.query('DELETE FROM users WHERE email=$1',[email]);await pool.end();await browser.close()}

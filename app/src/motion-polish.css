@@ -81,3 +81,8 @@
  .home-tools-entry .home-tools-copy{order:1;width:100%}
 }
 @media(max-width:600px){.home-tools-entry,[data-theme=light] .home-tools-entry{padding:18px;gap:18px}.home-tools-entry .market-pulse{height:140px;min-height:140px}}
+
+/* Economic data panels stay flat and still, including hover/focus. */
+.tools-shell .analysis-center .surface,
+.tools-shell .analysis-center .surface:hover,
+.tools-shell .analysis-center .surface:focus-within{background:var(--surface)!important;animation:none!important}
