@@ -83,3 +83,20 @@
 .calendar-preview-card .calendar-preview-event .event-country{grid-column:2;grid-row:1}
 .calendar-preview-card .calendar-preview-event .preview-event-title{grid-column:3;grid-row:1}
 .calendar-preview-card .calendar-preview-event .preview-impact{grid-column:4;grid-row:1}
+
+/* Compact, filterable upcoming list and a bounded native widget column. */
+.preview-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 10px;flex:none}
+.preview-filters label{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--secondary);min-width:0}
+.preview-filters select{min-width:0;width:100%;min-height:36px;padding:5px 6px;background:var(--canvas);color:var(--ink);border:1px solid var(--line);border-radius:8px;font:inherit;text-align:center;text-align-last:center}
+.calendar-preview-card .calendar-preview-event{grid-template-columns:44px 30px minmax(0,1fr) 44px;height:58px;min-height:58px;gap:6px}
+.calendar-preview-card .calendar-preview-event .preview-event-title{display:block;white-space:normal;line-height:1.6}
+.preview-event-title strong,.preview-event-title small{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:500}
+.calendar-preview-card .preview-event-title small{font:10px/1.7 Arial,sans-serif;color:var(--secondary);text-align:right;margin-top:3px}
+.calendar-preview-card .calendar-preview-event .preview-impact{display:flex;align-items:center;justify-content:center;gap:4px;width:auto;height:auto;background:none;border:0;font-size:10px;color:var(--secondary);white-space:nowrap}
+.preview-impact i{width:6px;height:6px;flex:none;border-radius:50%;background:#64748d}
+.preview-impact.high{color:var(--ink)!important;font-weight:700}.preview-impact.high i{background:#ff5d00}.preview-impact.medium i{background:#543aff}.preview-impact.unknown i{background:transparent;border:1px solid var(--secondary)}
+.calendar-preview-card .calendar-preview-event .event-country{font:11px/1.6 Arial,sans-serif;justify-content:center}
+.flicker-frame-wrap{width:100%;max-width:400px;margin-inline:auto}
+@media(min-width:1201px) and (min-height:700px){.analysis-market .analysis-grid{grid-template-columns:minmax(0,1fr) clamp(340px,24vw,420px)}.analysis-market .flicker-card{align-self:stretch}.analysis-market .calendar-preview-card .calendar-preview-event{height:58px;min-height:58px}}
+@media(max-width:600px){.calendar-preview-card .calendar-preview-event{grid-template-columns:40px 28px minmax(0,1fr) 42px;gap:4px}.preview-filters select{min-height:44px;font-size:12px}}
+@media(min-width:1201px) and (min-height:700px) and (max-height:850px){.analysis-market .flicker-frame-wrap iframe{zoom:var(--widget-compact-scale,1);width:calc(100% / var(--widget-compact-scale,1));max-width:none}.analysis-market .flicker-guide dl{gap:2px 6px}.analysis-market .flicker-guide dl>div{font-size:10px}}
