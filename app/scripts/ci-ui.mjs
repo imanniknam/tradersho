@@ -114,7 +114,7 @@ try{
  await page.getByRole('button',{name:'پاک‌کردن انتخاب‌ها',exact:true}).click();await page.getByRole('checkbox',{name:'USD',exact:true}).check()
  await Promise.all([page.waitForResponse(r=>new URL(r.url()).searchParams.get('currency')==='USD,EUR'),page.getByRole('checkbox',{name:'EUR',exact:true}).check()]);assert.equal(await page.getByRole('checkbox',{name:'JPY',exact:true}).isChecked(),false)
  await page.getByRole('searchbox',{name:'جستجوی رویداد'}).fill('us');await page.getByRole('searchbox',{name:'جستجوی رویداد'}).focus()
- assert.ok(await page.locator('.calendar-search-box').evaluate(n=>{const s=getComputedStyle(n),i=getComputedStyle(n.querySelector('input'));return s.outlineWidth==='2px'&&i.outlineStyle==='none'}),'Search has one focus ring around the complete control')
+ assert.ok(await page.locator('.calendar-search-box').evaluate(n=>{const s=getComputedStyle(n),i=getComputedStyle(n.querySelector('input'));return s.outlineWidth==='2px'&&s.outlineOffset==='-1px'&&i.outlineStyle==='none'}),'Search has one focus ring around the complete control')
  await page.getByRole('button',{name:'پاک‌کردن جستجو',exact:true}).click();assert.equal(await page.getByRole('searchbox',{name:'جستجوی رویداد'}).inputValue(),'')
  for(const width of [320,390,768,1024,1440,1920,2560,3440,3840])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:900});await page.goto(base+'/panel/tools/calendar');await page.getByRole('link',{name:'رویداد آزمایشی 0',exact:true}).waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
