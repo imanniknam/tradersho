@@ -99,4 +99,8 @@
 .flicker-frame-wrap{width:100%;max-width:400px;margin-inline:auto}
 @media(min-width:1201px) and (min-height:700px){.analysis-market .analysis-grid{grid-template-columns:minmax(0,1fr) clamp(340px,24vw,420px)}.analysis-market .flicker-card{align-self:stretch}.analysis-market .calendar-preview-card .calendar-preview-event{height:58px;min-height:58px}}
 @media(max-width:600px){.calendar-preview-card .calendar-preview-event{grid-template-columns:40px 28px minmax(0,1fr) 42px;gap:4px}.preview-filters select{min-height:44px;font-size:12px}}
-@media(min-width:1201px) and (min-height:700px) and (max-height:850px){.analysis-market .flicker-frame-wrap iframe{zoom:var(--widget-compact-scale,1);width:calc(100% / var(--widget-compact-scale,1));max-width:none}.analysis-market .flicker-guide dl{gap:2px 6px}.analysis-market .flicker-guide dl>div{font-size:10px}}
+@media(min-width:1201px) and (min-height:700px) and (max-height:850px){.analysis-market .flicker-guide dl{gap:2px 6px}.analysis-market .flicker-guide dl>div{font-size:10px}}
+
+/* Keep iframe layout independent from its resize messages and reserve scaled height. */
+.flicker-frame-wrap{min-height:0;flex:none;position:relative;direction:ltr}
+.flicker-frame-wrap iframe{position:absolute;top:0;left:50%;width:400px;max-width:none;transform-origin:top center;zoom:1}
