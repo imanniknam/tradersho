@@ -6,7 +6,7 @@ if(!process.env.DATABASE_URL?.endsWith('_qa'))throw Error('A dedicated _qa datab
 const {pool}=await import('../server/db.mjs'),base='http://127.0.0.1:5183',email=`ci-ui-${randomUUID()}@example.test`
 const browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true})
 const page=await browser.newPage({reducedMotion:'reduce'}),axe=await readFile('node_modules/axe-core/axe.min.js','utf8'),errors=[]
-await page.context().route('**/fonts/**',r=>r.abort())
+if(!process.env.QA_BRAND_FONTS)await page.context().route('**/fonts/**',r=>r.abort())
 await page.context().route('https://flicker.finance/embed/**',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html lang="en"><head><title>QA gold widget</title></head><body>Gold Ounce · XAU — widget QA fixture</body></html>'}))
 page.on('pageerror',e=>errors.push(e.message))
 try{
@@ -28,7 +28,7 @@ try{
  await page.context().unroute('https://flicker.finance/embed/**')
  await page.context().route('https://flicker.finance/embed/**',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html lang="en"><head><title>QA gold widget</title></head><body>Gold Ounce · XAU — widget QA fixture</body></html>'}))
  const guest=await browser.newContext({reducedMotion:'reduce'}),loginPage=await guest.newPage()
- await guest.route('**/fonts/**',r=>r.abort())
+ if(!process.env.QA_BRAND_FONTS)await guest.route('**/fonts/**',r=>r.abort())
  for(const width of [320,390,1440])for(const theme of ['light','dark'])for(const mode of ['login','signup']){
   await loginPage.setViewportSize({width,height:720});await loginPage.goto(base+'/auth');if(mode==='signup')await loginPage.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await loginPage.getByAltText('تصویر کد امنیتی پنج‌رقمی').waitFor();await loginPage.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(350)
   assert.ok(await loginPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
@@ -46,10 +46,16 @@ try{
  const answerHash=createHmac('sha256',process.env.CAPTCHA_SECRET).update(cap.id+':12345').digest('hex')
  await pool.query('UPDATE login_captcha SET answer_hash=$1 WHERE id=$2',[answerHash,cap.id])
  await page.getByLabel('کد امنیتی',{exact:true}).fill('12345');await page.getByRole('button',{name:'ورود به پنل',exact:true}).click();await page.waitForURL(base+'/panel')
- for(const width of [320,390,1440])for(const theme of ['light','dark'])for(const path of ['/panel','/panel/tools','/panel/market','/panel/support','/panel/support/new','/panel/account','/forgot-password']){
-  await page.setViewportSize({width,height:900});await page.goto(base+path);await page.locator('h1').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(350)
+ const ticketResponse=await page.context().request.post(base+'/api/tickets',{headers:{Origin:base},data:{subject:'بررسی چیدمان درخواست با عنوان فارسی طولانی برای تست رابط',message:'این درخواست صرفاً دادهٔ آزمون رابط در پایگاه QA است و اطلاعات واقعی کاربر ندارد.',category:'technical',priority:'normal',requestId:randomUUID()}});assert.equal(ticketResponse.status(),201);const auditTicket=await ticketResponse.json()
+ await mkdir('qa/panel',{recursive:true})
+ for(const width of [320,390,768,1024,1280,1440,1920,2560,3840])for(const theme of ['light','dark'])for(const path of ['/panel','/panel/tools','/panel/market','/panel/support','/panel/support/new','/panel/support/'+auditTicket.id,'/panel/account','/panel/wallet','/panel/rebate','/forgot-password','/privacy']){
+  await page.setViewportSize({width,height:900});await page.goto(base+path);await page.locator('h1,.coming-soon h2').first().waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(350)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${width} ${theme} ${path}`)
   await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))),[],`${width} ${theme} ${path}`)
+  if(process.env.QA_BRAND_FONTS){await page.evaluate(()=>document.fonts.ready);assert.ok(await page.evaluate(()=>document.fonts.check('16px "Yekan Bakh"')),'Brand font loaded')}
+  const spills=await page.evaluate(()=>[...document.querySelectorAll('.main-inner input:not([type=checkbox]),.main-inner select,.main-inner textarea,.calendar-search-box,.currency-filter')].filter(n=>{const r=n.getBoundingClientRect(),p=n.parentElement.getBoundingClientRect();return r.width>0&&(r.left<p.left-2||r.right>p.right+2)}).map(n=>({tag:n.tagName,cls:n.className,label:n.getAttribute('aria-label')})));assert.deepEqual(spills,[],`Control alignment ${width} ${theme} ${path}`)
+  assert.ok(await page.evaluate(()=>[...document.querySelectorAll('select:not([multiple])')].filter(n=>n.getBoundingClientRect().width>0).every(n=>{const s=getComputedStyle(n);return s.appearance==='none'&&s.backgroundImage!=='none'&&s.backgroundPositionX==='12px'&&parseFloat(s.paddingInlineEnd)>=36})),'Select arrows have a consistent inset')
+  await page.screenshot({path:`qa/panel/${path.replaceAll('/','-')}-${width}-${theme}.png`})
  }
  await mkdir('qa/tools',{recursive:true})
  for(const width of [320,390,768,1024,1440,2560])for(const theme of ['light','dark']){
@@ -62,7 +68,7 @@ try{
  for(const width of [320,390,768,1024,1440,1920,2560,3440,3840])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:1000});await page.goto(base+'/panel/tools');await page.locator('.tv-host iframe').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(150)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
-  assert.ok((await page.locator('.flicker-card iframe').getAttribute('src')).startsWith('https://flicker.finance/embed/en/xau/fear-greed?'));assert.equal(await page.locator('.analysis-context > section').count(),2)
+  assert.ok((await page.locator('.flicker-card iframe').getAttribute('src')).startsWith('https://flicker.finance/embed/en/xau/fear-greed?'));assert.equal(await page.locator('.analysis-context > section').count(),2);if(width<=600)assert.ok(await page.getByLabel('ارز پیش‌نمایش').evaluate(n=>parseFloat(getComputedStyle(n).fontSize)>=16),'Mobile select text is at least 16px')
   assert.ok(await page.evaluate(()=>{const cards=document.querySelectorAll('.analysis-context > section');return cards[1].getBoundingClientRect().top>=cards[0].getBoundingClientRect().bottom}),'Gold sentiment stays beneath calendar')
   assert.equal(await page.evaluate(()=>window.__chartConfig.symbol),'OANDA:XAUUSD');assert.equal(await page.evaluate(()=>window.__chartConfig.interval),'60')
   await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))),[])
@@ -72,6 +78,10 @@ try{
   await page.getByRole('navigation',{name:'ابزارهای تحلیل'}).getByRole('link',{name:'پنل ریسک'}).click();await page.getByRole('heading',{name:'پنل ریسک در حال آماده‌سازی است'}).waitFor();assert.equal(await page.locator('.tv-host').count(),0)
   if(width>=1201){const railAfter=await page.locator('.analysis-rail').boundingBox();assert.ok(Math.abs(railBefore.height-railAfter.height)<2&&Math.abs(railBefore.width-railAfter.width)<2&&Math.abs(railBefore.x-railAfter.x)<2&&Math.abs(railBefore.y-railAfter.y)<2,'Tool rail must keep its size across tabs')}
   await page.getByRole('link',{name:'بازگشت به نمای بازار',exact:true}).click();await page.locator('.tv-host iframe').waitFor()
+ }
+ for(const width of [390,1440,3840])for(const theme of ['light','dark'])for(const tool of ['risk','expert','journal','compass','scenario','widgets']){
+  await page.setViewportSize({width,height:900});await page.goto(base+'/panel/tools/'+tool);await page.locator('.coming-soon h2').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
+  assert.equal(await page.locator('.analysis-rail [aria-current=page]').getAttribute('href'),'/panel/tools/'+tool);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.ok(await page.getByText('به‌زودی',{exact:true}).last().isVisible())
  }
  await page.context().route('**/api/calendar?**',r=>r.fulfill({json:{configured:true,events:Array.from({length:50},(_,n)=>({id:'preview-long-'+n,originalTitle:'US Non-Farm Employment Change NFP',title:'عنوان طولانی رویداد اقتصادی برای بررسی چیدمان و نمایش در تقویم '.repeat(6),country:'US',currency:'USD',impact:'high',date:new Date().toISOString().slice(0,10),at:new Date(Date.now()+n*60000).toISOString(),status:'scheduled'}))}}))
  for(const [width,height] of [[1280,720],[1366,768],[1440,900],[1920,1080],[2560,1440],[3440,1440],[3840,2160]])for(const theme of ['light','dark']){
@@ -98,7 +108,14 @@ try{
  await page.context().unroute('**/api/calendar?**')
  assert.equal((await page.context().request.get(base+'/api/news')).status(),410)
  assert.equal((await page.context().request.get(base+'/api/calendar')).status(),200)
- await page.context().route('**/api/calendar**',r=>r.fulfill({json:{configured:true,updatedAt:new Date().toISOString(),events:Array.from({length:30},(_,n)=>({id:'calendar-qa-'+n,title:'رویداد آزمایشی '+n,originalTitle:'US Economic Release '+n,at:new Date(Date.now()+n*60000).toISOString(),country:'US',currency:'USD',impact:'high',actual:{value:'5.05',currency:'EUR',unit:'billion'},forecast:{value:'-12',unit:'thousand'},previous:null,sourceUrl:'https://www.bls.gov/schedule/'}))}}))
+ await page.context().route('**/api/calendar**',r=>r.fulfill({json:{configured:true,updatedAt:new Date().toISOString(),sources:[{provider:'persianfx',name:'PersianFX',url:'https://persianfx.com/',count:30,status:'ok',lastSuccess:new Date().toISOString()}],events:Array.from({length:30},(_,n)=>({id:'calendar-qa-'+n,title:'رویداد آزمایشی '+n,originalTitle:'US Economic Release '+n,at:new Date(Date.now()+n*60000).toISOString(),country:'US',currency:'USD',impact:'high',actual:{value:'5.05',currency:'EUR',unit:'billion'},forecast:{value:'-12',unit:'thousand'},previous:null,sourceUrl:'https://www.bls.gov/schedule/'}))}}))
+ await page.goto(base+'/panel/tools/calendar');await page.getByRole('link',{name:'رویداد آزمایشی 0',exact:true}).waitFor()
+ await page.getByRole('button',{name:'منبع داده',exact:true}).click();assert.equal(await page.locator('#calendar-sources').getAttribute('open'),'');assert.ok(await page.locator('#calendar-sources a').isVisible())
+ await page.getByRole('button',{name:'پاک‌کردن انتخاب‌ها',exact:true}).click();await page.getByRole('checkbox',{name:'USD',exact:true}).check()
+ await Promise.all([page.waitForResponse(r=>new URL(r.url()).searchParams.get('currency')==='USD,EUR'),page.getByRole('checkbox',{name:'EUR',exact:true}).check()]);assert.equal(await page.getByRole('checkbox',{name:'JPY',exact:true}).isChecked(),false)
+ await page.getByRole('searchbox',{name:'جستجوی رویداد'}).fill('us');await page.getByRole('searchbox',{name:'جستجوی رویداد'}).focus()
+ assert.ok(await page.locator('.calendar-search-box').evaluate(n=>{const s=getComputedStyle(n),i=getComputedStyle(n.querySelector('input'));return s.outlineWidth==='2px'&&i.outlineStyle==='none'}),'Search has one focus ring around the complete control')
+ await page.getByRole('button',{name:'پاک‌کردن جستجو',exact:true}).click();assert.equal(await page.getByRole('searchbox',{name:'جستجوی رویداد'}).inputValue(),'')
  for(const width of [320,390,768,1024,1440,1920,2560,3440,3840])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:900});await page.goto(base+'/panel/tools/calendar');await page.getByRole('link',{name:'رویداد آزمایشی 0',exact:true}).waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
@@ -110,12 +127,13 @@ try{
   const stacked=await page.evaluate(()=>{const row=document.querySelector('.event-titles'),fa=row.querySelector('a').getBoundingClientRect(),en=row.querySelector('.event-original').getBoundingClientRect(),meta=document.querySelector('.calendar-event-meta');return en.top>=fa.bottom-1&&meta.querySelector('.event-status').getBoundingClientRect().top>=meta.querySelector('.event-impact').getBoundingClientRect().bottom-1});assert.ok(stacked,'Titles and importance/status retain two-line hierarchy')
   assert.ok(await page.locator('.country-flag').first().evaluate(n=>n.tagName==='IMG'&&n.complete&&n.naturalWidth>0),'Flag SVG loads without emoji fallback')
   assert.ok(await page.getByRole('button',{name:'بررسی به‌روزرسانی تقویم'}).evaluate(n=>getComputedStyle(n).backgroundColor==='rgb(84, 58, 255)'))
-  await page.evaluate(()=>document.querySelector('.main-scroll').scrollTop=700);await page.waitForTimeout(150)
+  await page.evaluate(()=>{const host=document.querySelector('.main-scroll'),head=document.querySelector('.native-calendar-table thead');host.scrollTop+=head.getBoundingClientRect().top-host.getBoundingClientRect().top+120});await page.waitForTimeout(150)
   const pinned=await page.evaluate(()=>{const bar=document.querySelector('.calendar-command').getBoundingClientRect(),host=document.querySelector('.main-scroll').getBoundingClientRect();return Math.abs(bar.top-host.top)<3})
   assert.ok(pinned,`Calendar command remains sticky at ${width} ${theme}`)
+  if(width<=900)assert.ok(await page.evaluate(()=>{const rail=document.querySelector('.analysis-rail').getBoundingClientRect(),link=document.querySelector('.analysis-rail .selected').getBoundingClientRect();return link.left>=rail.left-1&&link.right<=rail.right+1}),'Active tool remains visible on the mobile rail')
   if(width>=1100)assert.ok(await page.evaluate(()=>Math.abs(document.querySelector('.native-calendar-table thead th').getBoundingClientRect().top-document.querySelector('.calendar-command').getBoundingClientRect().bottom)<4),'Desktop table headings stay below command bar')
   await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))),[])
   await page.screenshot({path:`qa/tools/calendar-native-${width}-${theme}.png`})
  }
- assert.deepEqual(errors,[]);console.log('PASS: registration through browser, 42 desktop/mobile page/theme combinations, overflow and axe serious/critical checks; 12 banner separation checks; 18 tool-workspace sizes/themes with fullscreen, navigation and coming-soon checks; 18 native-calendar variants with sticky controls, unit isolation and school/news routing checks; 14 desktop viewport-fit checks with long calendar titles and an always-visible Persian guide; upcoming-only preview expiration, flat backgrounds and four responsive iframe stability/scrollbar regression cases. CI uses the published fallback font; private brand fonts are mounted on the VPS.')
-}finally{await pool.query('DELETE FROM users WHERE email=$1',[email]);await pool.end();await browser.close()}
+ assert.deepEqual(errors,[]);console.log('PASS: registration through browser, 198 dashboard/support/account/privacy/calendar page/theme combinations, overflow and axe serious/critical checks; 12 banner separation checks; 18 tool-workspace sizes/themes with fullscreen, navigation and coming-soon checks; 18 native-calendar variants with sticky controls, unit isolation and school/news routing checks; 14 desktop viewport-fit checks with long calendar titles and an always-visible Persian guide; upcoming-only preview expiration, flat backgrounds and four responsive iframe stability/scrollbar regression cases. CI uses the published fallback font; private brand fonts are mounted on the VPS.')
+}finally{await pool.query('DELETE FROM support_tickets WHERE user_id IN (SELECT id FROM users WHERE email=$1)',[email]);await pool.query('DELETE FROM users WHERE email=$1',[email]);await pool.end();await browser.close()}

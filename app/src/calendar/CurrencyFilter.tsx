@@ -1,0 +1,8 @@
+import CountryLabel from './CountryLabel'
+export const calendarCurrencies=['USD','EUR','GBP','JPY','CHF','CAD','AUD','NZD','CNY','SEK','NOK','ZAR','TRY','MXN','INR','BRL','KRW','SGD','HKD']
+const countries=['US','EU','GB','JP','CH','CA','AU','NZ','CN','SE','NO','ZA','TR','MX','IN','BR','KR','SG','HK']
+export default function CurrencyFilter({value,onChange}:{value:string;onChange:(v:string)=>void}){
+ const selected=value==='all'?calendarCurrencies:value==='none'?[]:value.split(',')
+ const choices=(list:string[])=>list.map(currency=><label key={currency} className={selected.includes(currency)?'selected':''}><input type="checkbox" aria-label={currency} checked={selected.includes(currency)} onChange={()=>{const next=calendarCurrencies.filter(c=>c===currency?!selected.includes(c):selected.includes(c));onChange(next.length===calendarCurrencies.length?'all':next.length?next.join(','):'none')}}/><CountryLabel country={countries[calendarCurrencies.indexOf(currency)]} currency={currency} compact/></label>)
+ return <fieldset className="currency-filter"><legend>ارزهای مرتبط</legend><div className="currency-filter-heading"><p>می‌توانید چند ارز را هم‌زمان انتخاب کنید.</p><div><button type="button" onClick={()=>onChange('all')}>انتخاب همه</button><button type="button" onClick={()=>onChange('none')}>پاک‌کردن انتخاب‌ها</button></div></div><div className="currency-choices">{choices(calendarCurrencies.slice(0,9))}</div><details className="currency-more"><summary>ارزهای بیشتر <span>{selected.filter(c=>calendarCurrencies.indexOf(c)>=9).length.toLocaleString('fa-IR')} انتخاب‌شده</span></summary><div className="currency-choices">{choices(calendarCurrencies.slice(9))}</div></details></fieldset>
+}

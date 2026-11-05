@@ -107,3 +107,4 @@
 .preview-filters{grid-template-columns:1fr}.preview-filters>.impact-filter{min-width:0}.preview-filters .impact-filter legend{font-size:10px;margin-bottom:5px}.preview-filters .impact-filter>div{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.preview-filters .impact-filter button{min-height:34px;font-size:10px;padding:4px}.preview-filters .impact-filter i{width:6px;height:6px}
 @media(max-width:600px){.preview-filters .impact-filter button{min-height:44px;font-size:12px}}
 @media(min-width:601px){.preview-filters{grid-template-columns:100px minmax(0,1fr);align-items:center}.preview-filters .impact-filter legend{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.preview-filters .impact-filter button{min-height:36px;padding:4px 2px}.preview-filters .impact-filter>div{gap:3px}}
+@media(max-width:600px){.preview-filters select{font-size:16px}.preview-filters label{font-size:12px}}

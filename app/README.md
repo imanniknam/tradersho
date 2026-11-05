@@ -107,3 +107,5 @@ PostgreSQL `mail_outbox` persists jobs across restarts; AES-256-GCM encrypts que
 Monitor queue counts by status/purpose and generic `Mail delivery` / `Mail worker unavailable` logs from the secure server. No public mail administration or arbitrary-send endpoint exists. `DATABASE_URL=<dedicated _qa database> npm run test:e2e:mail` tests recovery/notifications, access control, duplicates, encryption, concurrency, expiry and retries using a fake transport, without real emails. CI runs this test automatically.
 
 فیلتر اهمیت در تقویم و پیش‌نمایش چندانتخابی است: `impact=high,medium`، مقدار `all` برای همه و `none` برای بدون انتخاب. ترکیب آرای بانک مرکزی با سه عدد صحیح و جداکنندهٔ خط تیره مستقل از مقدارهای اعشاری حفظ می‌شود؛ منبع مقدار خالی را به صفر تبدیل نمی‌کنیم.
+
+تقویم از فیلتر چندارزی `currency=USD,EUR` و `none` پشتیبانی می‌کند. چک‌باکس‌ها، منابع قابل‌بازشدن، جستجوی دارای دکمه پاک‌کردن و فیلترهای جمع‌شوندهٔ موبایل فعال‌اند. ممیزی `scripts/ci-ui.mjs` صفحات پنل را در۱۹۸ترکیبصفحه/عرض/تم و تمام تب‌های ابزارها می‌سنجد؛ `QA_BRAND_FONTS=1` فونت واقعی برند را نیز بارگذاری می‌کند.

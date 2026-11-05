@@ -23,6 +23,11 @@ try{
  assert.equal((await req('/calendar?from='+today+'&to='+today+'&impact=none')).body.total,0)
  for(const impact of ['high,guessed','high,high','high,medium,low,extra'])assert.equal((await req('/calendar?impact='+impact)).status,400)
  await req('/integrations/calendar','POST',batch(),false,true)
+ const money=batch();money.events=money.events.slice(0,3).map((e,n)=>({...e,currency:['USD','EUR','JPY'][n],country:['US','EU','JP'][n]}));await req('/integrations/calendar','POST',money,false,true)
+ const pair=(await req('/calendar?from='+today+'&to='+today+'&currency=USD,EUR')).body;assert.equal(pair.total,2);assert.deepEqual(new Set(pair.events.map(e=>e.currency)),new Set(['USD','EUR']))
+ assert.equal((await req('/calendar?from='+today+'&to='+today+'&currency=none')).body.total,0)
+ for(const currency of ['USD,HACK','USD,USD','USD,,EUR'])assert.equal((await req('/calendar?currency='+currency)).status,400)
+ await req('/integrations/calendar','POST',batch(),false,true)
  const failed=batch();failed.events=[];
  failed.sources.find(s=>s.provider==='persianfx').status='error'
  assert.equal((await req('/integrations/calendar','POST',failed,false,true)).status,200)
