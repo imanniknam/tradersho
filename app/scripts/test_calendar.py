@@ -40,6 +40,13 @@ class PersianCalendarTest(unittest.TestCase):
    with self.assertRaises(ValueError):p.amount(raw)
  def test_composite_auction_values_are_not_a_decimal(self):
   self.assertEqual(p.amount('3.1|3.8'),{'components':[{'value':'3.1','unit':'number'},{'value':'3.8','unit':'number'}]})
+ def test_rate_votes_preserve_components_without_guessing_ranges(self):
+  e=self.parse(self.row(event_name='UK MPC Official Bank Rate Votes',forecast='7-0-2',previous='3-0-6'))[0]
+  self.assertEqual(e['forecast'],{'components':[{'value':'7','unit':'number'},{'value':'0','unit':'number'},{'value':'2','unit':'number'}],'separator':'-'})
+  self.assertEqual(e['previous']['components'][2]['value'],'6')
+  with self.assertRaises(ValueError):self.parse(self.row(forecast='7-0-2'))
+  for raw in ['1-2','7-0-2-1','7.5-0-2']:
+   with self.assertRaises(ValueError):p.amount(raw,allow_votes=True)
  def test_tehran_timestamp_and_revisions(self):
   e=self.parse(self.row(revised='50.9'))[0];self.assertEqual(e['at'],'2026-11-02T15:00:00+00:00');self.assertEqual(e['previous']['value'],'51.0');self.assertEqual(e['revised']['value'],'50.9');self.assertEqual(e['impact'],'high')
  def test_all_day_tentative_no_fabricated_midnight(self):

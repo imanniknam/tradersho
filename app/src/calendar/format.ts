@@ -1,5 +1,5 @@
 export type EconomicScalar={value:string;unit?:'number'|'percent'|'thousand'|'million'|'billion'|'trillion';currency?:'USD'|'EUR'|'GBP'|'JPY'|'AUD'|'CAD'|'CHF'|'NZD'|'CNY'|'SEK'|'NOK'|'ZAR'|'TRY'|'MXN'|'INR'|'BRL'|'KRW'|'SGD'|'HKD'}
-export type EconomicValue=EconomicScalar|{components:EconomicScalar[]}
+export type EconomicValue=EconomicScalar|{components:EconomicScalar[];separator?:'|'|'-'}
 const units={number:'',percent:'٪',thousand:'هزار',million:'میلیون',billion:'میلیارد',trillion:'تریلیون'}
 // Source adapters must supply a canonical decimal and explicit unit. Never infer scale from translated text.
 export function formatEconomicValue(input:EconomicValue|null|undefined){

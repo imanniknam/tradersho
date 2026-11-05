@@ -10,9 +10,10 @@ ENDPOINT='https://api.persianfx.com/api.php'
 COUNTRIES={'USD':'US','EUR':'EU','GBP':'GB','JPY':'JP','CHF':'CH','CAD':'CA','AUD':'AU','NZD':'NZ','CNY':'CN','SEK':'SE','NOK':'NO','ZAR':'ZA','TRY':'TR','MXN':'MX','INR':'IN','BRL':'BR','KRW':'KR','SGD':'SG','HKD':'HK'}
 CURRENCIES={'$':'USD','€':'EUR','£':'GBP','¥':'JPY'}
 UNITS={'':'number','%':'percent','K':'thousand','M':'million','B':'billion','T':'trillion'}
-def amount(raw):
+def amount(raw,allow_votes=False):
  if raw is None or str(raw).strip() in {'','-','—','N/A','n/a'}:return None
  if not isinstance(raw,(str,int,float)) or isinstance(raw,bool):raise ValueError('invalid value')
+ if allow_votes and isinstance(raw,str) and re.fullmatch(r'\d{1,3}-\d{1,3}-\d{1,3}',raw.strip()):return {'components':[{'value':n,'unit':'number'} for n in raw.strip().split('-')],'separator':'-'}
  if isinstance(raw,str) and '|' in raw:
   parts=raw.split('|')
   if not 2<=len(parts)<=3:raise ValueError('invalid composite value')
@@ -45,11 +46,12 @@ def parse_day(data,day):
    if not re.fullmatch(r'\d{2}:\d{2}:\d{2}',rawtime):raise ValueError('invalid time')
    local=dt.datetime.fromisoformat(day+'T'+rawtime).replace(tzinfo=TEHRAN)
    at=local.astimezone(UTC).isoformat();timing='known'
-  actual=amount(row.get('actual'));status=row.get('status')
+  votes=original.endswith('Bank Rate Votes');numeric=lambda key:amount(row.get(key),allow_votes=votes)
+  actual=numeric('actual');status=row.get('status')
   if status not in {'published','waiting','cancelled'}:raise ValueError('unknown event status')
   impact={None:None,'none':None,'low':'low','mid':'medium','high':'high'}.get(row.get('impact'),'invalid')
   if impact=='invalid':raise ValueError('unknown importance')
-  result.append({'provider':'persianfx','key':key,'date':day,'at':at,'timeStatus':timing,'allDay':model in {'کل‌روز','کل روز','All Day','all_day'},'status':'cancelled' if status=='cancelled' else 'released' if status=='published' else 'scheduled','title':title,'originalTitle':original,'translated':title!=original,'country':COUNTRIES[row['currency']],'currency':row['currency'],'impact':impact,'actual':actual,'forecast':amount(row.get('forecast')),'previous':amount(row.get('previous')),'revised':amount(row.get('revised')),'sourceUrl':'https://persianfx.com/','providerUpdatedAt':row.get('updated_at')})
+  result.append({'provider':'persianfx','key':key,'date':day,'at':at,'timeStatus':timing,'allDay':model in {'کل‌روز','کل روز','All Day','all_day'},'status':'cancelled' if status=='cancelled' else 'released' if status=='published' else 'scheduled','title':title,'originalTitle':original,'translated':title!=original,'country':COUNTRIES[row['currency']],'currency':row['currency'],'impact':impact,'actual':actual,'forecast':numeric('forecast'),'previous':numeric('previous'),'revised':numeric('revised'),'sourceUrl':'https://persianfx.com/','providerUpdatedAt':row.get('updated_at')})
  return result
 
 def fetch_day(day):

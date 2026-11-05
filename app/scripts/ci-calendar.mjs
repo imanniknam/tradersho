@@ -18,6 +18,11 @@ try{
  assert.equal((await req('/calendar?from='+today+'&to='+today+'&impact=high')).body.total,111)
  assert.equal((await req('/calendar?from='+today+'&to='+today+'&impact=low')).body.total,0)
  for(const query of ['from=invalid','from=2026-02-30','page=0','currency=HACK','impact=guessed','from=2025-01-01&to=2027-01-01'])assert.equal((await req('/calendar?'+query)).status,400)
+ const mixed=batch();mixed.events=mixed.events.slice(0,4).map((e,n)=>({...e,impact:['high','medium','low',null][n]}));await req('/integrations/calendar','POST',mixed,false,true)
+ assert.equal((await req('/calendar?from='+today+'&to='+today+'&impact=high,medium')).body.total,2)
+ assert.equal((await req('/calendar?from='+today+'&to='+today+'&impact=none')).body.total,0)
+ for(const impact of ['high,guessed','high,high','high,medium,low,extra'])assert.equal((await req('/calendar?impact='+impact)).status,400)
+ await req('/integrations/calendar','POST',batch(),false,true)
  const failed=batch();failed.events=[];
  failed.sources.find(s=>s.provider==='persianfx').status='error'
  assert.equal((await req('/integrations/calendar','POST',failed,false,true)).status,200)
