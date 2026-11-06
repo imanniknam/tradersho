@@ -57,7 +57,9 @@ jobs:
           node scripts/ci-calendar.mjs
           node scripts/ci-mail.mjs
       - name: Desktop and mobile browser checks
-        run: CHROME_BIN="$(command -v google-chrome)" node scripts/ci-ui.mjs
+        run: |
+          CHROME_BIN="$(command -v google-chrome)" node scripts/ci-ui.mjs
+          CHROME_BIN="$(command -v google-chrome)" node scripts/ci-risk-ui.mjs
       - name: Application diagnostics on failure
         if: failure()
         run: cat /tmp/tradersho-ci-server.log || true

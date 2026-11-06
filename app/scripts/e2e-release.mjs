@@ -39,7 +39,7 @@ try{
  assert.equal(await page.locator('.tv-expanded').count(),1)
  await overflow();await shot('chart-fullscreen')
  await page.keyboard.press('Escape');assert.equal(await page.locator('.tv-expanded').count(),0)
- const tools=await api('/tools');assert.equal(tools.body.tools.find(t=>t.id==='chart').status,'active');assert.deepEqual(tools.body.tools.map(t=>t.id),['chart','expert']);assert.equal(tools.body.tools.find(t=>t.id==='expert').status,'coming_soon')
+ const tools=await api('/tools');assert.equal(tools.body.tools.find(t=>t.id==='chart').status,'active');assert.deepEqual(tools.body.tools.map(t=>t.id),['chart','risk','expert']);assert.equal(tools.body.tools.find(t=>t.id==='expert').status,'coming_soon')
  assert.equal((await api('/tools/calculator/access')).status,404)
  for(const path of ['/tools/expert/access','/candles/datasets','/replay/session'])assert.equal((await api(path)).status,409)
  for(const path of ['/rebates'])assert.equal((await api(path,'POST',{})).status,409)
