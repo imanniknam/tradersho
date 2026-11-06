@@ -40,6 +40,9 @@ class PersianCalendarTest(unittest.TestCase):
    with self.assertRaises(ValueError):p.amount(raw)
  def test_composite_auction_values_are_not_a_decimal(self):
   self.assertEqual(p.amount('3.1|3.8'),{'components':[{'value':'3.1','unit':'number'},{'value':'3.8','unit':'number'}]})
+ def test_effect_direction_requires_exact_source_statement(self):
+  self.assertEqual(p.effect_direction('اگر مقدار "فعلی" از "پیشبینی" کمتر باشد تاثیر مثبت بر ارزش ارز دارد؛'),'lower')
+  self.assertIsNone(p.effect_direction('higher is probably better'))
  def test_rate_votes_preserve_components_without_guessing_ranges(self):
   e=self.parse(self.row(event_name='UK MPC Official Bank Rate Votes',forecast='7-0-2',previous='3-0-6'))[0]
   self.assertEqual(e['forecast'],{'components':[{'value':'7','unit':'number'},{'value':'0','unit':'number'},{'value':'2','unit':'number'}],'separator':'-'})

@@ -108,3 +108,7 @@
 @media(max-width:600px){.preview-filters .impact-filter button{min-height:44px;font-size:12px}}
 @media(min-width:601px){.preview-filters{grid-template-columns:100px minmax(0,1fr);align-items:center}.preview-filters .impact-filter legend{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.preview-filters .impact-filter button{min-height:36px;padding:4px 2px}.preview-filters .impact-filter>div{gap:3px}}
 @media(max-width:600px){.preview-filters select{font-size:16px}.preview-filters label{font-size:12px}}
+
+.preview-impact.high i{background:#dc2626}.preview-impact.medium i{background:#f97316}.preview-impact.low i{background:#eab308}
+.preview-filters{grid-template-columns:minmax(0,1fr)}
+@media(min-width:601px){.preview-filters{grid-template-columns:145px minmax(0,1fr)}}

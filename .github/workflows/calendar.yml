@@ -1,7 +1,6 @@
 name: Update economic calendar
 on:
   schedule:
-    - cron: '2,32,47 * * * *'
     - cron: '17 * * * *'
   workflow_dispatch:
   workflow_run:

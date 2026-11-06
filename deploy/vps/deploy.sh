@@ -38,3 +38,37 @@ mv -Tf "$root/current.new" "$root/current"
 trap - ERR
 printf '\nRelease %s is healthy. Previous: %s\n' "$sha" "$previous"
 # Database schema rollback is deliberately not automated. Use additive migrations.
+
+# The daily results collector runs on the VPS instead of depending on GitHub cron latency.
+# Python/curl already exist on this host; credentials remain in the private environment file.
+docker cp tradersho-app-1:/app/scripts/collect-persianfx.py "$root/calendar-collector.new.py"
+chmod 600 "$root/calendar-collector.new.py"
+mv -f "$root/calendar-collector.new.py" "$root/calendar-collector.py"
+cat > /etc/systemd/system/tradersho-calendar.service <<'UNIT'
+[Unit]
+Description=Tradersho daily economic calendar refresh
+After=network-online.target docker.service
+[Service]
+Type=oneshot
+EnvironmentFile=/opt/tradersho/.env
+Environment=CALENDAR_PANEL_URL=https://my.tradersho.com
+ExecStart=/usr/bin/python3 /opt/tradersho/calendar-collector.py --past-days 0 --future-days 0
+TimeoutStartSec=150
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+UNIT
+cat > /etc/systemd/system/tradersho-calendar.timer <<'UNIT'
+[Unit]
+Description=Refresh today's calendar every minute
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=60s
+AccuracySec=1s
+[Install]
+WantedBy=timers.target
+UNIT
+systemctl daemon-reload
+systemctl enable --now tradersho-calendar.timer
+systemctl start --no-block tradersho-calendar.service

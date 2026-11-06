@@ -16,6 +16,7 @@ COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/server ./server
 COPY --from=build --chown=node:node /app/shared ./shared
 COPY --from=build --chown=node:node /app/scripts/support-agent.mjs ./scripts/support-agent.mjs
+COPY --from=build --chown=node:node /app/scripts/collect-persianfx.py ./scripts/collect-persianfx.py
 USER node
 EXPOSE 3001
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 CMD node -e "fetch('http://127.0.0.1:3001/api/health',{signal:AbortSignal.timeout(4000)}).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"

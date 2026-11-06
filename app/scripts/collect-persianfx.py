@@ -30,6 +30,11 @@ def amount(raw,allow_votes=False):
  if m[1]:out['currency']=CURRENCIES.get(m[1],m[1].upper())
  return out
 
+def effect_direction(raw):
+ # Exact publisher statements only: no title-based inference or generic higher-is-better rule.
+ return {'اگر مقدار "فعلی" از "پیشبینی" بیشتر باشد تاثیر مثبت بر ارزش ارز دارد؛':'higher',
+         'اگر مقدار "فعلی" از "پیشبینی" کمتر باشد تاثیر مثبت بر ارزش ارز دارد؛':'lower'}.get(raw)
+
 def parse_day(data,day):
  if not isinstance(data,dict) or data.get('status')!='success' or data.get('date')!=day or not isinstance(data.get('events'),list) or data.get('count')!=len(data['events']):raise ValueError('invalid snapshot')
  result=[];seen=set()
@@ -51,7 +56,7 @@ def parse_day(data,day):
   if status not in {'published','waiting','cancelled'}:raise ValueError('unknown event status')
   impact={None:None,'none':None,'low':'low','mid':'medium','high':'high'}.get(row.get('impact'),'invalid')
   if impact=='invalid':raise ValueError('unknown importance')
-  result.append({'provider':'persianfx','key':key,'date':day,'at':at,'timeStatus':timing,'allDay':model in {'کل‌روز','کل روز','All Day','all_day'},'status':'cancelled' if status=='cancelled' else 'released' if status=='published' else 'scheduled','title':title,'originalTitle':original,'translated':title!=original,'country':COUNTRIES[row['currency']],'currency':row['currency'],'impact':impact,'actual':actual,'forecast':numeric('forecast'),'previous':numeric('previous'),'revised':numeric('revised'),'sourceUrl':'https://persianfx.com/','providerUpdatedAt':row.get('updated_at')})
+  result.append({'provider':'persianfx','key':key,'date':day,'at':at,'timeStatus':timing,'allDay':model in {'کل‌روز','کل روز','All Day','all_day'},'status':'cancelled' if status=='cancelled' else 'released' if status=='published' else 'scheduled','title':title,'originalTitle':original,'translated':title!=original,'country':COUNTRIES[row['currency']],'currency':row['currency'],'impact':impact,'favorableDirection':effect_direction(row.get('usual_effect')),'actual':actual,'forecast':numeric('forecast'),'previous':numeric('previous'),'revised':numeric('revised'),'sourceUrl':'https://persianfx.com/','providerUpdatedAt':row.get('updated_at')})
  return result
 
 def fetch_day(day):

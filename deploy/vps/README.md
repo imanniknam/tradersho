@@ -62,3 +62,6 @@ The app can run without CAPTCHA when `CAPTCHA_MODE` is unset (legacy/local envir
 
 
 News ingestion is retired. Scheduled workflow and public read/import routes are removed (HTTP 410); historical database tables are retained. Native calendar data integration is pending a separately selected raw-data source. No calendar feed/API key is currently required or configured.
+
+### دریافت نتایج تقویم
+انتشار، collector تأییدشده را از image به `/opt/tradersho/calendar-collector.py` منتقل و `tradersho-calendar.timer` را فعال می‌کند. زمان‌بند هر۶۰ثانیه روز جاری تهران را دریافت می‌کند؛ Python3 و curl روی میزبان لازم‌اند. `CALENDAR_INGEST_TOKEN` از فایل خصوصی `/opt/tradersho/.env` خوانده می‌شود. وضعیت: `systemctl status tradersho-calendar.timer` و `journalctl -u tradersho-calendar.service`؛ از چاپ EnvironmentFile خودداری کنید. غیرفعال‌سازی: `systemctl disable --now tradersho-calendar.timer`. خطای منبع cache موفق قبلی را حفظ می‌کند. GitHub دریافت ساعتی پنجرهٔ وسیع را ادامه می‌دهد.
