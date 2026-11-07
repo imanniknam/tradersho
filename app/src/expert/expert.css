@@ -27,3 +27,6 @@
 @media(max-width:760px){.expert-lab-toolbar>div:last-child{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .expert-market-monitor{z-index:2}
+
+/* Keep leaders below tutorial cards, above the native panel outline. */
+.expert-guide-arrow{z-index:8}
