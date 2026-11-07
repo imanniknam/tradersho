@@ -81,7 +81,7 @@ try{
   if(width>=1201){const railAfter=await page.locator('.analysis-rail').boundingBox();assert.ok(Math.abs(railBefore.height-railAfter.height)<2&&Math.abs(railBefore.width-railAfter.width)<2&&Math.abs(railBefore.x-railAfter.x)<2&&Math.abs(railBefore.y-railAfter.y)<2,'Tool rail must keep its size across tabs')}
   await page.getByRole('navigation',{name:'ابزارهای تحلیل'}).getByRole('link',{name:'نمای بازار',exact:true}).click();await page.locator('.tv-host iframe').waitFor()
  }
- for(const width of [390,1440,3840])for(const theme of ['light','dark'])for(const tool of ['expert','journal','compass','scenario','widgets']){
+ for(const width of [390,1440,3840])for(const theme of ['light','dark'])for(const tool of ['journal','compass','scenario','widgets']){
   await page.setViewportSize({width,height:900});await page.goto(base+'/panel/tools/'+tool);await page.locator('.coming-soon h2').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
   assert.equal(await page.locator('.analysis-rail [aria-current=page]').getAttribute('href'),'/panel/tools/'+tool);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.ok(await page.getByText('به‌زودی',{exact:true}).last().isVisible())
  }
