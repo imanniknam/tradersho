@@ -64,6 +64,7 @@ services:
     stop_grace_period: 30s
     logging: *logging
   proxy:
+    networks: [default, wordpress_proxy]
     image: caddy:2-alpine
     restart: unless-stopped
     environment:
@@ -86,3 +87,8 @@ volumes:
   pgdata:
   caddy_data:
   caddy_config:
+
+networks:
+  wordpress_proxy:
+    external: true
+    name: tradersho_wordpress_proxy

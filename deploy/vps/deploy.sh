@@ -11,6 +11,8 @@ flock -w 600 9
 previous=$(readlink -f "$root/current" || true)
 compose() { docker compose --project-name tradersho --env-file "$root/.env" --env-file "$1/image.env" -f "$1/compose.yaml" "${@:2}"; }
 printf 'APP_IMAGE=tradersho:%s\n' "$sha" > "$release/image.env"
+# Keep independent WordPress traffic on a proxy-only network.
+docker network inspect tradersho_wordpress_proxy >/dev/null 2>&1 || docker network create tradersho_wordpress_proxy >/dev/null
 compose "$release" config --quiet
 # Validate proxy configuration before touching the running release.
 compose "$release" run --rm --no-deps proxy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile

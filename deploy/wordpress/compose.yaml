@@ -1,0 +1,49 @@
+name: tradersho-wordpress
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+services:
+  db:
+    image: mariadb@sha256:d769e37960821dfdcf096954f6e7ac89f747e116c1bba98e48edd265dfc7deae
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: ${WP_DB_PASSWORD:?required}
+      MARIADB_ROOT_PASSWORD: ${WP_DB_ROOT_PASSWORD:?required}
+    volumes:
+      - ./database:/var/lib/mysql
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    command: [--innodb-buffer-pool-size=256M, --max-connections=50, --max-allowed-packet=128M]
+    mem_limit: 640m
+    logging: *logging
+  web:
+    image: wordpress@sha256:9001ea7dafd2bc3f05d068e6413b0edd2a116eeed4dfe9e08b6bd718dee4960a
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./html:/var/www/html
+      - ./smtp.json:/run/secrets/wordpress-smtp.json:ro
+      - ./php.ini:/usr/local/etc/php/conf.d/tradersho.ini:ro
+      - ./apache.conf:/etc/apache2/conf-enabled/tradersho.conf:ro
+    networks:
+      default:
+      proxy:
+        aliases: [tradersho-wordpress-web]
+    ports:
+      - 127.0.0.1:8081:80
+    mem_limit: 896m
+    pids_limit: 160
+    logging: *logging
+networks:
+  proxy:
+    external: true
+    name: tradersho_wordpress_proxy
