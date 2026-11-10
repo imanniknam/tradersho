@@ -30,3 +30,11 @@
 
 /* Keep leaders below tutorial cards, above the native panel outline. */
 .expert-guide-arrow{z-index:8}
+
+.expert-chart-workbench:not(.compact){min-height:calc(var(--expert-panel-height, 650px) + 110px)}.expert-static-chart .scenario-level.SL line{stroke:var(--expert-sl,#c36d77)}.expert-static-chart .scenario-level.TP line{stroke:var(--expert-tp,#329b91)}
+
+.expert-chart-workbench:not(.compact) .expert-native-desk{left:22px;right:auto}
+
+.expert-platform-logo{display:block;width:180px;height:46px;object-fit:contain;object-position:right;background:#fff;border-radius:6px;padding:6px;margin-bottom:14px}
+
+.expert-chart-workbench:not(.compact) .expert-market-monitor{left:auto;right:20px;top:64px;bottom:auto}

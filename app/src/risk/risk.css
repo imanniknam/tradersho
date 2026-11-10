@@ -55,3 +55,6 @@
 @media(max-width:760px){.risk-table-hint{display:flex;align-items:center;gap:6px;margin:0;padding:0 16px 12px;font-size:10px;line-height:1.8;color:var(--secondary)}}
 
 .risk-stat-spark{width:64px;flex:none}.risk-stat-spark>i{width:auto;min-width:1px;flex:1}
+
+/* Client review: equal stage cards, no volume/equalizer metaphor. */
+.risk-bars{align-items:stretch;gap:10px;padding-bottom:20px}.risk-bars button{height:auto;min-height:116px;min-width:116px;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:14px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}.risk-bars button[aria-pressed=true]{outline:2px solid var(--risk-accent);outline-offset:2px}.risk-bars button.final{border-style:dashed}.risk-step-outcome{font-size:10px;color:var(--secondary)}.risk-step-net{font-size:16px;color:var(--risk-good)}.risk-bars button.blocked .risk-step-net{color:var(--risk-bad)}.risk-bars button.final .risk-step-net{color:var(--ink)}.risk-field-help{font-size:10px;color:var(--secondary);margin-top:6px}.risk-field-help summary{cursor:pointer}.risk-field-help small{display:block;padding-top:5px}.risk-capacity-trades button:not(.blocked){border-color:var(--risk-good)}
