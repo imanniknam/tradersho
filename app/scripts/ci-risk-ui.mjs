@@ -27,6 +27,7 @@ try{
  }
  await page.setViewportSize({width:1440,height:1000});await page.goto(base+'/panel/tools/risk');await page.getByLabel('موجودی مبنا',{exact:true}).waitFor()
  assert.ok((await page.locator('.risk-stat').nth(0).innerText()).includes('6.00%'));assert.ok((await page.locator('.risk-stat').nth(2).innerText()).includes('۱۰'))
+ assert.equal(await page.locator('.risk-capacity-trades button').count(),11);assert.equal(await page.locator('.risk-capacity-trades .cycle').count(),5);assert.equal(await page.locator('.risk-capacity-trades .cycle-final').count(),1);assert.equal(await page.locator('.risk-capacity-trades .extra').count(),4);assert.equal(await page.locator('.risk-capacity-trades .blocked').count(),1);assert.ok((await page.locator('.risk-worst-case').innerText()).includes('$600.00'));assert.equal(await page.locator('.risk-meter,.risk-stat-meter,.risk-stat-dots').count(),0);
  const riskCells=await page.locator('.risk-table-scroll tbody tr td:nth-child(3)').allTextContents();assert.deepEqual(riskCells,['$56.95','$68.82','$84.64','$105.73','$133.86','$150.00'])
  await page.locator('.risk-bars button').nth(5).click();assert.ok((await page.locator('.risk-stage-detail').innerText()).includes('$0.00'))
  await page.getByLabel('سقف افت مجاز',{exact:true}).fill('5');assert.ok((await page.locator('.risk-limit h3').innerText()).includes('بیشتر'));assert.ok((await page.locator('.risk-stat').nth(2).innerText()).includes('۵'))
