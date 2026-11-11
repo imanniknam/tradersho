@@ -1,3 +1,4 @@
+import {CalendarUserContext} from './calendar/preferences'
 import RecoveryPage from './RecoveryPage'
 import '@fontsource/vazirmatn/400.css'
 import '@fontsource/vazirmatn/500.css'
@@ -33,7 +34,7 @@ function useAuth(){const value=useContext(AuthContext);if(!value)throw new Error
 function AuthProvider({children}:{children:ReactNode}){
   const [user,setUser]=useState<User|null>(null),[loading,setLoading]=useState(true)
   useEffect(()=>{api<{user:User}>('/session').then(d=>setUser(d.user)).catch(()=>setUser(null)).finally(()=>setLoading(false))},[])
-  return <AuthContext.Provider value={{user,loading,setUser}}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{user,loading,setUser}}><CalendarUserContext.Provider value={user?.id||''}>{children}</CalendarUserContext.Provider></AuthContext.Provider>
 }
 function Brand(){const {theme}=useTheme();return <span className="brand"><img className="brand-logo" src={theme==='light'?'/assets/logo-purple.png':'/assets/logo-white.png'} alt="Tradersho"/></span>}
 function Spinner(){return <div className="splash"><Brand/><div className="loader"/></div>}

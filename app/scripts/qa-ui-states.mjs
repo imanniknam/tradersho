@@ -11,7 +11,7 @@ try{
   const ctx=await b.newContext({viewport:{width:1280,height:720},reducedMotion:'reduce'})
   await ctx.addInitScript(t=>localStorage.setItem('tradersho-theme',t),theme)
   const p=await ctx.newPage()
-  await p.goto(base+'/auth');await p.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await p.getByPlaceholder('name@example.com').fill('qa-ui-state@example.test');await p.getByPlaceholder('رمز عبور قوی').fill('SampleQa#2026');await p.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill('Mismatch#2026');await p.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await p.getByRole('alert').waitFor();assert.match(await p.getByRole('alert').innerText(),/یکسان/);assert.equal(await p.getByRole('alert').evaluate(e=>e===document.activeElement),true)
+  await p.goto(base+'/auth');await p.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await p.getByPlaceholder('نام و نام خانوادگی',{exact:true}).fill('آزمون کاربر');await p.getByPlaceholder('name@example.com').fill('qa-ui-state@example.test');await p.getByPlaceholder('رمز عبور قوی').fill('SampleQa#2026');await p.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill('Mismatch#2026');await p.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await p.getByRole('alert').waitFor();assert.match(await p.getByRole('alert').innerText(),/یکسان/);assert.equal(await p.getByRole('alert').evaluate(e=>e===document.activeElement),true)
   await p.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill('SampleQa#2026')
   await ctx.route('**/api/auth/signup',r=>r.fulfill({status:409,contentType:'application/json',body:JSON.stringify({error:'این ایمیل قبلاً ثبت شده است.'})}))
   await p.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await p.getByRole('alert').filter({hasText:'این ایمیل قبلاً ثبت شده است.'}).waitFor()
@@ -22,7 +22,7 @@ try{
   assert.ok(fit.scroll<=fit.height+2,JSON.stringify(fit))
   await p.getByRole('button',{name:'نمایش رمز',exact:true}).click();assert.equal(await p.getByPlaceholder('رمز عبور قوی').getAttribute('type'),'text');await p.getByRole('button',{name:'پنهان کردن رمز',exact:true}).click();assert.equal(await p.getByPlaceholder('رمز عبور قوی').getAttribute('type'),'password')
   await p.setViewportSize({width:390,height:400});await p.getByPlaceholder('رمز عبور را دوباره وارد کنید').focus();await p.getByRole('button',{name:'ایجاد حساب',exact:true}).scrollIntoViewIfNeeded();assert.equal(await p.getByRole('button',{name:'ایجاد حساب',exact:true}).isVisible(),true)
-  await ctx.route('**/fonts/**',r=>r.abort());await p.setViewportSize({width:1280,height:720});await p.reload();await p.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();assert.ok(await p.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2))
+  await ctx.route('**/fonts/**',r=>r.abort());await p.setViewportSize({width:1280,height:720});await p.reload();await p.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await p.getByPlaceholder('نام و نام خانوادگی',{exact:true}).fill('آزمون کاربر');assert.ok(await p.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2))
   await ctx.close()
  }
  const ui=await b.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'}),q=await ui.newPage()

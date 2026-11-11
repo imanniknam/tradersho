@@ -112,3 +112,9 @@
 .preview-impact.high i{background:#dc2626}.preview-impact.medium i{background:#f97316}.preview-impact.low i{background:#eab308}
 .preview-filters{grid-template-columns:minmax(0,1fr)}
 @media(min-width:601px){.preview-filters{grid-template-columns:145px minmax(0,1fr)}}
+
+.analysis-tool-icon{display:grid;place-items:center;width:40px;height:40px;flex:none;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--secondary)}
+.analysis-rail a.selected .analysis-tool-icon{color:#fff;background:#543aff;border-color:#7154ff;box-shadow:0 4px 12px #543aff20}
+.analysis-rail a:hover .analysis-tool-icon{border-color:var(--accent);color:var(--accent)}
+.analysis-rail a.selected:hover .analysis-tool-icon{color:#fff}
+@media(max-width:900px){.analysis-tool-icon{width:32px;height:32px;border-radius:9px}.analysis-tool-icon svg{width:20px;height:20px}}

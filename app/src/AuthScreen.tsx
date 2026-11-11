@@ -2,7 +2,7 @@ import CaptchaField from './CaptchaField'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Activity, ArrowLeft, BookOpen, Eye, EyeOff, Info, KeyRound, Mail, Pause, Play, ShieldCheck } from 'lucide-react'
+import { Activity, ArrowLeft, BookOpen, Eye, EyeOff, Info, KeyRound, Mail, Pause, Play, ShieldCheck, UserRound } from 'lucide-react'
 import { api } from './api'
 import { ThemeToggle } from './theme'
 import type { User } from './api'
@@ -21,6 +21,7 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
   const [params] = useSearchParams()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
+  const [name,setName]=useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -38,11 +39,12 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
     event.preventDefault()
     if(busy||!captchaReady)return
     setError('')
+    if(mode==='signup'&&name.trim().length<2)return setError('نام و نام خانوادگی خود را وارد کنید.')
     if (mode === 'signup' && rules.some(rule => !rule.test(password))) return setError('رمز عبور باید همهٔ شرایط ذکرشده را داشته باشد.')
     if (mode === 'signup' && password !== confirmPassword) return setError('تکرار رمز عبور با رمز اصلی یکسان نیست.')
     setBusy(true)
     try {
-      const data = await api<{ user: User }>(mode === 'login' ? '/auth/login' : '/auth/signup', 'POST', mode === 'login' ? { email, password,...captcha } : { email, password, confirmPassword,...captcha })
+      const data = await api<{ user: User }>(mode === 'login' ? '/auth/login' : '/auth/signup', 'POST', mode === 'login' ? { email, password,...captcha } : { name:name.trim(),email, password, confirmPassword,...captcha })
       setUser(data.user)
       navigate(destination, { replace: true })
     } catch (cause) { setError((cause as Error).message);setCaptchaRevision(v=>v+1) }
@@ -59,6 +61,7 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
       <h1>{mode === 'login' ? 'ورود به حساب کاربری' : 'ساخت حساب کاربری'}</h1><p className="muted">{mode === 'login' ? 'ایمیل و رمز عبور خود را وارد کنید.' : 'با ایمیل و یک رمز عبور امن ثبت‌نام کنید.'}</p>
       <div className="auth-tabs" role="tablist" aria-label="ورود یا ثبت‌نام" onKeyDown={event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const target=event.key==='Home'?'login':event.key==='End'?'signup':mode==='login'?'signup':'login';setMode(target);setError('');document.getElementById('auth-tab-'+target)?.focus()}}}><button type="button" disabled={busy} role="tab" id="auth-tab-login" aria-selected={mode==='login'} aria-controls="auth-fields" tabIndex={mode==='login'?0:-1} className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setError('') }}>ورود</button><button type="button" disabled={busy} role="tab" id="auth-tab-signup" aria-selected={mode==='signup'} aria-controls="auth-fields" tabIndex={mode==='signup'?0:-1} className={mode === 'signup' ? 'active' : ''} onClick={() => { setMode('signup'); setError('') }}>ثبت‌نام</button></div>
       <div id="auth-fields" role="tabpanel" aria-labelledby={'auth-tab-'+mode}><form onSubmit={submit} className="auth-form" aria-busy={busy}>
+        {mode==='signup'&&<label><span>نام و نام خانوادگی</span><div className="input-icon"><UserRound size={19}/><input disabled={busy} required minLength={2} maxLength={80} autoComplete="name" value={name} onChange={e=>setName(e.target.value)} placeholder="نام و نام خانوادگی"/></div></label>}
         <label><span>ایمیل</span><div className="input-icon"><Mail size={19}/><input disabled={busy} required maxLength={160} inputMode="email" autoCapitalize="none" spellCheck={false} type="email" autoComplete="email" dir="ltr" value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com" /></div></label>
         <label><span>رمز عبور</span><div className="input-icon"><KeyRound size={19}/><input disabled={busy} required maxLength={128} aria-describedby={mode==='signup'?'password-requirements':undefined} minLength={mode === 'signup' ? 8 : undefined} type={showPass ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} dir="ltr" value={password} onChange={event => setPassword(event.target.value)} placeholder={mode === 'signup' ? 'رمز عبور قوی' : 'رمز عبور'} /><button type="button" className="icon-button reveal-pass" onClick={() => setShowPass(!showPass)} aria-pressed={showPass} aria-label={showPass ? 'پنهان کردن رمز' : 'نمایش رمز'}>{showPass ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div></label>
         {mode === 'signup' && <><div className="password-rules" id="password-requirements" aria-label="شرایط رمز عبور">{rules.map(rule => <span key={rule.label} className={rule.test(password) ? 'met' : ''}><span aria-hidden="true">{rule.test(password) ? '✓' : '○'}</span>{rule.label}</span>)}</div><label><span className="confirm-label">تکرار رمز عبور{confirmPassword&&<small aria-live="polite" className={password===confirmPassword?'password-match':'password-mismatch'}>{password===confirmPassword?'رمزها یکسان هستند':'رمزها یکسان نیستند'}</small>}</span><div className="input-icon"><KeyRound size={19}/><input disabled={busy} required maxLength={128} type={showPass ? 'text' : 'password'} autoComplete="new-password" dir="ltr" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} placeholder="رمز عبور را دوباره وارد کنید" /></div></label></>}

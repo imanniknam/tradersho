@@ -66,3 +66,12 @@
  .auth-signup .captcha-row img{width:143px;height:48px}
  .auth-signup .auth-note{margin-top:6px;padding-top:6px;line-height:1.6}
 }
+
+/* A single rhythm between dashboard sections; aligned bottom-card action. */
+.dashboard-home{display:flex;flex-direction:column;gap:20px}
+.dashboard-home>.home-service-grid,.dashboard-home>.home-lower-grid,.dashboard-home>.home-tools-entry{margin-block:0;gap:20px}
+.home-school{display:flex;flex-direction:column;align-items:flex-start}
+.home-school>.button{margin-top:auto;align-self:stretch;justify-content:center}
+.home-school>p{margin-bottom:22px}
+.home-complete-name{display:inline-flex;align-items:center;gap:6px;font-size:13px;line-height:1.8;margin-top:10px;color:var(--accent)}
+@media(max-width:600px){.dashboard-home{gap:16px}.dashboard-home>.home-service-grid,.dashboard-home>.home-lower-grid{gap:16px}}

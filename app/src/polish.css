@@ -52,3 +52,6 @@ select:not([multiple]){appearance:none!important;-webkit-appearance:none!importa
 
 /* Contain absolutely positioned accessibility text inside the application scroller. */
 .main-scroll{position:relative;min-height:0}
+
+.auth-form input[autocomplete=name]{direction:rtl;text-align:right}
+@media(min-width:1001px){.auth-signup .auth-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.auth-signup .auth-form>*{grid-column:1/-1;min-width:0}.auth-signup .auth-form>label:nth-child(-n+2){grid-column:auto}}

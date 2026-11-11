@@ -35,9 +35,9 @@
 
 .expert-chart-workbench:not(.compact) .expert-native-desk{left:22px;right:auto}
 
-.expert-platform-logo{display:block;width:180px;height:46px;object-fit:contain;object-position:right;background:#fff;border-radius:6px;padding:6px;margin-bottom:14px}
+.expert-platform-logo{display:block;width:180px;height:46px;object-fit:contain;object-position:right;background:transparent;border-radius:0;padding:0;margin-bottom:14px}
 
-.expert-chart-workbench:not(.compact) .expert-market-monitor{left:auto;right:20px;top:64px;bottom:auto}
+.expert-chart-workbench:not(.compact) .expert-market-monitor{left:auto;right:calc(7.86% + 16px);top:64px;bottom:auto}
 
 .expert-static-chart .scenario-level.SL,.expert-static-chart .scenario-level.TP{pointer-events:all}.expert-static-chart .scenario-level text{pointer-events:none}
 

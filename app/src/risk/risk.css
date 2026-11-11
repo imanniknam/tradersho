@@ -96,3 +96,17 @@
 
 /* Preserve the input viewport while editing; invalid outputs are still removed. */
 .risk-field-error{min-height:20px;margin:0;line-height:20px}.risk-results{align-content:start;overflow-anchor:none}.risk-settings{overflow-anchor:none}
+
+/* Afternoon feedback: continuous horizontal path and readable uniform table rows. */
+.risk-intro .risk-kicker{font-family:inherit;margin:0;font-size:19px;line-height:1.8}
+.risk-field>small.risk-field-help{display:block;font-size:12px;line-height:1.9;color:var(--secondary);padding-top:8px;margin:0}
+.risk-capacity-trades.risk-bars{display:flex;flex-wrap:nowrap;align-items:stretch;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding-block:18px 20px}
+.risk-capacity-trades.risk-bars button{flex:0 0 100px;min-width:100px;min-height:106px}
+.risk-capacity-trades.risk-bars .risk-path-gap{display:flex;align-items:center;justify-content:center;flex:0 0 128px;min-width:128px;white-space:normal;line-height:2;margin:0;padding:12px;grid-column:auto}
+.risk-table-scroll table{min-width:760px;font-size:14px}
+.risk-table-scroll th,.risk-table-scroll td{padding:16px 14px;line-height:1.9}
+.risk-table-scroll thead th{font-size:12px;font-weight:600}
+.risk-table-scroll td{font-size:14px;line-height:1.9;font-variant-numeric:tabular-nums}
+.risk-table-scroll tbody th{font-size:14px;line-height:1.9}
+.risk-table-scroll tbody th .risk-stage-caption{display:block;min-height:22px;font-family:inherit;font-size:11px;line-height:22px;white-space:nowrap}
+@media(max-width:600px){.risk-capacity-trades.risk-bars{padding-inline:16px}.risk-field>small.risk-field-help{font-size:12px}}

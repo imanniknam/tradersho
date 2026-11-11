@@ -40,6 +40,9 @@ try{
  assert.equal((await req('/integrations/calendar','POST',upcoming,false,true)).status,200)
  const next=(await req('/calendar?upcoming=1&q=QA')).body.events;assert.equal(next.length,2);assert.deepEqual(next.map(e=>e.originalTitle),['QA 1','QA 2']);assert.ok(next.every(e=>Date.parse(e.at)>Date.now()))
  const expanded=(await req('/calendar?upcoming=1&limit=50&q=QA')).body.events;assert.equal(expanded.length,3);assert.ok(expanded.every(e=>Date.parse(e.at)>Date.now()&&e.status==='scheduled'))
+ const todayOnly=(await req('/calendar?upcoming=1&today=1&limit=50&q=QA')).body
+ assert.equal(todayOnly.from,today);assert.equal(todayOnly.to,today)
+ assert.ok(todayOnly.events.every(e=>e.date===today&&Date.parse(e.at)>=Date.now()))
  for(const limit of ['0','51','oops','2.5'])assert.equal((await req('/calendar?upcoming=1&limit='+limit)).status,400)
  await req('/integrations/calendar','POST',{...replaced,generatedAt:new Date().toISOString()},false,true)
  const bad=batch();bad.events[0].sourceUrl='https://evil.example/';assert.equal((await req('/integrations/calendar','POST',bad,false,true)).status,400)
