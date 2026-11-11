@@ -11,10 +11,10 @@ try{
   const ctx=await b.newContext({viewport:{width:1280,height:720},reducedMotion:'reduce'})
   await ctx.addInitScript(t=>localStorage.setItem('tradersho-theme',t),theme)
   const p=await ctx.newPage()
-  await p.goto(base+'/auth');await p.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await p.getByPlaceholder('نام و نام خانوادگی',{exact:true}).fill('آزمون کاربر');await p.getByPlaceholder('name@example.com').fill('qa-ui-state@example.test');await p.getByPlaceholder('رمز عبور قوی').fill('SampleQa#2026');await p.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill('Mismatch#2026');await p.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await p.getByRole('alert').waitFor();assert.match(await p.getByRole('alert').innerText(),/یکسان/);assert.equal(await p.getByRole('alert').evaluate(e=>e===document.activeElement),true)
+  await p.goto(base+'/auth');await p.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await p.getByPlaceholder('نام و نام خانوادگی',{exact:true}).fill('آزمون کاربر');await p.getByPlaceholder('name@example.com').fill('qa-ui-state@example.test');await p.getByPlaceholder('رمز عبور قوی').fill('SampleQa#2026');await p.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill('Mismatch#2026');await p.getByAltText('تصویر کد امنیتی پنج‌رقمی').waitFor();await p.getByLabel('کد امنیتی',{exact:true}).fill('00000');await p.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await p.getByRole('alert').waitFor();assert.match(await p.getByRole('alert').innerText(),/یکسان/);assert.equal(await p.getByRole('alert').evaluate(e=>e===document.activeElement),true)
   await p.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill('SampleQa#2026')
   await ctx.route('**/api/auth/signup',r=>r.fulfill({status:409,contentType:'application/json',body:JSON.stringify({error:'این ایمیل قبلاً ثبت شده است.'})}))
-  await p.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await p.getByRole('alert').filter({hasText:'این ایمیل قبلاً ثبت شده است.'}).waitFor()
+  await p.getByAltText('تصویر کد امنیتی پنج‌رقمی').waitFor();await p.getByLabel('کد امنیتی',{exact:true}).fill('00000');await p.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await p.getByRole('alert').filter({hasText:'این ایمیل قبلاً ثبت شده است.'}).waitFor()
   const fit=await p.evaluate(()=>({height:innerHeight,scroll:document.documentElement.scrollHeight,submit:document.querySelector('.auth-submit').getBoundingClientRect().bottom,footer:document.querySelector('.auth-side-bottom').getBoundingClientRect().bottom}))
   results.push({label:theme+'-signup-error-desktop',...fit})
   await p.addScriptTag({content:axe.source});const a=await p.evaluate(()=>axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa']}}));assert.deepEqual(a.violations.map(v=>v.id),[])
@@ -32,13 +32,16 @@ try{
  await q.goto(base+'/panel/account');await q.getByLabel('نام و نام خانوادگی').fill('نام جدید');await q.getByRole('button',{name:'ذخیرهٔ تغییرات',exact:true}).click();assert.equal(await q.getByRole('alert').getAttribute('class'),'form-error')
  let catalogAttempt=0
  await ui.route('**/api/tools',r=>r.fulfill({status:++catalogAttempt===1?503:200,contentType:'application/json',body:JSON.stringify(catalogAttempt===1?{error:'دریافت ابزارها ممکن نیست.'}:{tools:[{id:'chart',status:'active',label:'فعال'},{id:'expert',status:'coming_soon',label:'به‌زودی'}]})}))
- await q.goto(base+'/panel/tools');await q.getByRole('alert').waitFor();await q.getByRole('button',{name:'تلاش دوباره',exact:true}).click();await q.locator('.tool-card').first().waitFor();await q.getByRole('button',{name:'آمادهٔ استفاده',exact:true}).click();assert.equal(await q.locator('.tool-card').count(),1);await q.getByLabel('جستجو در ابزارها').fill('وجود ندارد');await q.getByRole('heading',{name:'ابزاری پیدا نشد'}).waitFor();await q.getByRole('button',{name:'نمایش همه'}).click();assert.equal(await q.locator('.tool-card').count(),2)
+ await ui.route('**/api/tools/chart/access',r=>r.fulfill({json:{allowed:true}}))
+ await ui.route('**/s3.tradingview.com/tv.js',r=>r.fulfill({contentType:'application/javascript',body:'window.TradingView={widget:function(c){const host=document.getElementById(c.container_id);const frame=document.createElement("iframe");frame.title="QA chart";host.append(frame);}}'}))
+ await q.goto(base+'/panel/tools');await q.getByRole('alert').waitFor();await q.getByRole('button',{name:'تلاش دوباره',exact:true}).click();await q.locator('.tv-host').waitFor();assert.equal(await q.getByRole('alert').count(),0)
+
  let adminAttempt=0
  await ui.route('**/api/admin/session',r=>r.fulfill({status:++adminAttempt===1?503:200,contentType:'application/json',body:JSON.stringify(adminAttempt===1?{error:'ارتباط با مدیریت برقرار نشد.'}:{allowed:true})}))
  await ui.route('**/api/admin/support/tickets?**',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({tickets:[],summary:{total:0,active:0,answered:0},total:0,page:1})}))
  await q.goto(base+'/admin/support');await q.getByRole('heading',{name:'دریافت پنل مدیریت ممکن نشد'}).waitFor();await q.getByRole('button',{name:'تلاش دوباره',exact:true}).click();await q.getByRole('heading',{name:'میز پشتیبانی',exact:true}).waitFor()
  await ui.route('**/api/tickets',r=>r.fulfill({status:500,contentType:'application/json',body:JSON.stringify({error:'ثبت تیکت انجام نشد.'})}))
  await q.goto(base+'/panel/support/new');await q.getByLabel('موضوع',{exact:true}).fill('متن فرم حفظ شود');await q.getByLabel('شرح درخواست').fill('این شرح درخواست باید پس از خطای شبکه باقی بماند.');await q.getByRole('button',{name:'ثبت تیکت',exact:true}).click();await q.getByRole('alert').waitFor();assert.equal(await q.getByLabel('موضوع',{exact:true}).inputValue(),'متن فرم حفظ شود');assert.equal(await q.getByLabel('شرح درخواست').inputValue(),'این شرح درخواست باید پس از خطای شبکه باقی بماند.');await ui.close()
- console.log('PASS: account error tone, tools retry/filter/search reset, admin network error/retry, support draft retention.')
+ console.log('PASS: account error tone, market chart retry, admin network error/retry, support draft retention.')
  console.log(JSON.stringify(results));console.log('PASS: mismatch/server-error focus and contrast, desktop fit with error, reveal/hide, short keyboard viewport, fallback font.')
 }finally{await b.close()}
