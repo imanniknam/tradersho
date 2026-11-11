@@ -13,6 +13,7 @@ import './expert.css'
 type Guide=Topic&{tab:ExpertTab;example?:string;rect?:{x:number;y:number;width:number;height:number}|null}
 type GuideWindow={id:string;guide:Guide;pinned:boolean;minimized:boolean;x:number;y:number}
 type Scenario={entry:number;sl:number;tp:number;lines:boolean;direction:string;lot:number;risk:number}
+const isScenario=(v:unknown):v is Scenario=>{const s=v as Scenario;return !!s&&['entry','sl','tp','lot','risk'].every(k=>Number.isFinite(s[k as keyof Scenario])&&Math.abs(Number(s[k as keyof Scenario]))<1e9)&&typeof s.lines==='boolean'&&['Long','Short'].includes(s.direction)}
 const initialScenario:Scenario={entry:4012.57,sl:4002.21,tp:4038.51,lines:true,direction:'Long',lot:.06,risk:62.16}
 const fa=(v:number)=>v.toLocaleString('fa-IR')
 const isTopic=(v:unknown):boolean=>{const t=v as Topic;return !!t&&typeof t.key==='string'&&t.key.length<160&&typeof t.title==='string'&&t.title.length<500&&typeof t.description==='string'&&t.description.length<6000&&Array.isArray(t.steps)&&t.steps.length<=15&&t.steps.every(s=>typeof s==='string'&&s.length<1500)&&typeof t.note==='string'&&t.note.length<5000}
@@ -29,7 +30,8 @@ export default function ExpertAcademy(){
   if(d.type==='tradersho-expert-palette'&&d.paint&&['background','up','down','volume','sl','tp'].every(k=>d.paint[k]===undefined||/^#[0-9a-f]{6}$/i.test(d.paint[k])))setPaint(p=>({...p,...d.paint}));
   if(d.type==='tradersho-expert-catalog'&&Array.isArray(d.items)&&d.items.length<600){setCatalog([...d.items.filter(isTopic),...advancedTopics].filter((t,i,a)=>a.findIndex(v=>v.key===t.key)===i));setReady(true)}
   if(d.type==='tradersho-expert-size'&&Number.isFinite(d.height)&&d.height>=20&&d.height<=4000)setNative(p=>({height:Math.ceil(d.height)+2,scale:Number.isFinite(d.scale)?Math.min(120,Math.max(80,d.scale)):p.scale,width:Number.isFinite(d.width)&&d.width>=300&&d.width<=900?d.width:p.width,mode:['simple','pro'].includes(d.mode)?d.mode:p.mode}))
-  if(d.type==='tradersho-expert-guide'&&isTopic(d)&&expertTabs.some(t=>t.id===d.tab)){const rect=d.rect&&['x','y','width','height'].every(k=>Number.isFinite(d.rect[k]))?d.rect:null;openRef.current({...d,rect});if(d.scenario&&['entry','sl','tp','lot','risk'].every(k=>Number.isFinite(d.scenario[k])&&Math.abs(d.scenario[k])<1e9))setScenario(d.scenario)}
+  if(d.type==='tradersho-expert-scenario'&&isScenario(d.scenario))setScenario(d.scenario)
+  if(d.type==='tradersho-expert-guide'&&isTopic(d)&&expertTabs.some(t=>t.id===d.tab)){const rect=d.rect&&['x','y','width','height'].every(k=>Number.isFinite(d.rect[k]))?d.rect:null;openRef.current({...d,rect})}
  };window.addEventListener('message',receive);return()=>window.removeEventListener('message',receive)},[])
  useEffect(()=>{send('viewport',{width:size.width})},[send,size.width])
  useEffect(()=>{if(indexOpen)library.current?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'})},[indexOpen])
