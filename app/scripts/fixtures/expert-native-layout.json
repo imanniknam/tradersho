@@ -1,0 +1,49 @@
+{
+  "reference": "MT5 v2.13; 96 DPI; 100 percent; measured native control frames",
+  "panels": {
+    "setup": {
+      "width": 420,
+      "height": 491,
+      "selector": "[data-key=entry]",
+      "field": {
+        "x": 179,
+        "y": 78,
+        "w": 79,
+        "h": 24
+      }
+    },
+    "margin": {
+      "width": 420,
+      "height": 306,
+      "selector": "[data-out=positionMargin]",
+      "field": {
+        "x": 210,
+        "y": 78,
+        "w": 183,
+        "h": 24
+      }
+    },
+    "swaps": {
+      "width": 420,
+      "height": 168,
+      "selector": "[data-key=swapVolume]",
+      "field": {
+        "x": 175,
+        "y": 76,
+        "w": 218,
+        "h": 24
+      }
+    },
+    "manage": {
+      "width": 420,
+      "height": 474,
+      "selector": "#preset-select",
+      "field": {
+        "x": 135,
+        "y": 78,
+        "w": 258,
+        "h": 24
+      }
+    }
+  }
+}

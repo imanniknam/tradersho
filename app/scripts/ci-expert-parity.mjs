@@ -10,8 +10,15 @@ await mkdir('qa/expert-parity',{recursive:true})
 try{
  await page.setContent('<iframe title="Expert QA" style="width:1000px;height:800px;border:0"></iframe>')
  await Promise.all([page.waitForEvent('framenavigated',f=>f.url()==='about:srcdoc'),page.locator('iframe').evaluate((n,html)=>{n.srcdoc=html},html)])
- const f=page.frames().find(f=>f!==page.mainFrame());await f.waitForSelector('#tabs button',{state:'attached',timeout:8000})
- await f.locator('[data-tab=manage]').click();await f.locator('[data-action=settings]').click();await f.locator('[data-page=Presets]').click();await f.locator('[data-action=source-preset-new]').click()
+ const f=page.frames().find(f=>f!==page.mainFrame());await f.waitForSelector('#tabs button',{state:'attached',timeout:8000});
+ const measured=JSON.parse(await readFile(new URL('./fixtures/expert-native-layout.json',import.meta.url),'utf8'));
+ for(const [tab,expected] of Object.entries(measured.panels)){
+  await f.evaluate(tab=>{state=initial();state.tab=tab;renderTabs();renderPanel()},tab);
+  const actual=await f.locator(expected.selector).evaluate(n=>{const p=document.querySelector('#expert').getBoundingClientRect(),r=n.getBoundingClientRect();return {width:p.width,height:p.height,field:{x:r.x-p.x,y:r.y-p.y,w:r.width,h:r.height}}});
+  assert.deepEqual(actual,{width:expected.width,height:expected.height,field:expected.field},'Measured native '+tab);
+ }
+
+ await f.locator('#tabs [data-tab=manage]').click();await f.locator('[data-action=settings]').click();await f.locator('[data-page=Presets]').click();await f.locator('[data-action=source-preset-new]').click()
  const geometry=await f.evaluate(()=>{const box=n=>{const a=n.getBoundingClientRect(),b=document.querySelector('#expert').getBoundingClientRect();return {x:a.x-b.x,y:a.y-b.y,w:a.width,h:a.height}};return {panel:box(document.querySelector('#expert')),content:box(document.querySelector('.more-content')),name:box(document.querySelector('[data-source-field=name]')),sections:[...document.querySelectorAll('.source-section summary')].map(box),footer:box(document.querySelector('[data-action=source-preset-save]'))}})
  assert.equal(geometry.panel.w,840);assert.equal(geometry.name.x,390);assert.equal(geometry.name.w,432);assert.ok(Math.abs(geometry.sections[0].y-165)<=2,JSON.stringify(geometry));assert.ok(geometry.sections.every(s=>s.h===23));
  assert.equal(await f.locator('[data-source-field=name]').inputValue(),'New preset');assert.equal(await f.locator('[data-source-field=risk]').inputValue(),'1.00');assert.equal(await f.locator('[data-source-toggle=tp]').isChecked(),false)
