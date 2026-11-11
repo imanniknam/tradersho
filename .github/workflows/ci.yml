@@ -61,6 +61,7 @@ jobs:
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-ui.mjs
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-risk-ui.mjs
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-expert-ui.mjs
+          CHROME_BIN="$(command -v google-chrome)" node scripts/ci-feedback-ui.mjs
       - name: Application diagnostics on failure
         if: failure()
         run: cat /tmp/tradersho-ci-server.log || true
