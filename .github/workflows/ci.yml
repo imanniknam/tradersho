@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: tradersho-${{ github.ref }}
+  group: tradersho-release-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   validate:
