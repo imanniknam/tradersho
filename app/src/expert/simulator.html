@@ -513,6 +513,15 @@ html,body{margin:0!important;padding:0!important;width:100%!important;background
 .source-pro-mode[data-tab=margin] .expert-body{padding-top:0}
 .source-pro-mode[data-tab=margin] .expert-footer{height:31px}
 .source-pro-mode .native-info-row{align-items:start}
+
+/* The selected row uses the 24px control bounds, not the 30px row gutter. */
+.source-pro-mode :is(.native-row,.native-info-row,.native-manage-row).selected-help{position:relative;outline:none!important;box-shadow:none!important;background-color:transparent!important}
+.source-pro-mode :is(.native-row,.native-info-row,.native-manage-row).selected-help::after{content:"";position:absolute;inset:0 0 6px;border:2px solid #b6a7ff;border-radius:4px;box-sizing:border-box;pointer-events:none}
+
+/* Prevent intrinsic text and form-control widths from widening the editor. */
+.source-settings .more-layout,.source-settings .more-content,.source-settings .source-preset-editor,.source-settings .source-preset-editor>*{min-width:0;max-width:100%}
+.source-settings .source-section summary,.source-settings .source-section summary>*,.source-settings .source-three-fields,.source-settings .source-trail-methods,.source-settings .source-preset-value,.source-settings .source-field-unit{min-width:0}
+.source-settings .efield,.source-settings select{min-width:0;max-width:100%}
 </style></head><body><div id="stage"><div id="panel-wrap"><div class="expert" id="expert" lang="en" dir="ltr"><div class="expert-top"><div class="expert-title">Tradersho <span class="title-sep">|</span> MONEY MANAGER <span class="version">v2.13</span></div><span class="native-window-tools" aria-hidden="true"><i>−</i><i>×</i></span></div><div class="expert-tabs" role="tablist" aria-label="بخش‌های اکسپرت" id="tabs"></div><div class="expert-body" id="panel-content" role="tabpanel" tabindex="-1"></div><div class="expert-footer">Tradersho &nbsp;•&nbsp; TRADE WITH CONTROL</div></div></div></div><div hidden><div id="guide-content"></div><div id="guide-path"></div><div id="guide-counter"></div><div id="quick-topics"></div><span id="preview-tab"></span><button id="tour-button"><span></span></button><button id="reset-button"></button><button id="guide-prev"></button><button id="guide-next"></button></div><div id="toast" role="status" aria-live="polite"></div><script>
 let guideEngaged=false;
 document.addEventListener('pointerdown',()=>{guideEngaged=true},true);

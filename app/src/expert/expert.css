@@ -42,3 +42,8 @@
 .expert-static-chart .scenario-level.SL,.expert-static-chart .scenario-level.TP{pointer-events:all}.expert-static-chart .scenario-level text{pointer-events:none}
 
 .expert-download-guide{font-family:inherit;font-size:18px;font-weight:700;line-height:1.8}
+
+/* Keep download cards consistent and make native wordmarks legible in dark mode. */
+.expert-download-grid article{border-color:var(--academy-accent);background:var(--tint)}
+[data-theme=dark] .expert-platform-logo{filter:invert(.88) hue-rotate(180deg)}
+.expert-native-desk iframe{background:transparent!important}
