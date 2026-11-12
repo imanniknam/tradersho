@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict'
+import {randomUUID,randomBytes} from 'node:crypto'
+import {mkdir,writeFile} from 'node:fs/promises'
+import {chromium} from 'playwright-core'
+import {inflateSync} from 'node:zlib'
+const pixel=png=>{let pos=8,chunks=[];while(pos<png.length){const len=png.readUInt32BE(pos),type=png.toString('ascii',pos+4,pos+8);if(type==='IDAT')chunks.push(png.subarray(pos+8,pos+8+len));pos+=12+len}return [...inflateSync(Buffer.concat(chunks)).subarray(1,4)]}
+const samePixel=(a,b)=>pixel(a).every((v,i)=>Math.abs(v-pixel(b)[i])<=3)
+if(!process.env.DATABASE_URL?.endsWith('_qa'))throw Error('Dedicated QA database required')
+const {pool}=await import('../server/db.mjs'),{tokenHash}=await import('../server/auth.mjs'),user=randomUUID(),token=randomBytes(32).toString('hex'),base='http://127.0.0.1:5183'
+const browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true}),context=await browser.newContext({reducedMotion:'reduce'}),page=await context.newPage(),errors=[]
+page.on('pageerror',e=>errors.push(e.message));await mkdir('qa/large-expert',{recursive:true})
+try{
+ await pool.query('INSERT INTO users(id,name,email,password_hash) VALUES($1,$2,$3,$4)',[user,'Expert QA',user+'@example.test','unusable-qa-hash']);await pool.query("INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '1 hour')",[tokenHash(token),user]);await context.addCookies([{name:'tradersho_session',value:token,url:base}]);
+ const click=async(n)=>{await page.locator('.expert-native-desk').evaluate(n=>n.scrollIntoView({block:'start'}));const r=await n.evaluate(n=>{const r=n.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,iw:innerWidth}}),host=await page.locator('.expert-native-desk iframe').boundingBox();assert.ok(host);const factor=host.width/r.iw;await page.mouse.click(host.x+r.x*factor,host.y+r.y*factor);await page.waitForTimeout(60)};
+ const send=async(key,tab='manage')=>page.locator('.expert-native-desk iframe').evaluate((n,d)=>n.contentWindow.postMessage({type:'tradersho-expert-command',action:'topic',...d},'*'),{key,tab});
+ for(const width of [390,1024,1920,3840])for(const theme of ['light','dark'])for(const zoom of [1,1.25]){
+ await page.setViewportSize({width:Math.floor(width/zoom),height:Math.floor(1100/zoom)});await page.goto(base+'/panel/tools/expert');await page.waitForFunction(()=>document.querySelector('.expert-academy-intro button')?.disabled===false);await page.evaluate(({theme,zoom})=>{document.documentElement.dataset.theme=theme;document.body.style.zoom=''},{theme,zoom});const f=page.frameLocator('.expert-native-desk iframe');
+ for(const tab of ['Setup','Portfolio','Margin','Swaps','Manage']){await click(f.getByRole('tab',{name:new RegExp(tab)}));assert.equal(await f.locator('#expert').getAttribute('data-tab'),tab.toLowerCase());assert.notEqual(await f.getByRole('tab',{name:new RegExp(tab)}).evaluate(n=>getComputedStyle(n).boxShadow),'none','Active tab has a visible indicator');}
+ for(const popup of ['colors','alert']){await send(popup);await f.locator('#native-popup').waitFor();await send('general');await f.locator('.more-layout').waitFor();assert.equal(await f.locator('#native-popup').count(),0,'Settings dismisses overlapping popup');
+ for(const section of ['General','Presets','Others','Themes']){await click(f.locator('[data-page="'+section+'"]'));assert.ok(await f.locator('[data-page="'+section+'"]').evaluate(n=>n.classList.contains('on')));const fit=await f.locator('#expert').evaluate(n=>{const c=n.querySelector('.more-content');return {frame:innerWidth,panel:n.getBoundingClientRect().right,content:c.clientWidth,scroll:c.scrollWidth}});assert.ok(fit.panel<=fit.frame+1&&fit.scroll<=fit.content+1,JSON.stringify({width,theme,zoom,section,fit}));assert.ok(await f.locator('[data-action=settings-back]').evaluate(n=>{const r=n.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1}),'Close button inside frame');}
+ await click(f.locator('[data-action=settings-back]'));await f.getByRole('tab',{name:/Manage/}).waitFor();}
+ assert.equal(await page.locator('.expert-control-spotlight').count(),0);console.log('PASS all tabs/settings/popup transitions',width,theme,zoom);
+ }
+ assert.deepEqual(errors,[]);
+}finally{await browser.close();await pool.query('DELETE FROM users WHERE id=$1',[user]);await pool.end()}
