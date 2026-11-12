@@ -27,6 +27,7 @@ try{
  const nativePage=await context.newPage();nativePage.on('pageerror',e=>errors.push(e.message))
  const html=(await readFile('src/expert/simulator.html','utf8')).replace('/* SHARED_DEMO_MARKET */',(await readFile('src/expert/demo-market.mjs','utf8')).replace(/^export /gm,''))
  await nativePage.setViewportSize({width:1400,height:1000});await nativePage.setContent('<iframe title="Native QA" style="width:1200px;height:930px;border:0"></iframe>')
+ await nativePage.evaluate(()=>{window.__sizes=[];addEventListener('message',e=>{if(e.data?.type==='tradersho-expert-size')window.__sizes.push(e.data)})})
  await nativePage.locator('iframe').evaluate((n,h)=>n.srcdoc=h,html)
  const f=nativePage.frames().find(f=>f!==nativePage.mainFrame())||await new Promise(resolve=>nativePage.once('frameattached',resolve))
  await f.locator('#tabs button').first().waitFor();await f.getByRole('tab',{name:/Manage/}).click()
@@ -35,7 +36,8 @@ try{
  await f.locator('[data-action=colors]').click();await f.locator('[data-source-hex]').fill('#abc');await f.locator('[data-action=source-color-apply]').click()
  assert.equal(await f.locator('#native-popup').count(),1,'Invalid HEX stays open');assert.equal(await f.locator('[data-source-hex]').getAttribute('aria-invalid'),'true')
  await f.locator('[data-source-hex]').fill('#abcdef');await f.locator('[data-action=source-color-cancel]').click();assert.equal(await f.locator('#native-popup').count(),0,'Cancel works immediately after HEX edit');assert.equal(await f.evaluate(()=>state.colors.tp),'#123abc')
- await nativePage.evaluate(()=>{window.__sizes=[];addEventListener('message',e=>{if(e.data?.type==='tradersho-expert-size')window.__sizes.push(e.data)})})
+ await nativePage.waitForFunction(()=>{const size=window.__sizes.at(-1);return size?.width===420&&size.popupWidth===0});
+ await nativePage.evaluate(()=>window.__sizes=[]);
  await f.locator('[data-action=settings]').click();await nativePage.waitForTimeout(80)
  const sizes=await nativePage.evaluate(()=>window.__sizes);assert.ok(sizes.length>=1&&sizes.length<=2);assert.ok(sizes.every(s=>s.width===840&&s.height===473),'Only final geometry is published, never transient layout '+JSON.stringify(sizes))
  await f.locator('[data-page=Presets]').click();await f.locator('[data-source-select=selected]').selectOption('0');await f.locator('[data-action=source-preset-default]').click();await f.locator('[data-source-select=selected]').selectOption('1');await f.locator('[data-action=source-preset-delete]').click();assert.equal(await f.locator('[data-source-select=startup]').inputValue(),'0','Deleting another preset preserves startup default')
