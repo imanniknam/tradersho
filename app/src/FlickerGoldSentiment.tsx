@@ -6,7 +6,8 @@ const source=origin+'/assets/xau/fear-and-greed-index?utm_source=tradersho&utm_m
 export default function FlickerGoldSentiment(){
  const {theme}=useTheme(),frame=useRef<HTMLIFrameElement>(null),wrap=useRef<HTMLDivElement>(null),[scale,setScale]=useState(.8),[height,setHeight]=useState(260),[loaded,setLoaded]=useState(false),[slow,setSlow]=useState(false),[refresh,setRefresh]=useState(0)
  const src=origin+'/embed/en/xau/fear-greed?'+new URLSearchParams({theme,bg:'transparent',border:'off',accent:'543aff',font:'system',_refresh:String(refresh)})
- useEffect(()=>{setLoaded(false);setSlow(false);setHeight(260);const timer=setTimeout(()=>setSlow(true),15000);return()=>clearTimeout(timer)},[theme])
+ useEffect(()=>{setHeight(260)},[theme])
+ useEffect(()=>{setLoaded(false);setSlow(false);const timer=setTimeout(()=>setSlow(true),15000);return()=>clearTimeout(timer)},[theme,refresh])
  // Refresh only the external widget; retain its measured size and the chart state.
  useEffect(()=>{let last=Date.now();const sync=()=>{if(document.visibilityState!=='visible'||Date.now()-last<300000)return;last=Date.now();setRefresh(n=>n+1)};const timer=setInterval(sync,300000);document.addEventListener('visibilitychange',sync);return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',sync)}},[])
  // Scale a fixed-width child; reported content height never controls its width.
