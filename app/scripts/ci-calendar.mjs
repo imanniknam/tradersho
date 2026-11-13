@@ -12,6 +12,7 @@ try{
  assert.equal((await req('/integrations/calendar','POST',batch(),false)).status,401)
  assert.equal((await req('/integrations/calendar','POST',batch(),false,true)).status,200)
  const r=await req('/calendar?from='+today+'&to='+today);assert.equal(r.status,200);assert.equal(r.body.total,111);assert.equal(r.body.events.length,100);assert.equal(r.body.events[0].at,null)
+ const detail=await req('/calendar/events/'+r.body.events[0].id);assert.equal(detail.status,200);assert.deepEqual(detail.body.event,r.body.events[0]);assert.ok(detail.body.updatedAt);assert.equal((await req('/calendar/events/'+r.body.events[0].id,'GET',undefined,false)).status,401);assert.equal((await req('/calendar/events/not-an-id')).status,404);assert.equal((await req('/calendar/events/'+'0'.repeat(64))).status,404);assert.equal((await req('/calendar/events/'+r.body.events[0].id,'POST')).status,405)
  assert.equal((await req('/calendar?from='+today+'&to='+today+'&page=2')).body.events.length,11)
  assert.equal((await req('/calendar?from='+today+'&to='+today+'&q=event%20110')).body.total,1)
  assert.equal((await req('/calendar?from='+today+'&to='+today+'&currency=EUR')).body.total,0)

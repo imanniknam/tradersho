@@ -1,0 +1,27 @@
+.calendar-preview-card button.calendar-preview-event{width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);font:inherit;text-align:right;cursor:pointer}
+.calendar-preview-card button.calendar-preview-event:is(:hover,[aria-expanded=true]){background:var(--tint)}
+.calendar-preview-card button.calendar-preview-event:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.event-detail-dialog{position:fixed;inset:auto;margin:0;padding:0;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 18px 60px #061a3238;overflow:auto;overscroll-behavior:contain;font-family:inherit;direction:rtl}
+.event-detail-dialog::backdrop{background:#061a320d}
+.event-detail-dialog>header{position:sticky;top:0;z-index:1;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700}
+.event-detail-content{padding:18px 20px 12px}
+.event-detail-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.event-detail-meta .event-country{margin:0;gap:7px;font-size:12px}.event-detail-meta .event-impact{margin:0;font-size:11px}
+.event-detail-dialog h3{font-size:18px;line-height:1.9;margin:14px 0 4px;overflow-wrap:anywhere}
+.event-detail-original{font:13px/1.8 Arial,sans-serif;color:var(--secondary);text-align:left;margin:0 0 16px;overflow-wrap:anywhere}
+.event-detail-time{display:flex;align-items:center;gap:9px;padding-block:12px;border-block:1px solid var(--line);font-size:12px;line-height:1.9}.event-detail-time>svg{flex:none;color:var(--secondary)}
+.event-detail-time time>span{display:block;color:var(--secondary)}.event-detail-status{font-size:11px;color:var(--secondary);margin-inline-start:auto;white-space:nowrap}
+.event-detail-countdown{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--secondary);margin:12px 0}.event-detail-countdown bdi{font-variant-numeric:tabular-nums;color:var(--ink)}
+.event-detail-period{font-size:12px;line-height:1.8;color:var(--secondary);margin:14px 0 0}
+.event-detail-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:18px 0 12px;padding:14px 0;background:var(--canvas);border:1px solid var(--line);border-radius:12px}
+.event-detail-values>div{display:flex;align-items:center;flex-direction:column;gap:12px;padding:0 8px;min-width:0}.event-detail-values>div+div{border-inline-start:1px solid var(--line)}
+.event-detail-values dt{color:var(--secondary);font-size:12px}.event-detail-values dd{margin:0;font-size:18px;line-height:1.7;max-width:100%;font-weight:700;overflow-wrap:anywhere;text-align:center;min-height:31px}
+.event-detail-values .economic-amount{display:flex;flex-direction:column;align-items:center;gap:2px;white-space:normal}.event-detail-values .amount-unit{font-size:11px;color:var(--secondary);font-weight:400}
+.event-detail-values .economic-composite{justify-content:center;gap:3px;font-size:14px}.event-detail-values .economic-composite .economic-amount{display:inline-flex;font-size:inherit}
+.event-detail-values .outcome-positive dd{color:var(--success)}.event-detail-values .outcome-negative dd{color:var(--danger)}
+.event-detail-revised{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:12px;color:var(--secondary);padding:8px 0}
+.event-detail-note{font-size:11px;line-height:1.9;margin:8px 0;color:var(--secondary)}
+.event-detail-refresh{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:10px;line-height:1.8;color:var(--secondary);min-height:25px}.event-detail-refresh button{display:inline-flex;align-items:center;gap:5px;background:transparent;color:var(--accent);border:0;font:inherit;font-size:11px;padding:8px;cursor:pointer}
+.event-detail-dialog>footer{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 20px}
+.event-detail-dialog>footer a{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:12px;min-height:32px}.event-detail-dialog>footer a:last-child{margin-inline-start:auto}
+@media(max-width:600px){.event-detail-dialog{border-radius:18px}.event-detail-content{padding:14px 16px 10px}.event-detail-dialog h3{font-size:16px}.event-detail-values dd{font-size:16px}.event-detail-dialog>footer{padding:10px 16px}.event-detail-dialog>footer a{min-height:36px}}

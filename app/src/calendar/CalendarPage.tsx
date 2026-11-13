@@ -2,10 +2,11 @@ import {useEffect,useRef,useState} from 'react'
 import type {CSSProperties} from 'react'
 import {CalendarDays,Search,RefreshCw,Info,Clock3,ChevronRight,ChevronLeft,X,SlidersHorizontal} from 'lucide-react'
 import {api} from '../api'
-import {formatEconomicValue,economicOutcome,eventCountdown} from './format'
+import {economicOutcome,eventCountdown} from './format'
 import type {EconomicValue} from './format'
 import './calendar.css'
 import CountryLabel from './CountryLabel'
+import Amount from './Amount'
 import ImpactFilter from './ImpactFilter'
 import CurrencyFilter from './CurrencyFilter'
 import {useCalendarPreference} from './preferences'
@@ -15,7 +16,6 @@ type CalendarData={serverNow?:string;configured:boolean;events:Event[];updatedAt
 const today=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'})
 const shift=(s:string,n:number)=>new Date(+new Date(s+'T12:00:00Z')+n*86400000).toISOString().slice(0,10)
 const dateLabel=(s:string)=>new Intl.DateTimeFormat('fa-IR',{timeZone:'Asia/Tehran',month:'short',day:'numeric',weekday:'short'}).format(new Date(s))
-function Amount({value}:{value:EconomicValue|null}){if(value&&'components' in value)return <span className="economic-composite" dir="ltr" title={value.separator==='-'?'ترکیب آرا، به ترتیب اعلام‌شده توسط منبع':'دادهٔ ترکیبی، به ترتیب اعلام‌شده توسط منبع'}>{value.components.map((part,n)=><span key={n}>{n>0&&<span className="composite-divider"> {value.separator||'|'} </span>}<Amount value={part}/></span>)}</span>;const parts=formatEconomicValue(value);return parts?<span className={'economic-amount'+(parts.unit==='٪'?' amount-percent':'')}><bdi dir="ltr">{parts.currency&&<span>{parts.currency} </span>}{parts.number}</bdi>{parts.unit&&<span className="amount-unit">{parts.unit}</span>}</span>:<span className="amount-missing" aria-label="داده ارائه نشده">—</span>}
 export default function CalendarPage(){
  const [currency,setCurrency]=useCalendarPreference('calendar','currency'),[impact,setImpact]=useCalendarPreference('calendar','impact')
  const [filtersOpen,setFiltersOpen]=useState(()=>matchMedia('(min-width:901px)').matches)
