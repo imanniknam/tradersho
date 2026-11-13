@@ -37,3 +37,13 @@
 @media(min-width:1201px) and (min-height:700px) and (max-height:850px){.analysis-market .market-desk{--market-gold-default:270px}}
 
 @media(min-width:1201px) and (min-height:700px){.analysis-market .market-desk .flicker-guide dl{margin:0;gap:0 7px}.analysis-market .market-desk .flicker-guide{line-height:1.7}.analysis-market .market-desk .flicker-attribution{flex:none}}
+
+/* The stage is sized by the user's grid, independently from the child iframe. */
+.flicker-frame-stage{min-width:0;width:100%}
+@media(min-width:1201px) and (min-height:700px){
+ .analysis-market .market-desk .flicker-frame-stage{flex:1 1 0;min-height:0;overflow:auto;display:flex;flex-direction:column}
+ .analysis-market .market-desk .flicker-frame-wrap{flex:none;margin-block:auto}
+ .analysis-market .market-desk .flicker-card>header,.analysis-market .market-desk .flicker-card>.context-caption,.analysis-market .market-desk .flicker-card>.flicker-guide,.analysis-market .market-desk .flicker-attribution{flex:none}
+ .analysis-market .market-desk .flicker-guide{margin-top:6px}
+}
+@media(min-width:1201px) and (min-height:700px){.analysis-market .market-desk .flicker-frame-wrap{max-width:none}}

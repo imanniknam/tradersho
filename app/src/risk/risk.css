@@ -168,3 +168,14 @@
  .risk-workspace .risk-table-scroll thead th{font-size:clamp(12px,.65vw,19px)}
  .risk-workspace .risk-table-scroll{max-height:clamp(580px,48dvh,1100px)}
 }
+
+/* Setups use the normal planner; the dialog only names the setup. */
+.risk-name-dialog{width:min(440px,calc(100vw - 24px))}
+.risk-name-dialog footer{position:static;padding-bottom:0}
+.risk-editor-banner{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:14px 18px;margin-bottom:18px;border:1px solid var(--line);border-radius:12px;background:var(--tint)}
+.risk-editor-banner>div{display:grid;gap:4px;flex:1;min-width:160px}.risk-editor-banner strong{font-size:15px;overflow-wrap:anywhere}.risk-editor-banner span{font-size:11px;color:var(--secondary)}
+.risk-setup-save{position:sticky;bottom:0;z-index:9;display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:14px 18px;margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 -6px 24px #061a3210}
+.risk-setup-save>div{display:grid;gap:4px;flex:1;min-width:160px}.risk-setup-save strong{font-size:14px;overflow-wrap:anywhere}.risk-setup-save span{font-size:11px;line-height:1.8;color:var(--secondary)}
+.risk-setup-save .risk-delete-setup{margin-inline-start:0}.risk-save-status{font-size:12px;color:var(--success);flex-basis:100%;margin:0}
+@media(max-width:600px){.risk-editor-banner{padding:12px}.risk-setup-save{padding:10px 12px;gap:8px}.risk-setup-save>div{flex-basis:100%}.risk-setup-save .button{flex:1;padding-inline:10px}.risk-setup-save .risk-delete-setup{width:100%}}
+@media(min-width:1900px){.risk-workspace .risk-setup-save .button{font-size:clamp(14px,.75vw,22px);min-height:clamp(46px,2.8vw,64px)}.risk-workspace .risk-setup-save strong{font-size:clamp(15px,.8vw,24px)}.risk-workspace .risk-setup-save span{font-size:clamp(12px,.65vw,18px)}}

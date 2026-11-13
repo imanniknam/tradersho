@@ -27,6 +27,7 @@ import './refinements.css'
 import './gradient-polish.css'
 import './motion-polish.css'
 import './dark-neutral.css'
+import './account-fit.css'
 import PrivacyPage from './PrivacyPage'
 
 interface AuthValue { user:User|null; loading:boolean; setUser:(u:User|null)=>void }
