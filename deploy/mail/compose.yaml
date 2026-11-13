@@ -1,0 +1,55 @@
+name: tradersho-mail
+services:
+  mailserver:
+    image: ${MAIL_IMAGE:?Set a pinned official docker-mailserver image digest}
+    hostname: mx.tradersho.com
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Tehran
+      SSL_TYPE: manual
+      SSL_CERT_PATH: /srv/tls/fullchain.pem
+      SSL_KEY_PATH: /srv/tls/privkey.pem
+      PERMIT_DOCKER: none
+      SPOOF_PROTECTION: '1'
+      ENABLE_RSPAMD: '1'
+      ENABLE_RSPAMD_VALKEY: '1'
+      ENABLE_AMAVIS: '0'
+      ENABLE_OPENDKIM: '0'
+      ENABLE_OPENDMARC: '0'
+      ENABLE_POLICYD_SPF: '0'
+      ENABLE_SPAMASSASSIN: '0'
+      ENABLE_CLAMAV: '0'
+      ENABLE_FAIL2BAN: '1'
+      ENABLE_POP3: '1'
+      POSTFIX_INET_PROTOCOLS: ipv4
+      DOVECOT_INET_PROTOCOLS: ipv4
+      POSTMASTER_ADDRESS: support@tradersho.com
+      POSTFIX_MESSAGE_SIZE_LIMIT: '26214400'
+      POSTFIX_MAILBOX_SIZE_LIMIT: '1073741824'
+    cap_add: [NET_ADMIN]
+    cap_drop: [NET_RAW]
+    ports:
+      - '109.122.254.172:25:25'
+      - '109.122.254.172:465:465'
+      - '109.122.254.172:587:587'
+      - '109.122.254.172:993:993'
+      - '109.122.254.172:995:995'
+      - '127.0.0.1:2525:25'
+      - '127.0.0.1:1465:465'
+      - '127.0.0.1:1587:587'
+      - '127.0.0.1:1993:993'
+      - '127.0.0.1:1995:995'
+    volumes:
+      - ./data:/var/mail
+      - ./state:/var/mail-state
+      - ./logs:/var/log/mail
+      - ./config:/tmp/docker-mailserver
+      - ./tls:/srv/tls:ro
+    stop_grace_period: 1m
+    mem_limit: 1g
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'

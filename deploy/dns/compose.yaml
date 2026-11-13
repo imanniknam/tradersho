@@ -1,0 +1,23 @@
+name: tradersho-dns
+services:
+  authoritative:
+    image: internetsystemsconsortium/bind9@sha256:66092edb53c081fa11b1fa8219e99065b0f497cb38f568ba789702a4c10e2590
+    command: ['-g', '-c', '/etc/bind/named.conf']
+    restart: unless-stopped
+    ports:
+      - '109.122.254.172:53:53/udp'
+      - '109.122.254.172:53:53/tcp'
+    volumes:
+      - ./config:/etc/bind:ro
+    read_only: true
+    tmpfs:
+      - /var/cache/bind:mode=1777,size=32m
+      - /run/named:mode=1777,size=4m
+    mem_limit: 192m
+    pids_limit: 64
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'

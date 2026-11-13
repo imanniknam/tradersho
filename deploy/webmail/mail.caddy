@@ -1,0 +1,10 @@
+mx.tradersho.com {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy same-origin
+        X-Frame-Options SAMEORIGIN
+        -Server
+    }
+    reverse_proxy tradersho-webmail:80
+}

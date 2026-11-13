@@ -1,0 +1,33 @@
+name: tradersho-webmail
+services:
+  webmail:
+    image: roundcube/roundcubemail@sha256:d23169b8bbb99b5e75adcd502b627d6f29e60833a7053a12e4ff133468c2e5b4
+    restart: unless-stopped
+    environment:
+      ROUNDCUBEMAIL_DB_TYPE: sqlite
+      ROUNDCUBEMAIL_DEFAULT_HOST: ssl://mx.tradersho.com
+      ROUNDCUBEMAIL_DEFAULT_PORT: '993'
+      ROUNDCUBEMAIL_SMTP_SERVER: tls://mx.tradersho.com
+      ROUNDCUBEMAIL_SMTP_PORT: '587'
+      ROUNDCUBEMAIL_USERNAME_DOMAIN: tradersho.com
+      ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: 18M
+      ROUNDCUBEMAIL_PLUGINS: archive,zipdownload
+    volumes:
+      - ./db:/var/roundcube/db
+      - ./config:/var/roundcube/config:ro
+    networks:
+      proxy:
+        aliases: [tradersho-webmail]
+    cap_drop: [NET_RAW]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 384m
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+networks:
+  proxy:
+    external: true
+    name: tradersho_wordpress_proxy
