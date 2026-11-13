@@ -5,9 +5,15 @@
         Referrer-Policy strict-origin-when-cross-origin
         -Server
     }
-    reverse_proxy app:3001 {
-        header_up X-Forwarded-Host {host}
-        header_up X-Forwarded-For {remote_host}
+    @ownerMail path /owner-mail /owner-mail/*
+    handle @ownerMail {
+        reverse_proxy owner-mail:3002
+    }
+    handle {
+        reverse_proxy app:3001 {
+            header_up X-Forwarded-Host {host}
+            header_up X-Forwarded-For {remote_host}
+        }
     }
 }
 # Never serve credential forms over unencrypted IP access.

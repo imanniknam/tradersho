@@ -1,0 +1,17 @@
+[Unit]
+Description=Tradersho restricted mail management broker
+After=docker.service
+Requires=docker.service
+[Service]
+ExecStart=/usr/bin/python3 /opt/tradersho-owner-mail/broker.py
+Restart=on-failure
+RuntimeDirectory=tradersho-owner-mail
+RuntimeDirectoryMode=0750
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/tradersho-owner-mail/backups /run/tradersho-owner-mail
+[Install]
+WantedBy=multi-user.target

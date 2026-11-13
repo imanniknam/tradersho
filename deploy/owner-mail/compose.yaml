@@ -1,0 +1,36 @@
+name: tradersho-owner-mail
+services:
+  owner:
+    image: ${OWNER_IMAGE}
+    pull_policy: never
+    user: '1000:1000'
+    command: ['node','/owner/server.mjs']
+    env_file: runtime.env
+    volumes:
+      - ./server.mjs:/owner/server.mjs:ro
+      - ./owner-security.mjs:/owner/owner-security.mjs:ro
+      - ./index.html:/owner/index.html:ro
+      - ./owner-key:/run/secrets/owner-key:ro
+      - /run/tradersho-owner-mail:/run/broker:ro
+    networks:
+      default:
+        aliases: [owner-mail]
+    ports: ['127.0.0.1:8084:3002']
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3002/owner-mail/api/status').then(r=>process.exit(r.status===401?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 192m
+    pids_limit: 32
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: '2'}
+networks:
+  default:
+    external: true
+    name: tradersho_default
