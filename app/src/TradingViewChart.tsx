@@ -1,10 +1,11 @@
+import type {ReactNode} from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { Maximize2, Minimize2, RefreshCw } from 'lucide-react'
 import { useTheme } from './theme'
 
 // Official hosted widget: TradingView supplies and controls its own market data.
 // No scraping, custom datafeed, Replay or paper-account connection is implied.
-export default function TradingViewChart() {
+export default function TradingViewChart({resizeHandles}:{resizeHandles?:ReactNode}) {
   const {theme}=useTheme()
   const host=useRef<HTMLDivElement>(null)
   const expandButton=useRef<HTMLButtonElement>(null)
@@ -52,7 +53,7 @@ export default function TradingViewChart() {
     return()=>{document.body.style.overflow=overflow;window.removeEventListener('keydown',close);(previous?.isConnected?previous:expandButton.current)?.focus()}
   },[expanded])
   return <section ref={region} role={expanded?'dialog':undefined} aria-modal={expanded?true:undefined} tabIndex={-1} className={`tv-chart surface ${expanded?'tv-expanded':''}`} aria-label="محیط تحلیل بازار">
-    <div className="tv-toolbar"><span><i className="tv-dot"/> نمودار TradingView</span><div><button className="icon-button" onClick={()=>setAttempt(n=>n+1)} aria-label="بارگذاری دوباره نمودار"><RefreshCw size={18}/></button><button ref={expandButton} className="button secondary small" aria-pressed={expanded} onClick={()=>setExpanded(v=>!v)}>{expanded?<Minimize2 size={17}/>:<Maximize2 size={17}/>} {expanded?'بازگشت به پنل':'نمای تمام‌صفحه'}</button></div></div>
+    {!expanded&&resizeHandles}<div className="tv-toolbar"><span><i className="tv-dot"/> نمودار TradingView</span><div><button className="icon-button" onClick={()=>setAttempt(n=>n+1)} aria-label="بارگذاری دوباره نمودار"><RefreshCw size={18}/></button><button ref={expandButton} className="button secondary small" aria-pressed={expanded} onClick={()=>setExpanded(v=>!v)}>{expanded?<Minimize2 size={17}/>:<Maximize2 size={17}/>} {expanded?'بازگشت به پنل':'نمای تمام‌صفحه'}</button></div></div>
     {status==='loading' && <p className="tv-status" role="status">در حال اتصال به TradingView…</p>}
     {(status==='error'||status==='slow') && <div className="tv-status" role="alert">{status==='error'?'اتصال به TradingView برقرار نشد.':'بارگذاری نمودار بیشتر از معمول طول کشیده است.'} <button onClick={()=>setAttempt(n=>n+1)}>تلاش دوباره</button><a href="https://www.tradingview.com/chart/?symbol=OANDA%3AXAUUSD" target="_blank" rel="noopener noreferrer">باز کردن TradingView</a></div>}
     <div ref={host} className="tradingview-widget-container tv-host"/>

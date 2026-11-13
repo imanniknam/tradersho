@@ -47,3 +47,5 @@
 .expert-download-grid article{border-color:var(--academy-accent);background:var(--tint)}
 [data-theme=dark] .expert-platform-logo{filter:invert(.88) hue-rotate(180deg)}
 .expert-native-desk iframe{background:transparent!important}
+
+.expert-download-platform.expert-download-guide{direction:rtl;justify-content:space-between}.expert-download-guide>span{font-family:inherit}

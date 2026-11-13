@@ -12,7 +12,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:17-alpine
@@ -69,6 +69,8 @@ jobs:
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-expert-layout-ui.mjs
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-panel-interactions.mjs
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-monitor-ui.mjs
+          CHROME_BIN="$(command -v google-chrome)" node scripts/ci-market-desk.mjs
+          CHROME_BIN="$(command -v google-chrome)" node scripts/ci-risk-setups.mjs
       - name: Application diagnostics on failure
         if: failure()
         run: cat /tmp/tradersho-ci-server.log || true

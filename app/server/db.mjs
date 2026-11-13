@@ -1,3 +1,4 @@
+import {migrateRiskSetups} from './risk-setups.mjs'
 import {migrateMail} from './mail.mjs'
 import {migrateCalendar} from './calendar.mjs'
 import {migrateCaptcha} from './captcha.mjs'
@@ -151,6 +152,7 @@ export async function migrate() {
       ALTER TABLE reference_replay_sessions ADD COLUMN IF NOT EXISTS simulation jsonb;
 
     `)
+    await migrateRiskSetups(client)
     await migrateSupport(client)
     await migrateRecovery(client)
     await migrateMail(client)

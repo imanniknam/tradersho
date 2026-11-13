@@ -55,3 +55,25 @@ select:not([multiple]){appearance:none!important;-webkit-appearance:none!importa
 
 .auth-form input[autocomplete=name]{direction:rtl;text-align:right}
 @media(min-width:1001px){.auth-signup .auth-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.auth-signup .auth-form>*{grid-column:1/-1;min-width:0}.auth-signup .auth-form>label:nth-child(-n+2){grid-column:auto}}
+
+/* Large desktops: fill the workspace and scale account/dashboard controls for readable physical size. */
+@media(min-width:1900px){
+ .app-shell:not(.tools-shell) .main-inner{max-width:none;padding:clamp(28px,2vw,72px)}
+ .app-shell:not(.tools-shell) .sidebar{width:clamp(236px,12vw,340px)}
+ .app-shell:not(.tools-shell) .nav-link{font-size:clamp(14px,.7vw,20px);min-height:clamp(46px,2.6vw,66px)}
+ .app-shell:not(.tools-shell) .nav-soon{font-size:clamp(9px,.45vw,12px)}
+ .main-inner:has(.account-grid) .page-head h1{font-size:clamp(26px,1.4vw,42px)}
+ .account-grid{gap:clamp(22px,1.5vw,54px)}
+ .account-grid>.surface{padding:clamp(28px,1.8vw,64px)}
+ .account-grid .profile-top{padding-bottom:clamp(24px,1.8vw,56px);margin-bottom:clamp(24px,1.8vw,56px)}
+ .account-grid .profile-top h2,.account-grid .security-surface h3{font-size:clamp(20px,1vw,30px)}
+ .account-grid .profile-top p,.account-grid .stack-form label,.account-grid .security-surface>p{font-size:clamp(14px,.8vw,22px);line-height:1.9}
+ .account-grid .stack-form{gap:clamp(20px,1.5vw,40px)}
+ .account-grid .stack-form input{min-height:clamp(48px,3vw,76px);font-size:clamp(16px,.9vw,24px);padding:12px 18px}
+ .account-grid .button{font-size:clamp(14px,.75vw,22px);min-height:clamp(46px,2.8vw,66px)}
+ .account-grid .security-surface small,.account-grid .security-show,.account-grid .security-logout{font-size:clamp(12px,.65vw,18px)}
+ .home-service h2{font-size:clamp(22px,1.25vw,36px)}
+ .home-service p,.home-recent p,.home-school p,.home-service a{font-size:clamp(13px,.7vw,20px)}
+}
+.sidebar .sidebar-kicker{font-size:15px;line-height:1.8;font-weight:700}
+@media(min-width:1900px){.sidebar .sidebar-kicker{font-size:clamp(16px,.9vw,25px)}}

@@ -1,3 +1,4 @@
+import {riskSetupsRoute} from './risk-setups.mjs'
 import {mailConfig,startMailWorker} from './mail.mjs'
 import {calendarIntegration,calendarRoute} from './calendar.mjs'
 import {captchaEnabled,issueCaptcha,verifyCaptcha} from './captcha.mjs'
@@ -171,6 +172,7 @@ const server = http.createServer(async (req, res) => {
     const user = await sessionUser(req)
     if (!user) return fail(res, 401, 'برای ادامه وارد حساب خود شوید.')
     if(path==='/api/news')return fail(res,410,'بخش خبرها حذف شده است.')
+    if(await riskSetupsRoute({path,method,user,req,res,body,json,fail,rateLimit}))return
     if(await calendarRoute({path,method,req,res,json,fail}))return
     if (path === '/api/session' && method === 'GET') return json(res, 200, { user: await publicUser(user) })
     if (path === '/api/admin/session' && method === 'GET') {

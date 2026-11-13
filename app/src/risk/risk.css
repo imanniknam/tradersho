@@ -110,3 +110,61 @@
 .risk-table-scroll tbody th{font-size:14px;line-height:1.9}
 .risk-table-scroll tbody th .risk-stage-caption{display:block;min-height:22px;font-family:inherit;font-size:11px;line-height:22px;white-space:nowrap}
 @media(max-width:600px){.risk-capacity-trades.risk-bars{padding-inline:16px}.risk-field>small.risk-field-help{font-size:12px}}
+
+/* Current feedback: preserve the last valid plan, wrap capacity cards, and keep setup controls available. */
+.risk-workspace .risk-intro{position:sticky;top:0;z-index:8;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px 20px;overflow:visible;scroll-margin-top:0}
+.risk-workspace .risk-intro:before{display:none}
+.risk-setup-tools{display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0}
+.risk-setup-tools>label{font-size:12px;color:var(--secondary)}
+.risk-setup-tools select{min-width:120px;max-width:230px;min-height:40px;border:1px solid var(--line);border-radius:8px;background:var(--canvas);color:var(--ink);padding:7px 12px;font:inherit;font-size:12px}
+.risk-setup-tools .button{min-height:40px}
+.risk-field-range{display:block;font-size:11px;line-height:1.8;color:var(--secondary);margin-bottom:3px}
+.risk-capacity-trades.risk-bars{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,100px),1fr));gap:12px;overflow:visible;overscroll-behavior:auto;scrollbar-width:auto;align-items:stretch;padding:18px 22px 20px}
+.risk-capacity-trades.risk-bars button{min-width:0;width:100%;min-height:106px;flex:none}
+.risk-capacity-trades.risk-bars .risk-path-gap{grid-column:1/-1;min-width:0;flex:none;min-height:44px}
+.risk-capacity-trades.risk-bars button[aria-pressed=true]{outline-offset:1px}
+.risk-results{scroll-margin-top:150px}
+.risk-setup-dialog{width:min(680px,calc(100vw - 24px));max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 20px 80px #061a3240;overflow:auto;overscroll-behavior:contain;font-family:inherit}
+.risk-setup-dialog::backdrop{background:#061a3270}
+.risk-setup-dialog form{padding:22px}
+.risk-setup-dialog header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.risk-setup-dialog h2{font-size:18px;margin:0}
+.risk-setup-dialog p{font-size:12px;line-height:1.9;color:var(--secondary)}
+.risk-setup-name{display:grid;gap:7px;font-size:13px;margin:18px 0}
+.risk-setup-name input{width:100%;min-height:44px;background:var(--canvas);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:10px 12px;font:inherit}
+.risk-setup-inputs{margin:0;padding:0;border:0;min-width:0}
+.risk-setup-dialog .risk-plan-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.risk-setup-dialog .risk-input-group{margin:0;padding:14px;min-width:0}
+.risk-setup-dialog .risk-profiles{margin-top:20px}
+.risk-setup-dialog footer{position:sticky;bottom:-22px;margin-top:18px;background:var(--surface);padding-block:12px 0;display:flex;flex-wrap:wrap;gap:8px}
+.risk-delete-setup{color:var(--risk-bad,#b91c1c);background:none;border:1px solid currentColor;border-radius:8px;font:inherit;font-size:12px;padding:8px 12px;margin-inline-start:auto;min-height:44px;cursor:pointer}
+.risk-setup-error{color:var(--risk-bad,#b91c1c)!important;flex-basis:100%;font-size:12px;line-height:1.9;margin:0}
+.risk-setup-error button{margin-inline:8px;background:transparent;border:0;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer}
+.risk-results button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:600px){.risk-workspace .risk-intro{padding:12px;gap:8px}.risk-intro p{font-size:11px}.risk-setup-tools{width:100%}.risk-setup-tools select{flex:1;min-width:90px;max-width:none;font-size:16px}.risk-setup-tools>label{font-size:11px}.risk-setup-tools .button{font-size:11px;padding-inline:10px}.risk-setup-dialog form{padding:16px}.risk-setup-dialog .risk-plan-fields{display:block}.risk-setup-dialog .risk-input-group+.risk-input-group{margin-top:12px}.risk-setup-dialog footer{bottom:-16px}.risk-capacity-trades.risk-bars{padding-inline:16px;grid-template-columns:repeat(auto-fill,minmax(min(100%,90px),1fr));gap:10px}}
+
+/* Use the available desk width instead of a fixed centered island on large monitors. */
+.risk-workspace{max-width:none;width:100%}
+.risk-capacity-trades.risk-bars{grid-template-columns:repeat(auto-fit,minmax(min(100%,100px),1fr))}
+@media(min-width:1900px){
+ .risk-workspace .risk-layout{grid-template-columns:clamp(340px,20vw,560px) minmax(0,1fr);gap:clamp(22px,1.2vw,48px)}
+ .risk-workspace .risk-intro{padding:clamp(18px,1vw,32px)}
+ .risk-workspace .risk-intro .risk-kicker{font-size:clamp(20px,1vw,30px)}
+ .risk-workspace .risk-intro p,.risk-workspace .risk-setup-tools>label,.risk-workspace .risk-setup-tools select{font-size:clamp(13px,.7vw,20px)}
+ .risk-workspace .risk-settings{padding:clamp(22px,1.2vw,40px)}
+ .risk-workspace .risk-section-title>span,.risk-workspace .risk-input-group legend,.risk-workspace .risk-field>label{font-size:clamp(14px,.75vw,21px)}
+ .risk-workspace .risk-input input{font-size:clamp(16px,.85vw,24px);min-height:clamp(44px,2.5vw,64px)}
+ .risk-workspace .risk-field>small.risk-field-help,.risk-workspace .risk-profiles strong{font-size:clamp(12px,.65vw,18px)}
+ .risk-workspace .risk-field-range,.risk-workspace .risk-profiles small,.risk-workspace .risk-profiles>p,.risk-workspace .risk-settings-note{font-size:clamp(11px,.6vw,16px)}
+ .risk-workspace .risk-stat{padding:clamp(20px,1.2vw,40px)}
+ .risk-workspace .risk-stat>strong{font-size:clamp(30px,1.6vw,48px)}
+ .risk-workspace .risk-stat>span,.risk-workspace .risk-card-heading h3,.risk-workspace .risk-worst-case h3,.risk-workspace .risk-limit h3{font-size:clamp(15px,.8vw,24px)}
+ .risk-workspace .risk-stat>small,.risk-workspace .risk-card-heading p,.risk-workspace .risk-worst-case p,.risk-workspace .risk-limit p,.risk-workspace .risk-capacity>p{font-size:clamp(12px,.65vw,19px)}
+ .risk-workspace .risk-capacity-trades.risk-bars{grid-template-columns:repeat(auto-fit,minmax(min(100%,clamp(110px,5vw,170px)),1fr));gap:clamp(12px,.7vw,22px)}
+ .risk-workspace .risk-bars button{min-height:clamp(110px,5.5vw,166px)}
+ .risk-workspace .risk-bars button>bdi,.risk-workspace .risk-bars button>span{font-size:clamp(14px,.8vw,24px)}
+ .risk-workspace .risk-bars button small{font-size:clamp(11px,.6vw,17px)}
+ .risk-workspace .risk-table-scroll td,.risk-workspace .risk-table-scroll tbody th{font-size:clamp(14px,.75vw,22px);padding:clamp(16px,.8vw,26px)}
+ .risk-workspace .risk-table-scroll thead th{font-size:clamp(12px,.65vw,19px)}
+ .risk-workspace .risk-table-scroll{max-height:clamp(580px,48dvh,1100px)}
+}
