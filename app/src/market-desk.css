@@ -52,8 +52,8 @@
 @media(min-width:1201px) and (min-height:700px){
  .tools-shell:has(.market-desk) .main-scroll{scrollbar-gutter:stable;overflow-anchor:none}
  .analysis-market .analysis-grid.market-desk{height:var(--market-height);flex:0 0 auto;min-height:0;align-items:stretch;overflow-anchor:none}
- .analysis-market .market-desk .analysis-context{height:100%;align-self:stretch;align-content:stretch;overflow-anchor:none}
- .analysis-market .market-desk .analysis-chart{height:100%}
+ .analysis-market .market-desk .analysis-context{height:var(--market-context-height);align-self:start;align-content:stretch;overflow-anchor:none}
+ .analysis-market .market-desk .analysis-chart{height:var(--market-chart-height);align-self:start}
  .analysis-market .market-desk .flicker-card{padding-block:8px;overflow:visible}
  .analysis-market .market-desk .flicker-frame-stage{flex:1 0 auto;overflow:visible}
  .analysis-market .market-desk .flicker-frame-wrap{width:100%;max-width:none}

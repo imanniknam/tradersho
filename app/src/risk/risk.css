@@ -143,30 +143,31 @@
 .risk-results button:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:600px){.risk-workspace .risk-intro{padding:12px;gap:8px}.risk-intro p{font-size:11px}.risk-setup-tools{width:100%}.risk-setup-tools select{flex:1;min-width:90px;max-width:none;font-size:16px}.risk-setup-tools>label{font-size:11px}.risk-setup-tools .button{font-size:11px;padding-inline:10px}.risk-setup-dialog form{padding:16px}.risk-setup-dialog .risk-plan-fields{display:block}.risk-setup-dialog .risk-input-group+.risk-input-group{margin-top:12px}.risk-setup-dialog footer{bottom:-16px}.risk-capacity-trades.risk-bars{padding-inline:16px;grid-template-columns:repeat(auto-fill,minmax(min(100%,90px),1fr));gap:10px}}
 
-/* Use the available desk width instead of a fixed centered island on large monitors. */
-.risk-workspace{max-width:none;width:100%}
+/* A readable planner with breathing room on large displays. */
+.risk-workspace{max-width:1880px;width:100%}
 .risk-capacity-trades.risk-bars{grid-template-columns:repeat(auto-fit,minmax(min(100%,100px),1fr))}
+.risk-table-scroll{max-height:none;overflow-x:auto;overflow-y:visible}
+@media(min-width:1500px){.risk-workspace{width:calc(100% - clamp(32px,5vw,160px))}}
 @media(min-width:1900px){
- .risk-workspace .risk-layout{grid-template-columns:clamp(340px,20vw,560px) minmax(0,1fr);gap:clamp(22px,1.2vw,48px)}
- .risk-workspace .risk-intro{padding:clamp(18px,1vw,32px)}
- .risk-workspace .risk-intro .risk-kicker{font-size:clamp(20px,1vw,30px)}
- .risk-workspace .risk-intro p,.risk-workspace .risk-setup-tools>label,.risk-workspace .risk-setup-tools select{font-size:clamp(13px,.7vw,20px)}
- .risk-workspace .risk-settings{padding:clamp(22px,1.2vw,40px)}
- .risk-workspace .risk-section-title>span,.risk-workspace .risk-input-group legend,.risk-workspace .risk-field>label{font-size:clamp(14px,.75vw,21px)}
- .risk-workspace .risk-input input{font-size:clamp(16px,.85vw,24px);min-height:clamp(44px,2.5vw,64px)}
- .risk-workspace .risk-field>small.risk-field-help,.risk-workspace .risk-profiles strong{font-size:clamp(12px,.65vw,18px)}
- .risk-workspace .risk-field-range,.risk-workspace .risk-profiles small,.risk-workspace .risk-profiles>p,.risk-workspace .risk-settings-note{font-size:clamp(11px,.6vw,16px)}
- .risk-workspace .risk-stat{padding:clamp(20px,1.2vw,40px)}
- .risk-workspace .risk-stat>strong{font-size:clamp(30px,1.6vw,48px)}
- .risk-workspace .risk-stat>span,.risk-workspace .risk-card-heading h3,.risk-workspace .risk-worst-case h3,.risk-workspace .risk-limit h3{font-size:clamp(15px,.8vw,24px)}
- .risk-workspace .risk-stat>small,.risk-workspace .risk-card-heading p,.risk-workspace .risk-worst-case p,.risk-workspace .risk-limit p,.risk-workspace .risk-capacity>p{font-size:clamp(12px,.65vw,19px)}
- .risk-workspace .risk-capacity-trades.risk-bars{grid-template-columns:repeat(auto-fit,minmax(min(100%,clamp(110px,5vw,170px)),1fr));gap:clamp(12px,.7vw,22px)}
- .risk-workspace .risk-bars button{min-height:clamp(110px,5.5vw,166px)}
- .risk-workspace .risk-bars button>bdi,.risk-workspace .risk-bars button>span{font-size:clamp(14px,.8vw,24px)}
- .risk-workspace .risk-bars button small{font-size:clamp(11px,.6vw,17px)}
- .risk-workspace .risk-table-scroll td,.risk-workspace .risk-table-scroll tbody th{font-size:clamp(14px,.75vw,22px);padding:clamp(16px,.8vw,26px)}
- .risk-workspace .risk-table-scroll thead th{font-size:clamp(12px,.65vw,19px)}
- .risk-workspace .risk-table-scroll{max-height:clamp(580px,48dvh,1100px)}
+ .risk-workspace .risk-layout{grid-template-columns:360px minmax(0,1fr);gap:24px}
+ .risk-workspace .risk-intro{padding:18px}
+ .risk-workspace .risk-intro .risk-kicker{font-size:20px}
+ .risk-workspace .risk-intro p,.risk-workspace .risk-setup-tools>label,.risk-workspace .risk-setup-tools select{font-size:13px}
+ .risk-workspace .risk-settings{padding:22px}
+ .risk-workspace .risk-section-title>span,.risk-workspace .risk-input-group legend,.risk-workspace .risk-field>label{font-size:14px}
+ .risk-workspace .risk-input input{font-size:18px;min-height:46px}
+ .risk-workspace .risk-field>small.risk-field-help,.risk-workspace .risk-profiles strong{font-size:12px}
+ .risk-workspace .risk-field-range,.risk-workspace .risk-profiles small,.risk-workspace .risk-profiles>p,.risk-workspace .risk-settings-note{font-size:11px}
+ .risk-workspace .risk-stat{padding:20px}
+ .risk-workspace .risk-stat>strong{font-size:32px}
+ .risk-workspace .risk-stat>span,.risk-workspace .risk-card-heading h3,.risk-workspace .risk-worst-case h3,.risk-workspace .risk-limit h3{font-size:15px}
+ .risk-workspace .risk-stat>small,.risk-workspace .risk-card-heading p,.risk-workspace .risk-worst-case p,.risk-workspace .risk-limit p,.risk-workspace .risk-capacity>p{font-size:12px}
+ .risk-workspace .risk-capacity-trades.risk-bars{grid-template-columns:repeat(auto-fit,minmax(min(100%,110px),1fr));gap:12px}
+ .risk-workspace .risk-bars button{min-height:110px}
+ .risk-workspace .risk-bars button>bdi,.risk-workspace .risk-bars button>span{font-size:14px}
+ .risk-workspace .risk-bars button small{font-size:11px}
+ .risk-workspace .risk-table-scroll td,.risk-workspace .risk-table-scroll tbody th{font-size:14px;padding:14px}
+ .risk-workspace .risk-table-scroll thead th{font-size:12px}
 }
 
 /* Setups use the normal planner; the dialog only names the setup. */

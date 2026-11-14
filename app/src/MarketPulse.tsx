@@ -29,7 +29,7 @@ export default function MarketPulse() {
   return (
     <div className="market-pulse" ref={ref} aria-hidden="true">
       <span className="mp-aurora mp-aurora-a" /><span className="mp-aurora mp-aurora-b" /><span className="mp-aurora mp-aurora-c" />
-      <svg className="mp-scene" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid slice" focusable="false">
+      <svg className="mp-scene" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet" focusable="false">
         <defs>
           <linearGradient id="mp-line" x1="0" x2="1"><stop offset="0" stopColor="var(--mp-c2)" /><stop offset=".55" stopColor="var(--mp-c1)" /><stop offset="1" stopColor="var(--mp-c3)" /></linearGradient>
           <linearGradient id="mp-area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="var(--mp-c1)" stopOpacity=".30" /><stop offset="1" stopColor="var(--mp-c1)" stopOpacity="0" /></linearGradient>

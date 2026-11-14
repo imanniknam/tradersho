@@ -86,3 +86,6 @@
 .tools-shell .analysis-center .surface,
 .tools-shell .analysis-center .surface:hover,
 .tools-shell .analysis-center .surface:focus-within{background:var(--surface)!important;animation:none!important}
+
+/* Keep the full decorative scene inside its cell on wide monitors. */
+.home-tools-entry .mp-scene{inset:8px;width:calc(100% - 16px);height:calc(100% - 16px);transform:none}

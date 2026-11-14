@@ -16,6 +16,7 @@ try{
  await context.route('https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',r=>r.fulfill({contentType:'application/javascript',body:`{const s=document.currentScript,f=document.createElement('iframe');f.title='TradingView monitor QA';f.style='width:100%;height:100%;border:0';f.srcdoc='<title>Chart QA</title>';s.parentElement.querySelector('.tradingview-widget-container__widget').append(f)}`}))
  for(const [width,height] of [[1920,1080],[2560,1440],[3440,1440],[3840,2160],[5120,1440],[5120,2880]])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height});await context.addInitScript(t=>{if(window===top)localStorage.setItem('tradersho-theme',t)},theme)
+  await page.goto(base+'/panel');await page.locator('.home-tools-entry .mp-candle').first().waitFor();await settle();assert.ok(await page.locator('.market-pulse').evaluate(n=>{const b=n.getBoundingClientRect();return [...n.querySelectorAll('.mp-candle')].every(c=>{const r=c.getBoundingClientRect();return r.left>=b.left&&r.right<=b.right&&r.top>=b.top&&r.bottom<=b.bottom})}),'All decorative candles and wicks fit inside the dashboard frame');await page.screenshot({path:`qa/monitors/dashboard-${width}x${height}-${theme}.png`});results.push({tool:'dashboard',width,height,theme});
   for(const tool of ['market','calendar','risk','expert']){
    await page.goto(base+'/panel/tools'+(tool==='market'?'':'/'+tool));await page.locator('.analysis-heading h1').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
    if(tool==='market'){
@@ -27,6 +28,7 @@ try{
     const sticky=await page.evaluate(()=>({command:document.querySelector('.calendar-command').getBoundingClientRect().bottom,head:document.querySelector('thead th').getBoundingClientRect().top}));assert.ok(Math.abs(sticky.command-sticky.head)<3,'Sticky table header stays beneath command bar '+JSON.stringify(sticky))
    }else if(tool==='risk'){
     await page.locator('.risk-stats').waitFor();await page.locator('#risk-cycleLength').fill('20');await page.locator('.risk-table-scroll tbody tr').last().waitFor();assert.equal(await page.locator('.risk-table-scroll tbody tr').count(),20)
+    assert.ok(await page.locator('.risk-workspace').evaluate(n=>n.getBoundingClientRect().width<=1881&&n.parentElement.getBoundingClientRect().width-n.getBoundingClientRect().width>=31),'Bounded risk width and outer margins');assert.ok(await page.locator('.risk-stat>strong').first().evaluate(n=>parseFloat(getComputedStyle(n).fontSize)<=34),'Risk numbers do not grow with monitor width');assert.ok(await page.locator('.risk-table-scroll').evaluate(n=>n.scrollHeight<=n.clientHeight+1),'Cycle table grows with its rows instead of scrolling internally');await page.locator('.risk-table-scroll tbody tr').last().scrollIntoViewIfNeeded();assert.equal(await page.locator('.risk-table-scroll').evaluate(n=>n.scrollTop),0);assert.ok(await page.locator('.risk-table-scroll tbody tr').last().evaluate(n=>{const r=n.getBoundingClientRect(),s=n.closest('.main-scroll').getBoundingClientRect();return r.bottom<=s.bottom+1&&r.top>=s.top}),'Last row reached by page scrolling');
     await page.locator('.risk-bars button').nth(19).click();assert.ok((await page.locator('.risk-stage-id').innerText()).includes('T20'))
    }else{
     await page.waitForFunction(()=>document.querySelector('.expert-academy-intro button')?.disabled===false);const native=page.frameLocator('.expert-native-desk iframe');await native.getByRole('tab',{name:/Manage/}).click();await native.locator('[data-action=settings]').click();await native.locator('.more-layout').waitFor();await settle()
@@ -38,5 +40,5 @@ try{
   }
   console.log('PASS monitor',width,height,theme)
  }
- assert.deepEqual(errors,[]);await writeFile('qa/monitors/report.json',JSON.stringify({results,errors},null,2));console.log('PASS 48 monitor page/theme/size cases, 20-stage risk, sticky calendar, expert settings and market alignment')
+ assert.deepEqual(errors,[]);await writeFile('qa/monitors/report.json',JSON.stringify({results,errors},null,2));console.log('PASS 60 monitor page/theme/size cases, complete dashboard candles, bounded risk sizing, page-scrolled 20-stage table, sticky calendar, expert settings and default market alignment')
 }finally{await browser.close();await pool.query('DELETE FROM users WHERE id=$1',[id]);await pool.end()}
