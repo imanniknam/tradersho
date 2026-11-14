@@ -49,3 +49,6 @@
 .expert-native-desk iframe{background:transparent!important}
 
 .expert-download-platform.expert-download-guide{direction:rtl;justify-content:space-between}.expert-download-guide>span{font-family:inherit}
+
+.expert-static-chart .scenario-level.ENTRY{pointer-events:all}
+.expert-static-chart .scenario-level .scenario-level-hit{stroke:transparent;stroke-width:14;stroke-dasharray:none;pointer-events:stroke}
