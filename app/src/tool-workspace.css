@@ -118,3 +118,7 @@
 .analysis-rail a:hover .analysis-tool-icon{border-color:var(--accent);color:var(--accent)}
 .analysis-rail a.selected:hover .analysis-tool-icon{color:#fff}
 @media(max-width:900px){.analysis-tool-icon{width:32px;height:32px;border-radius:9px}.analysis-tool-icon svg{width:20px;height:20px}}
+
+/* Keep the current tool visible while the academy scrolls beneath it. */
+.analysis-expert .analysis-heading{position:sticky;top:0;z-index:15;align-items:center;padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px #00000008}
+.tools-shell .main-scroll:has(.analysis-expert){scroll-padding-block-start:96px}
