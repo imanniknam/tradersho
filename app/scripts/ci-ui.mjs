@@ -18,6 +18,8 @@ try{
  await page.getByLabel('کد امنیتی',{exact:true}).fill('12345');await page.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await page.waitForURL(base+'/panel')
  // A responsive child reports its natural height, like the hosted Flicker widget.
  // Height-dependent parent zoom makes its width cross this wrapping threshold forever.
+
+ await page.context().route('**/api/market/gold-sentiment/status**',r=>r.fulfill({json:{availability:'unknown',checkedAt:new Date().toISOString()}}))
  await page.context().route('https://flicker.finance/embed/**',r=>r.fulfill({contentType:'text/html',body:`<!doctype html><html lang="en"><head><title>Responsive gold widget QA</title><style>body{margin:0}main{box-sizing:border-box;padding:16px}</style></head><body><main>Gold sentiment responsive fixture</main><script>const content=document.querySelector('main');function layout(){content.style.height=(innerWidth<470?280:260)+'px'}layout();addEventListener('resize',layout);new ResizeObserver(()=>parent.postMessage({type:'flicker-widget:resize',height:Math.ceil(document.body.getBoundingClientRect().height)},'*')).observe(document.body);</script></body></html>`}))
  for(const [width,height] of [[1280,720],[1366,768],[1440,900],[390,844]]){
   await page.setViewportSize({width,height});await page.goto(base+'/panel/tools',{waitUntil:'domcontentloaded'});const widget=page.locator('.flicker-card iframe');await widget.waitFor();await widget.scrollIntoViewIfNeeded();await widget.contentFrame().getByText('Gold sentiment responsive fixture').waitFor();await page.waitForTimeout(500)

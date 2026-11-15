@@ -12,6 +12,8 @@ try{
  await pool.query('INSERT INTO users(id,name,email,password_hash) VALUES($1,$2,$3,$4)',[user,'Event QA',user+'@example.test','unusable-qa-hash']);await pool.query("INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '1 hour')",[tokenHash(token),user]);await context.addCookies([{name:'tradersho_session',value:token,url:base}])
  await context.route('**/api/calendar?**',r=>r.fulfill({json:{configured:true,serverNow:now.toISOString(),events:previewEvents,total:previewEvents.length,updatedAt:now.toISOString()}}))
  await context.route('**/api/calendar/events/**',r=>{calls++;return fail?r.fulfill({status:503,json:{error:'QA offline'}}):r.fulfill({json:{event:detail,updatedAt:now.toISOString(),serverNow:now.toISOString()}})})
+
+ await context.route('**/api/market/gold-sentiment/status**',r=>r.fulfill({json:{availability:'unknown',checkedAt:new Date().toISOString()}}))
  await context.route('https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',r=>r.fulfill({contentType:'application/javascript',body:"window.__chartMounts=(window.__chartMounts||0)+1"}))
  // The nearest release is emphasized until pointer/keyboard focus moves to another row.
  previewEvents=[event,{...event,id:'b'.repeat(64),title:'رویداد دوم'},{...event,id:'c'.repeat(64),title:'رویداد سوم'}]

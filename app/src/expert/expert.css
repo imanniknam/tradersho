@@ -61,3 +61,10 @@
 .expert-download-grid .button{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:none}
 .expert-download-grid .button:hover{background:#543aff;border-color:#543aff;color:#fff;box-shadow:0 4px 12px #543aff18}
 @media(max-width:480px){.expert-academy-intro>div:last-child{grid-template-columns:1fr}}
+
+/* A separate monitor dock keeps every trade zone and price handle unobstructed. */
+.expert-lab>.expert-market-monitor{position:relative;inset:auto;display:grid;grid-template-columns:minmax(170px,1.2fr) repeat(3,minmax(130px,1fr));width:100%;max-width:none;margin:0;border:0;border-bottom:1px solid #36536a;box-shadow:none;z-index:auto}
+.expert-lab>.expert-market-monitor>header{border:0;padding:8px 14px}
+.expert-lab>.expert-market-monitor>button,.expert-lab>.expert-market-monitor>div{justify-content:center;gap:12px;border:0;border-inline-start:1px solid #203b51;min-height:44px;text-align:center}
+.expert-lab>.expert-market-monitor>small{grid-column:1/-1;text-align:right;padding:3px 14px 7px}
+@media(max-width:760px){.expert-lab>.expert-market-monitor{grid-template-columns:repeat(2,minmax(0,1fr))}.expert-lab>.expert-market-monitor>header{grid-column:1/-1}.expert-lab>.expert-market-monitor>div{grid-column:1/-1}}

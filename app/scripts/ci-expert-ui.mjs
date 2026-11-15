@@ -13,6 +13,7 @@ try{
  for(const width of [320,390,768,1024,1440,1920,2560,3840])for(const theme of ['light','dark']){
   await load(width,theme);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1),'No outer overflow '+width+' '+theme)
   assert.ok(await page.locator('.expert-static-chart').evaluate(n=>{const clip=n.querySelector('clipPath rect'),top=Number(clip.getAttribute('y')),bottom=top+Number(clip.getAttribute('height'));return [...n.querySelectorAll('g[clip-path] g line')].every(w=>Number(w.getAttribute('y1'))>=top&&Number(w.getAttribute('y2'))<=bottom)}),'Every candle wick fits the chart plot '+width+' '+theme);
+  assert.ok(await page.locator('.expert-market-monitor').evaluate(n=>n.getBoundingClientRect().bottom<=document.querySelector('.expert-chart-workbench').getBoundingClientRect().top+1),'Monitor dock never overlays chart prices or zones '+width+' '+theme);
   await page.locator('.expert-lab').scrollIntoViewIfNeeded();await page.screenshot({path:`qa/expert/${width}-${theme}.png`})
   await page.addScriptTag({content:axe});const issues=await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})));assert.deepEqual(issues,[],width+' '+theme)
   assert.equal(await page.locator('iframe').getAttribute('sandbox'),'allow-scripts');assert.equal(await page.locator('.expert-help-window').count(),0)

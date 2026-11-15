@@ -36,6 +36,7 @@ try{
  await pool.query("INSERT INTO password_recovery VALUES($1,$2,$3,now()+interval '15 minutes')",[tokenHash(token),id,tokenHash(row.password_hash)])
  assert.equal((await request('/auth/reset-password','POST',{token,password:'ReleaseNew#2027',confirmPassword:'ReleaseNew#2027'})).status,200)
  assert.equal((await request('/session')).status,401)
+ assert.equal((await request('/market/gold-sentiment/status')).status,401)
  assert.equal((await request('/auth/reset-password','POST',{token,password,confirmPassword:password})).status,400)
  const cap=(await request('/auth/captcha')).body
  const answerHash=createHmac('sha256',process.env.CAPTCHA_SECRET).update(cap.id+':12345').digest('hex')

@@ -12,6 +12,8 @@ try{
  const day=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'}),tomorrow=new Date(Date.now()+86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'})
  const events=[{id:'today',date:day,title:'امروز آزمایشی',at:new Date(Date.now()+60000).toISOString()},{id:'tomorrow',date:tomorrow,title:'فردا آزمایشی',at:new Date(Date.now()+86400000).toISOString()}].map(e=>({...e,country:'US',currency:'USD',status:'scheduled',impact:'high',sourceUrl:'https://persianfx.com/'}))
  await ctx.route('**/api/calendar?**',r=>r.fulfill({json:{configured:true,events,sources:[{provider:'persianfx',name:'PersianFX',url:'https://persianfx.com/',count:2,lastSuccess:new Date().toISOString()}],total:2,serverNow:new Date().toISOString(),updatedAt:new Date().toISOString()}}))
+
+ await ctx.route('**/api/market/gold-sentiment/status**',r=>r.fulfill({json:{availability:'unknown',checkedAt:new Date().toISOString()}}))
  await ctx.route('https://flicker.finance/**',r=>r.fulfill({contentType:'text/html',body:'<title>QA</title>'}))
  await page.setViewportSize({width:1440,height:900});await page.goto(base+'/panel/tools/calendar');await page.getByText('امروز آزمایشی',{exact:true}).waitFor()
  await page.getByRole('button',{name:'پاک‌کردن انتخاب‌ها',exact:true}).click();await page.getByRole('checkbox',{name:'USD',exact:true}).check();await page.getByRole('button',{name:'تأیید و بستن',exact:true}).click()

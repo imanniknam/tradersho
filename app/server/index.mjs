@@ -1,3 +1,4 @@
+import {getFlickerStatus} from './flicker-status.mjs'
 import {riskSetupsRoute} from './risk-setups.mjs'
 import {mailConfig,startMailWorker} from './mail.mjs'
 import {calendarIntegration,calendarRoute} from './calendar.mjs'
@@ -174,6 +175,7 @@ const server = http.createServer(async (req, res) => {
     if(path==='/api/news')return fail(res,410,'بخش خبرها حذف شده است.')
     if(await riskSetupsRoute({path,method,user,req,res,body,json,fail,rateLimit}))return
     if(await calendarRoute({path,method,req,res,json,fail}))return
+    if(path==='/api/market/gold-sentiment/status'&&method==='GET'){if(await rateLimit(req,res,'gold-status',user.id,60))return;return json(res,200,await getFlickerStatus(new URL(req.url,'http://localhost').searchParams.get('refresh')==='1'))}
     if (path === '/api/session' && method === 'GET') return json(res, 200, { user: await publicUser(user) })
     if (path === '/api/admin/session' && method === 'GET') {
       const agent=await pool.query('SELECT 1 FROM support_agents WHERE user_id=$1',[user.id])
