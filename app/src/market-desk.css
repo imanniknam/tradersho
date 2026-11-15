@@ -89,3 +89,8 @@
 .calendar-preview-card .calendar-preview-event .preview-impact{font-size:.85em}
 .calendar-preview-card .context-link{font-size:var(--preview-control-size)}
 @container market-calendar (max-width:440px){.calendar-preview-card .preview-filters{grid-template-columns:minmax(0,1fr)}}
+@media(min-width:1201px) and (min-height:700px) and (max-height:850px){
+ .analysis-market .market-desk .calendar-preview-card{padding-block:6px}
+ .analysis-market .market-desk .calendar-preview-card>.context-caption{margin-block:2px}
+ .analysis-market .market-desk .calendar-preview-card .preview-filters{margin:0 0 2px}
+}
