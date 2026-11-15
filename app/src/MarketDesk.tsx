@@ -7,13 +7,14 @@ import './market-desk.css'
 type Size={side:number|null;calendar:number|null;height:number|null;chartHeight:number|null}
 type Panel='chart'|'calendar'|'flicker'
 type Edge='n'|'s'|'e'|'w'|'ne'|'nw'|'se'|'sw'
-const empty:Size={side:null,calendar:null,height:null,chartHeight:null},gap=10,minCalendar=220
+const empty:Size={side:null,calendar:null,height:null,chartHeight:null},gap=10,baseMinCalendar=220
 const clamp=(n:number,min:number,max:number)=>Math.min(max,Math.max(min,n))
 const names={chart:'چارت',calendar:'تقویم',flicker:'فلیکر'}
 const directions={n:'بالا',s:'پایین',e:'راست',w:'چپ',ne:'بالا راست',nw:'بالا چپ',se:'پایین راست',sw:'پایین چپ'}
-export default function MarketDesk({chart,calendar,flicker}:{chart:(handles:ReactNode)=>ReactNode;calendar:(handles:ReactNode)=>ReactNode;flicker:(handles:ReactNode,onMinimumHeight:(height:number)=>void)=>ReactNode}){
+export default function MarketDesk({chart,calendar,flicker}:{chart:(handles:ReactNode)=>ReactNode;calendar:(handles:ReactNode,onMinimumHeight:(height:number)=>void)=>ReactNode;flicker:(handles:ReactNode,onMinimumHeight:(height:number)=>void)=>ReactNode}){
  const user=useContext(CalendarUserContext),key=`tradersho.market-layout.v1.${user}`
  const [size,setSize]=useState<Size>(()=>{try{const saved=JSON.parse(localStorage.getItem(key)||'null');return saved&&['side','calendar','height'].every(k=>saved[k]===null||typeof saved[k]==='number'&&Number.isFinite(saved[k])&&saved[k]>0)?{...saved,chartHeight:typeof saved.chartHeight==='number'&&Number.isFinite(saved.chartHeight)&&saved.chartHeight>0?saved.chartHeight:null}:empty}catch{return empty}})
+ const [calendarContentHeight,setCalendarContentHeight]=useState(baseMinCalendar),minCalendar=Math.max(baseMinCalendar,calendarContentHeight)
  const [availableHeight,setAvailableHeight]=useState(520),[goldContentHeight,setGoldContentHeight]=useState(270),minGold=Math.max(270,goldContentHeight),minimumHeight=minCalendar+gap+minGold
  const grid=useRef<HTMLDivElement>(null),drag=useRef<{id:number;node:HTMLElement;x:number;y:number;width:number;height:number;side:number;calendar:number;gold:number;chartHeight:number;scroll:number;panel:Panel;edge:Edge;size:Size}|null>(null)
  const [active,setActive]=useState(false)
@@ -41,5 +42,5 @@ export default function MarketDesk({chart,calendar,flicker}:{chart:(handles:Reac
  const height=Math.max(minimumHeight,size.height??availableHeight),free=height-gap,calendarHeight=size.calendar===null?Math.max(minCalendar,free-Math.max(minGold,innerHeight<=850?270:320)):clamp(size.calendar*free,minCalendar,free-minGold)
  const chartHeight=size.chartHeight??availableHeight
  const style={'--market-chart-height':`${chartHeight}px`,'--market-context-height':`${height}px`,'--market-side':size.side===null?'clamp(340px,24vw,420px)':`clamp(300px,${size.side*100}%,min(640px,calc(100% - 454px)))`,'--market-calendar':`${calendarHeight}px ${free-calendarHeight}px`,'--market-height':`${Math.max(height,chartHeight)}px`} as CSSProperties
- return <><div className="market-layout-tools"><span>برای تغییر اندازه، لبه یا گوشهٔ باکس‌ها را بکشید.</span><button type="button" onClick={()=>setSize(empty)}><RotateCcw size={14}/>چیدمان پیش‌فرض</button></div><div ref={grid} className={`analysis-grid market-desk${active?' market-resizing':''}${size.height!==null?' market-custom-height':''}`} style={style}><div className="analysis-chart">{chart(handles('chart'))}</div><aside className="analysis-context" aria-label="اطلاعات بازار">{calendar(handles('calendar'))}{flicker(handles('flicker'),setGoldContentHeight)}</aside>{active&&<div className="market-drag-shield"/>}</div></>
+ return <><div className="market-layout-tools"><span>برای تغییر اندازه، لبه یا گوشهٔ باکس‌ها را بکشید.</span><button type="button" onClick={()=>setSize(empty)}><RotateCcw size={14}/>چیدمان پیش‌فرض</button></div><div ref={grid} className={`analysis-grid market-desk${active?' market-resizing':''}${size.height!==null?' market-custom-height':''}`} style={style}><div className="analysis-chart">{chart(handles('chart'))}</div><aside className="analysis-context" aria-label="اطلاعات بازار">{calendar(handles('calendar'),setCalendarContentHeight)}{flicker(handles('flicker'),setGoldContentHeight)}</aside>{active&&<div className="market-drag-shield"/>}</div></>
 }

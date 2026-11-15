@@ -70,3 +70,22 @@
  .analysis-market .market-layout-tools{min-height:24px}
  .analysis-market .market-layout-tools button{min-height:24px;padding-block:3px}
 }
+
+/* Typography and filters follow the resized card, independently of monitor width. */
+.calendar-preview-card{container-type:inline-size;container-name:market-calendar;--preview-text-size:clamp(11px,calc(8px + 1cqi),18px);--preview-control-size:clamp(11px,calc(8px + 1cqi),16px)}
+.calendar-preview-card>header h2{font-size:clamp(16px,calc(12px + 1.2cqi),24px)}
+.calendar-preview-card>.context-caption{font-size:clamp(11px,calc(8px + .8cqi),16px)}
+.calendar-preview-card .preview-filters{grid-template-columns:minmax(125px,.9fr) minmax(0,2.5fr);gap:8px}
+.calendar-preview-card .preview-filters .impact-filter button{font-size:var(--preview-control-size);min-height:clamp(36px,calc(24px + 3cqi),48px);gap:5px;padding:5px 6px;white-space:nowrap}
+.calendar-preview-card .preview-filters .impact-filter i{flex:none}
+.calendar-preview-card .preview-filters .currency-picker>summary{font-size:var(--preview-control-size);min-height:clamp(36px,calc(24px + 3cqi),48px)}
+.calendar-preview-card .preview-filters .currency-picker>summary>span:first-child{font-size:.9em}
+.calendar-preview-card .calendar-preview{font-size:var(--preview-text-size)}
+.analysis-market .market-desk .calendar-preview-card .calendar-preview-event{font-size:var(--preview-text-size);height:clamp(58px,5em,90px);min-height:clamp(58px,5em,90px);grid-template-columns:4.4em 2.8em minmax(0,1fr) 4.3em}
+.calendar-preview-card .calendar-preview-event .preview-event-title{font-size:1em;line-height:1.65}
+.calendar-preview-card .calendar-preview-event .preview-event-title small{font-size:.9em}
+.calendar-preview-card .calendar-preview-event time,.calendar-preview-card .calendar-preview-event .event-country{font-size:.95em}
+.calendar-preview-card .calendar-preview-event time small{font-size:.8em}
+.calendar-preview-card .calendar-preview-event .preview-impact{font-size:.85em}
+.calendar-preview-card .context-link{font-size:var(--preview-control-size)}
+@container market-calendar (max-width:440px){.calendar-preview-card .preview-filters{grid-template-columns:minmax(0,1fr)}}

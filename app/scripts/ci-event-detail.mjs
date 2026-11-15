@@ -17,6 +17,7 @@ try{
  previewEvents=[event,{...event,id:'b'.repeat(64),title:'رویداد دوم'},{...event,id:'c'.repeat(64),title:'رویداد سوم'}]
  for(const width of [390,1440,2560])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:900});await page.mouse.move(0,0);await page.goto(base+'/panel/tools');await page.locator('.calendar-preview-event').first().waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
+  if(width>1200){const handle=page.getByRole('button',{name:'تغییر اندازهٔ تقویم از پایین',exact:true});for(let i=0;i<5;i++)await handle.press('Shift+ArrowDown');await page.waitForFunction(()=>document.querySelectorAll('.calendar-preview-event').length===3)}
   const rows=page.locator('.calendar-preview-event'),colors=()=>rows.evaluateAll(ns=>ns.map(n=>getComputedStyle(n).backgroundColor));const initial=await colors(),tint=initial[0];assert.notEqual(tint,initial[1]);assert.equal(initial[1],initial[2]);
   await rows.nth(1).hover();assert.deepEqual(await colors(),[initial[1],tint,initial[1]]);
   await rows.nth(2).hover();assert.deepEqual(await colors(),[initial[1],initial[1],tint]);
