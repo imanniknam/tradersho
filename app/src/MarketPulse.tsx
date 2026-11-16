@@ -29,15 +29,13 @@ export default function MarketPulse() {
   return (
     <div className="market-pulse" ref={ref} aria-hidden="true">
       <span className="mp-aurora mp-aurora-a" /><span className="mp-aurora mp-aurora-b" /><span className="mp-aurora mp-aurora-c" />
-      <svg className="mp-scene" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet" focusable="false">
+      <svg className="mp-scene" viewBox="-16 -16 672 332" preserveAspectRatio="xMidYMid meet" focusable="false">
         <defs>
           <linearGradient id="mp-line" x1="0" x2="1"><stop offset="0" stopColor="var(--mp-c2)" /><stop offset=".55" stopColor="var(--mp-c1)" /><stop offset="1" stopColor="var(--mp-c3)" /></linearGradient>
           <linearGradient id="mp-area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="var(--mp-c1)" stopOpacity=".30" /><stop offset="1" stopColor="var(--mp-c1)" stopOpacity="0" /></linearGradient>
-          <linearGradient id="mp-fade" x1="0" x2="1"><stop offset="0" stopColor="#fff" /><stop offset=".5" stopColor="#fff" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></linearGradient>
-          <mask id="mp-mask"><rect width="640" height="300" fill="url(#mp-fade)" /></mask>
           <filter id="mp-glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5" /></filter>
         </defs>
-        <g mask="url(#mp-mask)">
+        <g>
           <g className="mp-grid">
             {Array.from({ length: 7 }, (_, i) => <line key={'h' + i} x1="0" x2="640" y1={30 + i * 40} y2={30 + i * 40} />)}
             {Array.from({ length: 12 }, (_, i) => <line key={'v' + i} y1="0" y2="300" x1={20 + i * 56} x2={20 + i * 56} />)}

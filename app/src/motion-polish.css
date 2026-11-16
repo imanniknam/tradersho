@@ -89,3 +89,8 @@
 
 /* Keep the full decorative scene inside its cell on wide monitors. */
 .home-tools-entry .mp-scene{inset:8px;width:calc(100% - 16px);height:calc(100% - 16px);transform:none}
+
+/* Keep the complete illustration visible, including the final candles and line. */
+.home-tools-entry:before{display:none}
+.home-tools-entry .market-pulse{z-index:1;opacity:1}
+.home-tools-entry .mp-trace,.home-tools-entry .mp-glow{animation:none;stroke-dashoffset:0}
