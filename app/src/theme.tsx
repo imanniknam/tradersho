@@ -5,7 +5,7 @@ type Theme = 'light' | 'dark'
 const ThemeContext = createContext<{theme: Theme; toggle: () => void}>({theme:'light',toggle:()=>{}})
 export function ThemeProvider({children}:{children:ReactNode}) {
   const [theme,setTheme] = useState<Theme>(() => { try { return localStorage.getItem('tradersho-theme') === 'dark' ? 'dark' : 'light' } catch { return 'light' } })
-  useEffect(() => { document.documentElement.dataset.theme=theme; document.documentElement.style.colorScheme=theme; document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='light'?'#ffffff':'#061a32'); try {localStorage.setItem('tradersho-theme',theme)} catch {} },[theme])
+  useEffect(() => { document.documentElement.dataset.theme=theme; document.documentElement.style.colorScheme=theme; document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='light'?'#ffffff':'#111214'); try {localStorage.setItem('tradersho-theme',theme)} catch {} },[theme])
   return <ThemeContext.Provider value={{theme,toggle:()=>setTheme(t=>t==='light'?'dark':'light')}}>{children}</ThemeContext.Provider>
 }
 export const useTheme = () => useContext(ThemeContext)
