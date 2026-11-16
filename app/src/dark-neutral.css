@@ -23,7 +23,7 @@
 [data-theme=dark] .nav-link.active svg{color:#c8b3ff}
 [data-theme=dark] .nav-link:hover{background:#24232b;color:var(--ink)}
 [data-theme=dark] :is(.button.primary,.auth-submit){background:#7956d9;border-color:#9573eb;color:#fff;box-shadow:inset 0 1px 0 #ffffff12,0 3px 8px #0002}
-[data-theme=dark] :is(.button.primary,.auth-submit):hover:not(:disabled){background:#8965e6;border-color:#b497f5;box-shadow:0 5px 16px #0003}
+[data-theme=dark] :is(.button.primary,.auth-submit):hover:not(:disabled){background:#805edb;border-color:#b497f5;box-shadow:0 5px 16px #0003}
 [data-theme=dark] :is(.button.secondary,.search-field,.segmented){background:#232429;color:var(--ink);border-color:var(--line)}
 [data-theme=dark] .button.secondary:hover{background:#2c2d34}
 [data-theme=dark] :is(.home-service-icon,.entry-icon,.avatar,.profile-avatar,.auth-icon){background:#30283f;color:#c6aff7}
@@ -46,3 +46,6 @@
 [data-theme=dark] ::selection{background:#7652bd;color:#fff}
 [data-theme=dark] ::-webkit-scrollbar-track{background:var(--canvas)}
 [data-theme=dark] ::-webkit-scrollbar-thumb{background:#494951;border-color:var(--canvas)}
+
+/* Downloads retain their shared brand hover in the graphite theme. */
+[data-theme=dark] .expert-download-grid .button:hover{background:#543aff;border-color:#543aff;color:#fff}

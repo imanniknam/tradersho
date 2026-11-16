@@ -133,7 +133,7 @@ try{
   assert.equal(await page.locator('.calendar-event-country .country-flag').count(),30)
   const stacked=await page.evaluate(()=>{const row=document.querySelector('.event-titles'),fa=row.querySelector('a').getBoundingClientRect(),en=row.querySelector('.event-original').getBoundingClientRect(),meta=document.querySelector('.calendar-event-meta');return en.top>=fa.bottom-1&&meta.querySelector('.event-status').getBoundingClientRect().top>=meta.querySelector('.event-impact').getBoundingClientRect().bottom-1});assert.ok(stacked,'Titles and importance/status retain two-line hierarchy')
   assert.ok(await page.locator('.country-flag').first().evaluate(n=>n.tagName==='IMG'&&n.complete&&n.naturalWidth>0),'Flag SVG loads without emoji fallback')
-  assert.ok(await page.getByRole('button',{name:'بررسی به‌روزرسانی تقویم'}).evaluate(n=>getComputedStyle(n).backgroundColor==='rgb(84, 58, 255)'))
+  assert.ok(await page.getByRole('button',{name:'بررسی به‌روزرسانی تقویم'}).evaluate((n,theme)=>getComputedStyle(n).backgroundColor===(theme==='dark'?'rgb(121, 86, 217)':'rgb(84, 58, 255)'),theme))
   await page.evaluate(()=>{const host=document.querySelector('.main-scroll'),head=document.querySelector('.native-calendar-table thead');host.scrollTop+=head.getBoundingClientRect().top-host.getBoundingClientRect().top+120});await page.waitForTimeout(150)
   const pinned=await page.evaluate(()=>{const bar=document.querySelector('.calendar-command').getBoundingClientRect(),host=document.querySelector('.main-scroll').getBoundingClientRect();return Math.abs(bar.top-host.top)<3})
   assert.ok(pinned,`Calendar command remains sticky at ${width} ${theme}`)
