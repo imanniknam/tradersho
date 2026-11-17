@@ -22,7 +22,7 @@
 .risk-widget-stages button{display:grid;place-items:center;min-width:0;padding:0;min-height:38px;border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:9px;background:var(--tint);color:var(--accent);font:700 12px Arial}
 .risk-widget-stages button.fixed{background:#26996d12;color:#26996d;border-color:#58ab885f}
 .risk-widget-stages button.recovery{background:#be861912;color:#be8619;border-color:#be86196f}
-.risk-widget-stages button[aria-pressed=true]{background:#7776ba;border-color:#7776ba;color:white}
+.risk-widget-stages button[aria-pressed=true]{background:#605f9e;border-color:#605f9e;color:white}
 .risk-widget-stages button:hover{outline:1px solid var(--accent);outline-offset:1px}
 .risk-widget-spec-title{margin-bottom:-8px!important}
 .risk-widget-specs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:13px;overflow:hidden;margin:0;background:var(--canvas)}
@@ -37,7 +37,7 @@
 @container(max-width:480px){.risk-widget-content{padding:14px;gap:12px}.risk-widget-content>header{margin:-14px -14px 0;padding:12px 14px}.risk-widget-title h2{font-size:16px}.risk-widget header a{font-size:10px}.risk-widget-title{gap:6px}.risk-widget-metrics>div{padding-inline:6px;gap:4px}.risk-widget-metrics small{white-space:normal}.risk-widget-stages{gap:4px}.risk-widget-stages button{font-size:9px;min-height:32px}.risk-widget h3{font-size:12px}.risk-widget-specs>div{gap:4px;padding:10px 6px}.risk-widget-select{padding-inline:12px;min-height:44px}}
 
 /* Fit the card to its content; grid rows may reserve space for adjacent panels. */
-.analysis-market .market-desk .risk-widget{align-self:start;height:auto;min-height:0;flex:none}
+.analysis-market .market-desk .risk-widget{align-self:stretch;height:100%;min-height:0;flex:none}
 .risk-widget-select select{font-family:inherit;font-size:14px;font-weight:700}
 .risk-widget-specs dt,.risk-widget-specs dd{min-width:0;max-width:100%;overflow-wrap:anywhere}
 .risk-widget-specs dd{white-space:normal}
