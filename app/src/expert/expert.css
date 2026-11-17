@@ -86,3 +86,19 @@
 .expert-download-grid article:hover,
 .expert-download-grid article:focus-within{background:var(--tint);border-color:var(--academy-accent);box-shadow:0 4px 18px color-mix(in srgb,var(--academy-accent) 12%,transparent)}
 @media(prefers-reduced-motion:reduce){.expert-download-grid article{transition:none}}
+
+/* Native-style monitor window floating over the upper-right chart corner. */
+.expert-chart-workbench>.expert-market-monitor{position:absolute;inset:44px 22px auto auto;display:block;width:230px;max-width:calc(100% - 32px);margin:0;border:1px solid #4a5364;border-radius:5px;background:#20232c;color:#e4e5ed;box-shadow:0 5px 18px #0003;z-index:6}
+.expert-chart-workbench>.expert-market-monitor>header{padding:7px 9px;border-bottom:1px solid #454b59;background:#292d37;font-size:11px}
+.expert-chart-workbench>.expert-market-monitor>header button{min-width:24px;min-height:24px;background:#353b49;color:#e4e5ed;border-radius:3px}
+.expert-chart-workbench>.expert-market-monitor>button,
+.expert-chart-workbench>.expert-market-monitor>div{min-height:30px;padding:6px 9px;border-bottom:1px solid #3a404e;color:#cdd1de;justify-content:space-between;gap:12px}
+.expert-chart-workbench>.expert-market-monitor>button:hover{background:#39354c;color:#fff}
+.expert-chart-workbench>.expert-market-monitor bdi{color:#f0edf9}
+.expert-chart-workbench>.expert-market-monitor>small{font-size:9px;color:#aeb4c5;padding:6px 9px}
+.expert-chart-workbench.compact>.expert-market-monitor{position:relative;inset:auto;align-self:flex-end;width:230px;max-width:calc(100% - 32px);margin:0 16px 50px;flex:none;order:0}
+.expert-chart-workbench:not(.compact)>.expert-market-monitor>header{cursor:grab;touch-action:none;user-select:none}
+.expert-chart-workbench:not(.compact)>.expert-market-monitor>header:active{cursor:grabbing}
+.expert-market-monitor .expert-monitor-actions{display:flex;align-items:center;gap:5px}
+.expert-chart-workbench>.expert-market-monitor.monitor-minimized>:not(header){display:none}
+.expert-chart-workbench>.expert-market-monitor.monitor-minimized>header{border-bottom:0}
