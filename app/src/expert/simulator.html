@@ -536,10 +536,6 @@ html,body{margin:0!important;padding:0!important;width:100%!important;background
 #expert .theme-card .theme-mini{width:100%;height:100%;min-height:0}
 #expert .theme-card .theme-name{display:flex;align-items:center;justify-content:center;width:100%;height:24px;min-height:24px;margin:0;padding:0 3px;line-height:1.15;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #expert .source-panel-palette>span{display:flex;align-items:center;justify-content:center;text-align:center;padding-block:0;line-height:1.15;min-height:18px}
-/* Give native window controls room inside their title bar. */
-.expert:not(.source-settings) .expert-top{box-sizing:border-box;height:34px!important;min-height:34px;padding:5px 10px!important}
-.expert .native-window-tools{height:22px;gap:8px;align-items:center;align-self:center;margin:0}
-.expert .native-window-tools button{width:22px;height:22px;min-width:22px;min-height:22px;line-height:1;margin:0}
 </style></head><body><div id="stage"><div id="panel-wrap"><div class="expert" id="expert" lang="en" dir="ltr"><div class="expert-top"><div class="expert-title">Tradersho <span class="title-sep">|</span> MONEY MANAGER <span class="version">v2.13</span></div><span class="native-window-tools" aria-hidden="true"><i>−</i><i>×</i></span></div><div class="expert-tabs" role="tablist" aria-label="بخش‌های اکسپرت" id="tabs"></div><div class="expert-body" id="panel-content" role="tabpanel" tabindex="-1"></div><div class="expert-footer">Tradersho &nbsp;•&nbsp; TRADE WITH CONTROL</div></div></div></div><div hidden><div id="guide-content"></div><div id="guide-path"></div><div id="guide-counter"></div><div id="quick-topics"></div><span id="preview-tab"></span><button id="tour-button"><span></span></button><button id="reset-button"></button><button id="guide-prev"></button><button id="guide-next"></button></div><div id="toast" role="status" aria-live="polite"></div><script>
 let guideEngaged=false;
 document.addEventListener('pointerdown',()=>{guideEngaged=true},true);
