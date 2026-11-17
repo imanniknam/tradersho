@@ -15,11 +15,11 @@ html,body,#root{width:100%;min-height:100%;background:var(--canvas)}
 [data-theme=light] .home-tools-copy .eyebrow,[data-theme=light] .home-tools-copy p{color:var(--secondary)}
 /* Slow, composited aurora and architectural contours behind the auth copy. */
 .auth-visual{background:var(--canvas);grid-template-rows:auto 1fr;overflow:hidden}
-.auth-visual:before{content:'';position:absolute;inset:-18%;z-index:0;border:0;opacity:1;filter:blur(35px);background:radial-gradient(ellipse at 20% 25%,#543aff33 0%,transparent 45%),radial-gradient(ellipse at 70% 75%,#577cdb26 0%,transparent 50%),radial-gradient(ellipse at 75% 15%,#bcafff20 0%,transparent 40%);animation:auth-aurora-drift 18s ease-in-out infinite alternate;will-change:transform;pointer-events:none}
+.auth-visual:before{content:'';position:absolute;inset:-18%;z-index:0;border:0;opacity:1;filter:blur(35px);background:radial-gradient(ellipse at 20% 25%,#7776ba33 0%,transparent 45%),radial-gradient(ellipse at 70% 75%,#577cdb26 0%,transparent 50%),radial-gradient(ellipse at 75% 15%,#bcafff20 0%,transparent 40%);animation:auth-aurora-drift 18s ease-in-out infinite alternate;will-change:transform;pointer-events:none}
 .auth-visual:after{content:'';display:block;position:absolute;inset:auto auto -20% -28%;width:100%;height:auto;aspect-ratio:1;z-index:0;border:1px solid #9a87ff29;border-radius:40%;background:transparent;box-shadow:0 0 0 70px #9a87ff0a,0 0 0 140px #9a87ff08,0 0 0 210px #9a87ff06;animation:auth-contour-drift 55s linear infinite;pointer-events:none}
 [data-theme=light] .auth-visual{background:#f5f5ff}
 [data-theme=light] .auth-visual:before{background:radial-gradient(ellipse at 15% 20%,#9984ff42 0%,transparent 45%),radial-gradient(ellipse at 75% 78%,#d9dcff99 0%,transparent 50%),radial-gradient(ellipse at 80% 15%,#fff 0%,transparent 40%)}
-[data-theme=light] .auth-visual:after{border-color:#543aff1a;box-shadow:0 0 0 70px #543aff06,0 0 0 140px #543aff04,0 0 0 210px #543aff03}
+[data-theme=light] .auth-visual:after{border-color:#7776ba1a;box-shadow:0 0 0 70px #7776ba06,0 0 0 140px #7776ba04,0 0 0 210px #7776ba03}
 .auth-visual-top,.auth-visual-content{width:100%;max-width:600px;justify-self:center}
 .auth-visual-content{padding-block:28px}
 .auth-form-top,.auth-side-bottom{max-width:430px;justify-self:center}

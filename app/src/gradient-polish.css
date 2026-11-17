@@ -1,16 +1,16 @@
 /* Contrast-preserving busy state; disabled primary actions remain legible. */
-.button.primary:disabled,.auth-form .auth-submit:disabled{color:#fff;background:#6852e8;border-color:#6852e8;opacity:1;box-shadow:none;cursor:wait}
+.button.primary:disabled,.auth-form .auth-submit:disabled{color:#fff;background:#7776ba;border-color:#7776ba;opacity:1;box-shadow:none;cursor:wait}
 .button.primary:disabled svg{color:currentColor}
 .logout{background:var(--tint);color:var(--accent);text-decoration:none;transition:background .2s,color .2s}
-.logout:hover,.logout:focus-visible{background:#543aff;color:#fff;text-decoration:none}
+.logout:hover,.logout:focus-visible{background:#7776ba;color:#fff;text-decoration:none}
 /* Brand-only, single-color card outlines. */
 :root{--card-edge:#403867}
 [data-theme=light]{--card-edge:#ded8f2}
 .home-service,.home-recent,.home-school,.catalog-card,.profile-surface,.security-surface,.ticket-list,.support-compose,.support-guidance,.conversation{border:1px solid var(--card-edge);background:var(--surface);animation:none}
-.catalog-card:hover,.profile-surface:focus-within,.security-surface:focus-within,.support-compose:focus-within,.conversation:focus-within{border-color:#543aff;animation:none}
+.catalog-card:hover,.profile-surface:focus-within,.security-surface:focus-within,.support-compose:focus-within,.conversation:focus-within{border-color:#7776ba;animation:none}
 .home-welcome{border-color:var(--card-edge)}
 .security-logout{background:transparent;color:var(--secondary);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-height:46px;width:100%;justify-content:center}
-.security-logout:hover,.security-logout:focus-visible{background:var(--tint);border-color:#543aff;color:var(--ink)}
+.security-logout:hover,.security-logout:focus-visible{background:var(--tint);border-color:#7776ba;color:var(--ink)}
 [data-theme=dark] .catalog-art{background:radial-gradient(ellipse at 80% 20%,#38bde830,transparent 60%),linear-gradient(135deg,#292054,#18263f 65%,#25305b);color:#dce8ff}
 [data-theme=dark] .catalog-art-chart{background:radial-gradient(ellipse at 80% 15%,#7454ff66,transparent 60%),linear-gradient(135deg,#30215d,#14283f)}
 [data-theme=dark] .catalog-art-lines{opacity:.6}

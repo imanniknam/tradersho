@@ -1,8 +1,8 @@
-/* Brand-book violets only (#543AFF #4C0FA3 #1A0047 #061A32 #BAB8F9 #D6D9FC #F5F5FF). No edge bars: soft drifting gradient light inside surfaces. */
+/* Brand-book violets only (#7776ba #6867a9 #1A0047 #061A32 #BAB8F9 #D6D9FC #F5F5FF). No edge bars: soft drifting gradient light inside surfaces. */
 @property --gx{syntax:'<percentage>';inherits:false;initial-value:15%}
 @property --gy{syntax:'<percentage>';inherits:false;initial-value:0%}
-:root{--glow:#543aff30;--glow-2:#4c0fa340;--glow-hover:#543aff4d;--mp-c1:#543aff;--mp-c2:#4c0fa3;--mp-c3:#bab8f9;--mp-up:#8f7cff;--mp-down:#bab8f9;--mp-base:#061a32;--mp-base-2:#1a0047}
-[data-theme=light]{--glow:#bab8f975;--glow-2:#d6d9fcb0;--glow-hover:#bab8f9a6;--mp-c1:#543aff;--mp-c2:#bab8f9;--mp-c3:#d6d9fc;--mp-up:#543aff;--mp-down:#4c0fa3;--mp-base:#f5f5ff;--mp-base-2:#d6d9fc}
+:root{--glow:#7776ba30;--glow-2:#6867a940;--glow-hover:#7776ba4d;--mp-c1:#7776ba;--mp-c2:#6867a9;--mp-c3:#bab8f9;--mp-up:#8f7cff;--mp-down:#bab8f9;--mp-base:#061a32;--mp-base-2:#1a0047}
+[data-theme=light]{--glow:#bab8f975;--glow-2:#d6d9fcb0;--glow-hover:#bab8f9a6;--mp-c1:#7776ba;--mp-c2:#bab8f9;--mp-c3:#d6d9fc;--mp-up:#7776ba;--mp-down:#6867a9;--mp-base:#f5f5ff;--mp-base-2:#d6d9fc}
 
 .surface,.home-service,.home-recent,.home-school,.catalog-card,.profile-surface,.security-surface,.ticket-list,.support-compose,.support-guidance,.conversation,.recovery-card,.tool-card{
   border:1px solid var(--card-edge,var(--line))!important;
@@ -11,14 +11,14 @@
   transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .25s,box-shadow .3s}
 .surface:nth-child(2n),.home-service:nth-child(2n){animation-duration:20s!important;animation-delay:-5s!important}
 .surface:nth-child(3n),.home-service:nth-child(3n){animation-duration:24s!important;animation-delay:-11s!important}
-.surface:hover,.surface:focus-within,.catalog-card:hover,.home-service:hover,.tool-card:hover{border-color:#543aff!important;
+.surface:hover,.surface:focus-within,.catalog-card:hover,.home-service:hover,.tool-card:hover{border-color:#7776ba!important;
   background:radial-gradient(560px circle at var(--gx) var(--gy),var(--glow-hover),transparent 62%),radial-gradient(420px circle at calc(100% - var(--gx)) 115%,var(--glow-2),transparent 60%),var(--surface)!important;
-  box-shadow:0 14px 40px #543aff1f}
+  box-shadow:0 14px 40px #7776ba1f}
 .home-service:hover,.catalog-card:hover,.tool-card:hover{transform:translateY(-3px)}
 @keyframes glow-drift{0%,100%{--gx:12%;--gy:-5%}50%{--gx:88%;--gy:25%}}
 
 /* Welcome: animated brand gradient section */
-.home-welcome{border:1px solid var(--card-edge,var(--line))!important;background:radial-gradient(520px circle at var(--gx) var(--gy),#543aff59,transparent 60%),linear-gradient(115deg,#1a0047,#2b1380 55%,#1a0047)!important;background-size:auto,100% 100%;animation:glow-drift 14s ease-in-out infinite!important}
+.home-welcome{border:1px solid var(--card-edge,var(--line))!important;background:radial-gradient(520px circle at var(--gx) var(--gy),#7776ba59,transparent 60%),linear-gradient(115deg,#1a0047,#2b1380 55%,#1a0047)!important;background-size:auto,100% 100%;animation:glow-drift 14s ease-in-out infinite!important}
 [data-theme=light] .home-welcome{background:radial-gradient(520px circle at var(--gx) var(--gy),#bab8f9b3,transparent 62%),linear-gradient(115deg,#f5f5ff,#e9e8ff 55%,#f5f5ff)!important}
 [data-theme=light] .home-welcome p{color:#43506b}
 
