@@ -7,6 +7,7 @@
 .risk-widget-title h2{font-size:20px;color:var(--ink);margin:0;white-space:nowrap}
 .risk-widget header a{display:flex;align-items:center;gap:7px;color:var(--ink);font-size:12px;font-weight:700;min-height:34px;white-space:nowrap}
 .risk-widget header a:hover,.risk-widget-empty a{color:var(--accent)}
+.risk-widget-empty a{text-decoration:underline;text-underline-offset:3px}
 .risk-widget-select{display:flex;align-items:center;gap:14px;background:var(--canvas);border:1px solid var(--line);border-radius:14px;padding:8px 18px;min-height:50px;color:var(--secondary);font-size:12px}
 .risk-widget-select select{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:700 15px inherit;min-height:30px}
 .risk-widget-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));direction:ltr;padding:12px 0;border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:15px;background:color-mix(in srgb,var(--tint) 45%,var(--surface));min-height:64px}
