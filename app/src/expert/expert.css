@@ -102,3 +102,16 @@
 .expert-market-monitor .expert-monitor-actions{display:flex;align-items:center;gap:5px}
 .expert-chart-workbench>.expert-market-monitor.monitor-minimized>:not(header){display:none}
 .expert-chart-workbench>.expert-market-monitor.monitor-minimized>header{border-bottom:0}
+
+/* The embedded panel publishes these colors, including custom palette changes. */
+.expert-chart-workbench>.expert-market-monitor{background:var(--monitor-background,#071b2e);border-color:var(--monitor-line,#29475d);color:var(--monitor-text,#e1eaf4)}
+.expert-chart-workbench>.expert-market-monitor>header{background:var(--monitor-header,#050e18);border-color:var(--monitor-line,#29475d);color:var(--monitor-text,#e1eaf4)}
+.expert-chart-workbench>.expert-market-monitor>header button{background:var(--monitor-button,#102b40);color:var(--monitor-text,#e1eaf4);border:1px solid var(--monitor-line,#29475d)}
+.expert-chart-workbench>.expert-market-monitor>button,.expert-chart-workbench>.expert-market-monitor>div{background:var(--monitor-field,#0e283e);border-color:var(--monitor-line,#29475d);color:var(--monitor-muted,#9db8d5)}
+.expert-chart-workbench>.expert-market-monitor>button:hover{background:var(--monitor-button,#102b40);color:var(--monitor-text,#e1eaf4)}
+.expert-chart-workbench>.expert-market-monitor bdi{color:var(--monitor-text,#e1eaf4)}
+.expert-chart-workbench>.expert-market-monitor>small{color:var(--monitor-muted,#9db8d5)}
+
+/* Reserve a quiet right-hand lane for the floating spread monitor. */
+.expert-chart-workbench:not(.compact)>.expert-static-chart{left:0;right:auto;width:calc(100% - 274px)}
+.expert-chart-workbench:not(.compact)>.expert-market-monitor{inset:44px 22px auto auto}

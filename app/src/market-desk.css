@@ -99,3 +99,7 @@
 .flicker-unavailable strong{font-size:14px;color:var(--ink)}.flicker-unavailable p{font-size:12px;margin:0}.flicker-unavailable small{font-size:11px}
 .flicker-unavailable button{font:inherit;font-size:12px;min-height:40px;padding:7px 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--accent);cursor:pointer}.flicker-unavailable button:disabled{opacity:.6;cursor:wait}
 .flicker-frame-wrap[hidden],.flicker-guide[hidden]{display:none}
+
+/* Corner resize grips: a single diagonal stroke, with the full hit area retained. */
+.market-resize-handle:is(.resize-ne,.resize-nw,.resize-se,.resize-sw) span{inset:auto;left:50%;top:50%;width:16px;height:2px;border:0;border-radius:2px;background:currentColor;transform:translate(-50%,-50%) rotate(-45deg)}
+.market-resize-handle:is(.resize-nw,.resize-se) span{transform:translate(-50%,-50%) rotate(45deg)}

@@ -1,0 +1,52 @@
+/* Reference layout: framed header, setup picker, three inline metrics and 2x3 facts. */
+.risk-widget{position:relative;padding:0!important;min-width:0;container-type:inline-size;border-radius:24px;overflow:hidden!important;box-shadow:0 5px 0 color-mix(in srgb,var(--line) 35%,transparent)}
+.risk-widget-content{display:grid;gap:16px;padding:18px 28px 28px;min-width:0}
+.risk-widget-content>header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-18px -28px 0;padding:18px 28px;border-bottom:1px solid var(--line)}
+.risk-widget-title{display:flex;align-items:center;gap:12px;min-width:0}
+.risk-widget-title>svg{box-sizing:content-box;padding:6px;background:var(--tint);color:var(--accent);border-radius:10px;flex:none}
+.risk-widget-title h2{font-size:20px;color:var(--ink);margin:0;white-space:nowrap}
+.risk-widget header a{display:flex;align-items:center;gap:7px;color:var(--ink);font-size:12px;font-weight:700;min-height:34px;white-space:nowrap}
+.risk-widget header a:hover,.risk-widget-empty a{color:var(--accent)}
+.risk-widget-select{display:flex;align-items:center;gap:14px;background:var(--canvas);border:1px solid var(--line);border-radius:14px;padding:8px 18px;min-height:50px;color:var(--secondary);font-size:12px}
+.risk-widget-select select{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:700 15px inherit;min-height:30px}
+.risk-widget-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));direction:ltr;padding:12px 0;border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:15px;background:color-mix(in srgb,var(--tint) 45%,var(--surface));min-height:64px}
+.risk-widget-metrics>div{display:flex;flex-direction:row-reverse;justify-content:space-between;align-items:center;gap:8px;padding:0 16px;min-width:0}
+.risk-widget-metrics>div+div{border-left:1px solid var(--line)}
+.risk-widget-metrics small{font-size:clamp(9px,1.65cqi,12px);color:var(--secondary);direction:rtl;white-space:nowrap}
+.risk-widget-metrics strong{font-size:clamp(14px,4cqi,27px);color:var(--ink);white-space:nowrap;line-height:1.3}
+.risk-widget-path-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:-8px}
+.risk-widget h3{font-size:14px;color:var(--ink);margin:0;line-height:1.8}
+.risk-widget-path-heading>span{font-size:11px;color:var(--secondary);white-space:nowrap}
+.risk-widget-stages{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));direction:ltr;gap:7px}
+.risk-widget-stages>span{display:contents}
+.risk-widget-stages button{display:grid;place-items:center;min-width:0;padding:0;min-height:38px;border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:9px;background:var(--tint);color:var(--accent);font:700 12px Arial}
+.risk-widget-stages button.fixed{background:#26996d12;color:#26996d;border-color:#58ab885f}
+.risk-widget-stages button.recovery{background:#be861912;color:#be8619;border-color:#be86196f}
+.risk-widget-stages button[aria-pressed=true]{background:#7776ba;border-color:#7776ba;color:white}
+.risk-widget-stages button:hover{outline:1px solid var(--accent);outline-offset:1px}
+.risk-widget-spec-title{margin-bottom:-8px!important}
+.risk-widget-specs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:13px;overflow:hidden;margin:0;background:var(--canvas)}
+.risk-widget-specs>div{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:8px;min-width:0;padding:15px 13px;border-inline-end:1px solid var(--line)}
+.risk-widget-specs>div:nth-child(3n){border-inline-end:0}
+.risk-widget-specs>div:nth-child(n+4){border-top:1px solid var(--line)}
+.risk-widget-specs dt{color:var(--secondary);font-size:clamp(9px,1.55cqi,11px)}
+.risk-widget-specs dd{margin:0;font-size:clamp(12px,2.4cqi,17px);font-weight:800;color:var(--ink);white-space:nowrap}
+.risk-widget-notice,.risk-widget-empty,.risk-widget-warning{margin:0;color:var(--secondary);font-size:11px;line-height:1.8}
+.risk-widget-warning{color:var(--danger)}
+.risk-widget-notice button{display:flex;gap:6px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--tint);color:var(--ink);font:inherit}
+@container(max-width:480px){.risk-widget-content{padding:14px;gap:12px}.risk-widget-content>header{margin:-14px -14px 0;padding:12px 14px}.risk-widget-title h2{font-size:16px}.risk-widget header a{font-size:10px}.risk-widget-title{gap:6px}.risk-widget-metrics>div{padding-inline:6px;gap:4px}.risk-widget-metrics small{white-space:normal}.risk-widget-stages{gap:4px}.risk-widget-stages button{font-size:9px;min-height:32px}.risk-widget h3{font-size:12px}.risk-widget-specs>div{gap:4px;padding:10px 6px}.risk-widget-select{padding-inline:12px;min-height:44px}}
+
+/* Fit the card to its content; grid rows may reserve space for adjacent panels. */
+.analysis-market .market-desk .risk-widget{align-self:start;height:auto;min-height:0;flex:none}
+.risk-widget-select select{font-family:inherit;font-size:14px;font-weight:700}
+.risk-widget-specs dt,.risk-widget-specs dd{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.risk-widget-specs dd{white-space:normal}
+@container(max-width:480px){
+ .risk-widget-specs>div{display:grid;grid-template-columns:minmax(0,1fr);align-content:center;justify-items:start;gap:5px;padding:9px 8px;min-height:58px}
+ .risk-widget-specs dt{font-size:10px;line-height:1.5}
+ .risk-widget-specs dd{font-size:13px;line-height:1.4}
+ .risk-widget-metrics>div{flex-direction:column-reverse;justify-content:center;gap:5px}
+ .risk-widget-metrics small{font-size:10px;line-height:1.5;text-align:center}
+ .risk-widget-metrics strong{font-size:17px}
+ .risk-widget-content{padding-bottom:14px}
+}
