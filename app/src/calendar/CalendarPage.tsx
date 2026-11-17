@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState} from 'react'
 import type {CSSProperties} from 'react'
-import {CalendarDays,Search,RefreshCw,Info,Clock3,ChevronRight,ChevronLeft,X,SlidersHorizontal} from 'lucide-react'
+import {CalendarDays,Search,RefreshCw,Info,ChevronRight,ChevronLeft,X,SlidersHorizontal} from 'lucide-react'
 import {api} from '../api'
 import {economicOutcome,eventCountdown} from './format'
 import type {EconomicValue} from './format'
@@ -34,11 +34,11 @@ export default function CalendarPage(){
  const range=(days:number)=>{const d=today();setFrom(d);setTo(shift(d,days-1));setPage(1)}
  const move=(days:number)=>{setFrom(shift(from,days));setTo(shift(to,days));setPage(1)}
  const displayData=valid&&dataKey===requestKey?data:null
- const events=displayData?.events||[],total=displayData?.total??events.length,last=data?.updatedAt?new Intl.DateTimeFormat('fa-IR',{timeZone:'Asia/Tehran',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(data.updatedAt)):null
+ const events=displayData?.events||[],total=displayData?.total??events.length
  const days=[...new Set(events.map(eventDay))]
  return <section className="calendar-native" style={{'--calendar-command-height':`${commandHeight-1}px`} as CSSProperties}>
   <div ref={command} className="calendar-command"><div className="calendar-command-title"><span className="calendar-emblem"><CalendarDays size={23}/></span><div><h2>تقویم اقتصادی</h2><p>زمان رویدادها به وقت تهران</p></div></div><div className="calendar-command-actions"><button className="button primary small" disabled={loading} onClick={()=>setRevision(n=>n+1)} aria-label="بررسی به‌روزرسانی تقویم"><RefreshCw size={17} className={loading?'calendar-spin':''}/>{loading?'در حال دریافت…':'بررسی به‌روزرسانی'}</button></div></div>
-  <div className="calendar-overview"><div><span className="eyebrow">ECONOMIC CALENDAR</span><h3>نبض اقتصاد جهان، در یک نگاه</h3><p>رویدادها، نتایج و انتظار بازار؛ با عنوان فارسی، تاریخ شمسی و ساعت تهران.</p></div><span className="calendar-state" title={last?`آخرین دریافت: ${last}`:undefined}><Clock3 size={15}/>{data?.configured?`PersianFX · ${data.stale||data.partial?'دادهٔ ذخیره‌شده':'دریافت زمان‌بندی‌شده'}`:'در حال اتصال منابع'}</span></div>
+  <div className="calendar-overview"><div><span className="eyebrow">ECONOMIC CALENDAR</span><h3>نبض اقتصاد جهان، در یک نگاه</h3><p>رویدادها، نتایج و انتظار بازار؛ با عنوان فارسی، تاریخ شمسی و ساعت تهران.</p></div></div>
   {data?.partial&&<p className="calendar-refresh-error" role="status">آخرین دریافت از منبع موفق نبود؛ دادهٔ آخرین دریافت موفق نمایش داده می‌شود.</p>}
   {error&&displayData&&<div className="calendar-refresh-error" role="status"><Info size={17}/><span>به‌روزرسانی انجام نشد؛ آخرین دادهٔ دریافت‌شده نمایش داده می‌شود.</span><button disabled={loading} onClick={()=>setRevision(n=>n+1)}>تلاش دوباره</button></div>}
   <section className="surface native-calendar-table" aria-busy={loading}><div className="calendar-range"><div className="calendar-presets">{[[1,'امروز'],[7,'۷ روز آینده'],[30,'۳۰ روز آینده']].map(([days,label])=><button key={days} onClick={()=>range(Number(days))} aria-pressed={from===today()&&to===shift(today(),Number(days)-1)}>{label}</button>)}</div><div className="calendar-step"><button aria-label="هفتهٔ قبل" disabled={!valid} onClick={()=>move(-7)}><ChevronRight size={18}/></button><span>{valid?`${dateLabel(from+'T12:00:00Z')} تا ${dateLabel(to+'T12:00:00Z')}`:'انتخاب بازه'}</span><button aria-label="هفتهٔ بعد" disabled={!valid} onClick={()=>move(7)}><ChevronLeft size={18}/></button></div></div>
