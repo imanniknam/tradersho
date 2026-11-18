@@ -101,4 +101,5 @@
   width:calc(100% - 16px);
   height:calc(100% - 16px);
   border:0;
+  color-scheme:light;
 }
