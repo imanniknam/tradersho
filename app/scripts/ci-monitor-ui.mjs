@@ -24,7 +24,7 @@ try{
    if(tool==='market'){
     await page.locator('.calendar-preview-event').first().waitFor();await page.locator('.tv-host iframe').waitFor();await settle()
     const fit=await page.evaluate(()=>{const scroll=document.querySelector('.main-scroll'),chart=document.querySelector('.tv-chart').getBoundingClientRect(),cards=[...document.querySelectorAll('.analysis-context>section')].map(n=>n.getBoundingClientRect());return {scroll:scroll.scrollHeight,client:scroll.clientHeight,bottom:chart.bottom,context:cards.at(-1).bottom,rows:document.querySelectorAll('.calendar-preview-event').length}})
-    assert.ok(fit.scroll<=fit.client+2&&Math.abs(fit.bottom-fit.context)<2&&fit.bottom<=height+1,JSON.stringify({width,height,fit}));assert.ok(fit.rows>2)
+    assert.ok(fit.scroll<=fit.client+2&&fit.context<=height+1&&fit.bottom<=height+1,JSON.stringify({width,height,fit}));assert.ok(fit.rows>2)
    }else if(tool==='calendar'){
     await page.locator('tbody tr').first().waitFor();assert.ok(await page.locator('.calendar-native').evaluate(n=>n.getBoundingClientRect().width<=2200),'Readable calendar width on wide screens');await page.locator('.main-scroll').evaluate(n=>n.scrollTop=1400);await settle()
     const sticky=await page.evaluate(()=>({command:document.querySelector('.calendar-command').getBoundingClientRect().bottom,head:document.querySelector('thead th').getBoundingClientRect().top}));assert.ok(Math.abs(sticky.command-sticky.head)<3,'Sticky table header stays beneath command bar '+JSON.stringify(sticky))

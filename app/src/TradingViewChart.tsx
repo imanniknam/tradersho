@@ -5,7 +5,7 @@ import { useTheme } from './theme'
 
 // Official hosted widget: TradingView supplies and controls its own market data.
 // No scraping, custom datafeed, Replay or paper-account connection is implied.
-export default function TradingViewChart({resizeHandles}:{resizeHandles?:ReactNode}) {
+export default function TradingViewChart({resizeHandles,visible=true}:{resizeHandles?:ReactNode;visible?:boolean}) {
   const {theme}=useTheme()
   const host=useRef<HTMLDivElement>(null)
   const expandButton=useRef<HTMLButtonElement>(null)
@@ -42,6 +42,7 @@ export default function TradingViewChart({resizeHandles}:{resizeHandles?:ReactNo
     const timer=window.setTimeout(()=>{if(alive)setStatus(s=>s==='loading'?'slow':s)},20000)
     return ()=>{alive=false;clearTimeout(timer);observer.disconnect();node.replaceChildren()}
   },[theme,attempt])
+  useEffect(()=>{if(!visible)setExpanded(false)},[visible])
   useEffect(()=>{
     if(!expanded)return
     const previous=document.activeElement as HTMLElement|null

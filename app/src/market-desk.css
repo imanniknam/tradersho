@@ -50,7 +50,7 @@
 
 /* Definite pixel tracks keep Safari's flex/grid intrinsic sizing out of a drag. */
 @media(min-width:1201px) and (min-height:700px){
- .tools-shell:has(.market-desk) .main-scroll{scrollbar-gutter:stable;overflow-anchor:none}
+ .tools-shell:has(.analysis-market .market-desk) .main-scroll{scrollbar-gutter:stable;overflow-anchor:none}
  .analysis-market .analysis-grid.market-desk{height:var(--market-height);flex:0 0 auto;min-height:0;align-items:stretch;overflow-anchor:none}
  .analysis-market .market-desk .analysis-context{height:var(--market-context-height);align-self:start;align-content:stretch;overflow-anchor:none}
  .analysis-market .market-desk .analysis-chart{height:var(--market-chart-height);align-self:start}
@@ -103,3 +103,5 @@
 /* Corner resize grips: a single diagonal stroke, with the full hit area retained. */
 .market-resize-handle:is(.resize-ne,.resize-nw,.resize-se,.resize-sw) span{inset:auto;left:50%;top:50%;width:16px;height:2px;border:0;border-radius:2px;background:currentColor;transform:translate(-50%,-50%) rotate(-45deg)}
 .market-resize-handle:is(.resize-nw,.resize-se) span{transform:translate(-50%,-50%) rotate(45deg)}
+
+.market-view:not([hidden]){display:contents}
