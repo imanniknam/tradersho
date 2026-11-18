@@ -8,7 +8,7 @@ let cookie='',id
 async function request(path,method='GET',data,headers={}){
  const r=await fetch(base+'/api'+path,{method,headers:{Origin:base,'Content-Type':'application/json',Cookie:cookie,...headers},body:data===undefined?undefined:JSON.stringify(data)})
  const value=r.headers.get('set-cookie');if(value)cookie=value.split(';')[0]
- return {status:r.status,body:await r.json()}
+ return {status:r.status,body:await r.json(),setCookie:value}
 }
 try{
  assert.equal((await request('/health')).body.database,'ready')
@@ -24,6 +24,7 @@ try{
  const signupHash=createHmac('sha256',process.env.CAPTCHA_SECRET).update(signupCap.id+':12345').digest('hex')
  await pool.query('UPDATE login_captcha SET answer_hash=$1 WHERE id=$2',[signupHash,signupCap.id])
  const account=await request('/auth/signup','POST',{email,password,confirmPassword:password,captchaId:signupCap.id,captchaAnswer:'۱۲۳۴۵'});assert.equal(account.status,201);id=account.body.user.id
+ assert.match(account.setCookie, /Max-Age=259200(?:;|$)/)
  assert.equal((await request('/auth/signup','POST',{email:'reuse-'+email,password,confirmPassword:password,captchaId:signupCap.id,captchaAnswer:'12345'})).status,400)
  assert.equal((await request('/session')).body.user.id,id)
  assert.equal((await request('/admin/session')).status,403)
@@ -41,7 +42,18 @@ try{
  const cap=(await request('/auth/captcha')).body
  const answerHash=createHmac('sha256',process.env.CAPTCHA_SECRET).update(cap.id+':12345').digest('hex')
  await pool.query('UPDATE login_captcha SET answer_hash=$1 WHERE id=$2',[answerHash,cap.id])
- assert.equal((await request('/auth/login','POST',{email,password:'ReleaseNew#2027',captchaId:cap.id,captchaAnswer:'۱۲۳۴۵'})).status,200)
+ const login=await request('/auth/login','POST',{email,password:'ReleaseNew#2027',captchaId:cap.id,captchaAnswer:'۱۲۳۴۵'})
+ assert.equal(login.status,200)
+ assert.match(login.setCookie,/Max-Age=259200(?:;|$)/)
+ const passwordChange=await request('/account/password','POST',{currentPassword:'ReleaseNew#2027',newPassword:'ReleaseFinal#2028',confirmPassword:'ReleaseFinal#2028'})
+ assert.equal(passwordChange.status,200)
+ assert.match(passwordChange.setCookie,/Max-Age=259200(?:;|$)/)
+ const sessionHash=tokenHash(cookie.slice('tradersho_session='.length))
+ const {rows:[session]}=await pool.query('SELECT EXTRACT(EPOCH FROM expires_at-created_at)::int AS lifetime FROM sessions WHERE token_hash=$1',[sessionHash])
+ assert.equal(session.lifetime,259200)
+ assert.equal((await request('/session')).status,200)
+ await pool.query("UPDATE sessions SET created_at=now()-interval '72 hours' WHERE token_hash=$1",[sessionHash])
+ assert.equal((await request('/session')).status,401)
  assert.equal((await request('/auth/login','POST',{email,password:'ReleaseNew#2027',captchaId:cap.id,captchaAnswer:'12345'})).status,400)
 
  console.log('PASS: PostgreSQL health, signup/password policy, session, admin isolation, ticket filters, recovery/reuse/revocation, CSRF.')

@@ -10,6 +10,9 @@ export async function api<T>(path: string, method = 'GET', body?: unknown): Prom
   }
   let data: Record<string, unknown> = {}
   try { data = await res.json() } catch { /* handled below */ }
+  if (res.status === 401 && !path.startsWith('/auth/')) {
+    window.dispatchEvent(new Event('tradersho:session-expired'))
+  }
   if (!res.ok) throw new Error(String(data.error || 'ارتباط با سرور برقرار نشد.'))
   return data as T
 }

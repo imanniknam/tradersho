@@ -23,7 +23,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const port = Number(process.env.PORT || 3001)
 const host = process.env.HOST || '0.0.0.0'
 const production = process.env.NODE_ENV === 'production'
-const sessionAge = 30 * 86400
+const sessionAge = 3 * 24 * 60 * 60
 const courseLengths = { basics: 8, risk: 6, psychology: 5 }
 const securityHeaders = { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin' }
 const json = (res, status, data, headers = {}) => {
@@ -85,13 +85,17 @@ const publicUser = async user => {
 const sessionUser = async req => {
   const token = cookies(req).tradersho_session
   if (!token || !/^[a-f0-9]{64}$/.test(token)) return null
-  const { rows } = await pool.query('SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = $1 AND s.expires_at > now()', [digest(token)])
+  const { rows } = await pool.query('SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = $1 AND s.expires_at > now() AND s.created_at + make_interval(secs => $2) > now()', [digest(token), sessionAge])
   return rows[0] || null
 }
+const insertSession = (db, token, userId) => db.query(
+  'INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, now() + make_interval(secs => $3))',
+  [digest(token), userId, sessionAge],
+)
 const createSession = async (req, userId) => {
   const token = randomBytes(32).toString('hex')
   await pool.query('DELETE FROM sessions WHERE expires_at <= now()')
-  await pool.query("INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, now() + interval '30 days')", [digest(token), userId])
+  await insertSession(pool, token, userId)
   return setCookie(req, token, sessionAge)
 }
 const sameOrigin = req => {
@@ -203,7 +207,7 @@ const server = http.createServer(async (req, res) => {
         await client.query('BEGIN')
         await client.query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [nextHash, user.id])
         await client.query('DELETE FROM sessions WHERE user_id = $1', [user.id])
-        await client.query("INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, now() + interval '30 days')", [digest(token), user.id])
+        await insertSession(client, token, user.id)
         await client.query('COMMIT')
       } catch (error) { await client.query('ROLLBACK'); throw error }
       finally { client.release() }

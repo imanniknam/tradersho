@@ -94,3 +94,11 @@
 .home-tools-entry:before{display:none}
 .home-tools-entry .market-pulse{z-index:1;opacity:1}
 .home-tools-entry .mp-trace,.home-tools-entry .mp-glow{animation:none;stroke-dashoffset:0}
+
+.home-tools-entry .market-pulse-frame {
+  position:absolute;
+  inset:8px;
+  width:calc(100% - 16px);
+  height:calc(100% - 16px);
+  border:0;
+}

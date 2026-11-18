@@ -36,6 +36,23 @@ function useAuth(){const value=useContext(AuthContext);if(!value)throw new Error
 function AuthProvider({children}:{children:ReactNode}){
   const [user,setUser]=useState<User|null>(null),[loading,setLoading]=useState(true)
   useEffect(()=>{api<{user:User}>('/session').then(d=>setUser(d.user)).catch(()=>setUser(null)).finally(()=>setLoading(false))},[])
+  useEffect(()=>{
+    const expire = () => setUser(null)
+    window.addEventListener('tradersho:session-expired', expire)
+    return () => window.removeEventListener('tradersho:session-expired', expire)
+  },[])
+  useEffect(()=>{
+    if(!user) return
+    const verifySession = () => {
+      if(!document.hidden) void api('/session').catch(()=>{})
+    }
+    document.addEventListener('visibilitychange', verifySession)
+    const timer = window.setInterval(verifySession, 60_000)
+    return ()=>{
+      document.removeEventListener('visibilitychange', verifySession)
+      window.clearInterval(timer)
+    }
+  },[user?.id])
   return <AuthContext.Provider value={{user,loading,setUser}}><CalendarUserContext.Provider value={user?.id||''}>{children}</CalendarUserContext.Provider></AuthContext.Provider>
 }
 function Brand(){const {theme}=useTheme();return <span className="brand"><img className="brand-logo" src={theme==='light'?'/assets/logo-purple.png':'/assets/logo-white.png'} alt="Tradersho"/></span>}
