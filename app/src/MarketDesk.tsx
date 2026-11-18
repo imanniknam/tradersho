@@ -9,7 +9,7 @@ type Panel='chart'|'calendar'|'flicker'
 type Edge='n'|'s'|'e'|'w'|'ne'|'nw'|'se'|'sw'
 const empty:Size={side:null,calendar:null,height:null,chartHeight:null},gap=10,baseMinCalendar=360
 const clamp=(n:number,min:number,max:number)=>Math.min(max,Math.max(min,n))
-const names={chart:'چارت',calendar:'تقویم',flicker:'پنل ریسک'}
+const names={chart:'چارت',calendar:'تقویم',flicker:'پنل مدیریت ریسک'}
 const directions={n:'بالا',s:'پایین',e:'راست',w:'چپ',ne:'بالا راست',nw:'بالا چپ',se:'پایین راست',sw:'پایین چپ'}
 const minimumSidebarWidth=380
 export default function MarketDesk({chart,calendar,flicker}:{chart:(handles:ReactNode)=>ReactNode;calendar:(handles:ReactNode,onBounds:(bounds:{min:number;max:number})=>void)=>ReactNode;flicker:(handles:ReactNode,onMinimumHeight:(height:number)=>void)=>ReactNode}){

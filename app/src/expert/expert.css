@@ -112,9 +112,9 @@
 .expert-chart-workbench>.expert-market-monitor bdi{color:var(--monitor-text,#e1eaf4)}
 .expert-chart-workbench>.expert-market-monitor>small{color:var(--monitor-muted,#9db8d5)}
 
-/* Reserve a quiet right-hand lane for the floating spread monitor. */
-.expert-chart-workbench:not(.compact)>.expert-static-chart{left:0;right:auto;width:calc(100% - 274px)}
-.expert-chart-workbench:not(.compact)>.expert-market-monitor{inset:44px 22px auto auto}
+/* The floating monitor sits just inside the plot, to the left of the price scale. */
+.expert-chart-workbench:not(.compact)>.expert-market-monitor{inset:44px calc(7.86% + 8px) auto auto}
+.expert-static-chart .expert-price-axis{stroke-width:1.2;stroke-dasharray:none}
 
 .expert-static-chart .expert-spread-badge rect{fill:var(--monitor-header,#151f2b);stroke:var(--monitor-line,#4a5364)}
 .expert-static-chart .expert-spread-badge text{fill:var(--monitor-text,#e4e5ed);font-weight:700}

@@ -18,7 +18,7 @@ import {useCalendarPreference} from './calendar/preferences'
 const ExpertAcademy=lazy(()=>import('./expert/ExpertAcademy'))
 const sections=[
  {id:'chart',title:'نمای بازار',icon:ChartNoAxesCombined},
- {id:'risk',title:'پنل ریسک',icon:ShieldCheck},
+ {id:'risk',title:'پنل مدیریت ریسک',icon:ShieldCheck},
  {id:'expert',title:'اکسپرت',icon:SlidersHorizontal},
  {id:'journal',title:'ژورنال',icon:BookOpen,soon:true},
  {id:'compass',title:'قطب‌نما',icon:Compass,soon:true},

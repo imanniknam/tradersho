@@ -13,6 +13,13 @@ try{
  await load();await page.getByRole('button',{name:'Simple',exact:true}).click();await page.getByRole('button',{name:'جمع‌کردن مانیتور آموزشی'}).click();await page.waitForFunction(()=>{const k=Object.keys(localStorage).find(k=>k.startsWith('tradersho.expert.v1.'));if(!k)return false;const s=JSON.parse(localStorage.getItem(k));return s.snapshot?.state?.mode==='simple'&&s.ui?.minimized===true});await page.reload();await page.waitForFunction(()=>document.querySelector('.expert-academy')?.dataset.ready==='true');await page.frameLocator('iframe').locator('.source-simple').waitFor();assert.equal(await page.getByRole('button',{name:'بازکردن مانیتور آموزشی'}).getAttribute('aria-expanded'),'false')
  for(const width of [320,390,768,1024,1440,1920,2560,3840])for(const theme of ['light','dark']){
   await load(width,theme);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1),'No outer overflow '+width+' '+theme)
+  assert.ok(await page.locator('.expert-static-chart').evaluate(chart=>{
+   const bounds=chart.getBoundingClientRect(),host=chart.closest('.expert-chart-workbench');
+   const axis=chart.querySelector('.expert-price-axis').getBoundingClientRect();
+   const entry=chart.querySelector('.scenario-level.ENTRY rect').getBoundingClientRect();
+   const monitor=host.querySelector('.expert-market-monitor').getBoundingClientRect();
+   return Math.abs(bounds.right-host.getBoundingClientRect().right)<=1&&Math.abs(entry.right-bounds.right)<=1&&(host.classList.contains('compact')||monitor.right<axis.left);
+  }),'Price axis reaches the right edge and monitor clears the scale');
   assert.ok(await page.locator('.expert-spread-badge').evaluate(n=>{const badge=n.querySelector('rect').getBBox(),entry=n.parentElement.querySelector('.scenario-level.ENTRY rect').getBBox();return badge.x+badge.width<entry.x&&badge.y===entry.y}),'Spread sits beside the right-side entry price');
   assert.ok(await page.locator('.expert-static-chart').evaluate(n=>{const clip=n.querySelector('clipPath rect'),top=Number(clip.getAttribute('y')),bottom=top+Number(clip.getAttribute('height'));return [...n.querySelectorAll('g[clip-path] g line')].every(w=>Number(w.getAttribute('y1'))>=top&&Number(w.getAttribute('y2'))<=bottom)}),'Every candle wick fits the chart plot '+width+' '+theme);
   assert.ok(await page.locator('.expert-market-monitor').evaluate(n=>{const r=n.getBoundingClientRect(),h=n.closest('.expert-chart-workbench').getBoundingClientRect();return r.left>=h.left-1&&r.right<=h.right+1&&r.top>=h.top-1&&r.bottom<=h.bottom+1}),'Monitor remains within the chart workspace '+width+' '+theme);

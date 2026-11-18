@@ -16,7 +16,7 @@ try{
  const guest=await browser.newContext();assert.equal((await guest.request.get(base+'/api/tools/risk/access')).status(),401);await guest.close()
  for(const width of [320,390,768,1024,1280,1440,1920,2560,3840])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:900});await page.goto(base+'/panel/tools/risk');await page.locator('.risk-stats').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
-  assert.equal(await page.locator('.analysis-rail [aria-current=page]').innerText(),'پنل ریسک');assert.equal(await page.locator('.risk-table-scroll tbody tr').count(),6)
+  assert.equal(await page.locator('.analysis-rail [aria-current=page]').innerText(),'پنل مدیریت ریسک');assert.equal(await page.locator('.risk-table-scroll tbody tr').count(),6)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No page overflow '+width+' '+theme)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1),'No outer vertical overflow / blank page tail '+width+' '+theme)
   assert.ok(await page.locator('.risk-input').evaluateAll(nodes=>nodes.every(n=>{const a=n.getBoundingClientRect(),b=n.parentElement.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1})))
