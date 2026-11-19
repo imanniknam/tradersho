@@ -36,6 +36,25 @@ try{
  await pool.query('UPDATE login_captcha SET answer_hash=$1 WHERE id=$2',[answerHash,cap.id])
  await page.getByLabel('کد امنیتی',{exact:true}).fill('12345');await page.getByRole('button',{name:'ورود به پنل',exact:true}).click();await page.waitForURL(base+'/panel')
  const ticketResponse=await page.context().request.post(base+'/api/tickets',{headers:{Origin:base},data:{subject:'بررسی چیدمان درخواست با عنوان فارسی طولانی برای تست رابط',message:'این درخواست صرفاً دادهٔ آزمون رابط در پایگاه QA است و اطلاعات واقعی کاربر ندارد.',category:'technical',priority:'normal',requestId:randomUUID()}});assert.equal(ticketResponse.status(),201);const auditTicket=await ticketResponse.json()
+ const website='https://tradersho.com/'
+ await page.route(website,route=>route.fulfill({body:'Tradersho website QA'}))
+ for(const width of [320,1440]){
+  await page.setViewportSize({width,height:900})
+  const header=page.locator('.topbar')
+  for(const path of ['/panel/rebate','/panel/wallet','/panel/account','/panel/tools/calendar']){
+   await page.goto(base+path)
+   await header.getByRole('link',{name:'بازگشت به داشبورد',exact:true}).click()
+   await page.waitForURL(base+'/panel')
+  }
+  await page.goto(base+'/panel/?from=qa')
+  await header.getByRole('link',{name:'ورود به وب‌سایت تریدر شو',exact:true}).click()
+  await page.waitForURL(website)
+ }
+ for(const label of ['تریدر شو، بازگشت به داشبورد','بازگشت به پنل']){
+  await page.goto(base+'/panel/tools')
+  await page.locator('.topbar').getByRole('link',{name:label,exact:true}).click()
+  await page.waitForURL(base+'/panel')
+ }
  await mkdir('qa/panel',{recursive:true})
  for(const width of [320,390,768,1024,1280,1440,1920,2560,3840])for(const theme of ['light','dark'])for(const path of ['/panel','/panel/tools','/panel/market','/panel/support','/panel/support/new','/panel/support/'+auditTicket.id,'/panel/account','/panel/wallet','/panel/rebate','/forgot-password','/privacy']){
   await page.setViewportSize({width,height:900});try{await page.goto(base+path);await page.locator('h1,.coming-soon h2').first().waitFor()}catch(error){await page.screenshot({path:'qa/panel/navigation-failure.png'});console.error('Navigation failure',{width,theme,path,url:page.url(),errors});throw error}await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(350)
