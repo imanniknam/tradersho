@@ -88,7 +88,7 @@ try{
   const railBefore=await page.locator('.analysis-rail').boundingBox()
   const mountedChart=await page.locator('.tv-host iframe').elementHandle()
   await page.getByRole('navigation',{name:'ابزارهای تحلیل'}).getByRole('link',{name:'پنل مدیریت ریسک'}).click();await page.locator('.risk-stats').waitFor();assert.equal(await page.locator('.tv-host').isVisible(),false)
-  if(width>=1201){const railAfter=await page.locator('.analysis-rail').boundingBox();assert.ok(Math.abs(railBefore.height-railAfter.height)<2&&Math.abs(railBefore.width-railAfter.width)<2&&Math.abs(railBefore.x-railAfter.x)<2&&Math.abs(railBefore.y-railAfter.y)<2,'Tool rail must keep its size across tabs')}
+  if(width>=1201){const railAfter=await page.locator('.analysis-rail').boundingBox();assert.ok(Math.abs(railBefore.height-railAfter.height)<2&&Math.abs(railBefore.width-railAfter.width)<2&&Math.abs(railBefore.x-railAfter.x)<2&&Math.abs(railBefore.y-railAfter.y)<2,'Tool rail must keep its size and position across tabs '+JSON.stringify({width,theme,railBefore,railAfter}))}
   await page.getByRole('navigation',{name:'ابزارهای تحلیل'}).getByRole('link',{name:'نمای بازار',exact:true}).click();await page.locator('.tv-host iframe').waitFor();assert.ok(await mountedChart.evaluate(n=>n===document.querySelector('.tv-host iframe')),'Tool navigation keeps the same chart iframe')
  }
  for(const width of [390,1440,3840])for(const theme of ['light','dark'])for(const tool of ['journal','compass','scenario','widgets']){
