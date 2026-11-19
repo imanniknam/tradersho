@@ -39,14 +39,14 @@
 .home-tools-entry .home-tools-copy h2{color:var(--ink)}
 .home-tools-entry .home-tools-copy :is(.eyebrow,p){color:var(--secondary)}
 .market-pulse{position:absolute;inset:0;z-index:0;pointer-events:none;container-type:size}
-.market-pulse-frame{
+.market-pulse-art{
   display:block;position:absolute;top:50%;left:12px;transform:translateY(-50%);
   width:min(calc(54% - 12px),calc(200cqh - 32px));height:auto;aspect-ratio:2;border:0;
 }
 @media(max-width:900px){
   .dashboard-home .home-tools-entry{display:block;min-height:0;padding:clamp(159px,42vw,258px) 22px 24px}
   .home-tools-entry .home-tools-copy{width:100%;max-width:none}
-  .market-pulse-frame{
+  .market-pulse-art{
     top:10px;left:50%;transform:translateX(-50%);
     width:min(calc(100% - 24px),calc(2 * clamp(136px,39vw,232px)));
   }

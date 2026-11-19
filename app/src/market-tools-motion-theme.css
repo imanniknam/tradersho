@@ -1,0 +1,39 @@
+/* The illustration has no surrounding frame; the dashboard paints its background. */
+.market-pulse-art text { font-family: Arial, sans-serif; }
+.market-pulse-art text.mp-fa { font-family: inherit; }
+
+[data-theme="light"] .market-pulse-art {
+  --label: #5b516e;
+  --ink: #302545;
+  --line: #cfc2e5;
+}
+
+[data-theme="light"] #mp-amb stop:first-child { stop-color: #cfb8ee; }
+[data-theme="light"] #mp-card stop:first-child { stop-color: #fff; }
+[data-theme="light"] #mp-card stop:last-child { stop-color: #f0eafa; }
+[data-theme="light"] #mp-expert stop:first-child { stop-color: #fdfaff; }
+[data-theme="light"] #mp-expert stop:last-child { stop-color: #e9e0f5; }
+[data-theme="light"] #mp-edge stop { stop-color: var(--line); }
+[data-theme="light"] #mp-dial stop:first-child { stop-color: #faf6ff; }
+[data-theme="light"] #mp-dial stop:last-child { stop-color: #e9def3; }
+
+[data-theme="light"] .market-pulse-art text { fill: var(--label); }
+[data-theme="light"] .market-pulse-art :is(text[font-weight="bold"], #mp-expert-risk-value) { fill: var(--ink); }
+[data-theme="light"] .market-pulse-art :is([fill="#101115"], [fill="#0d0e12"]) {
+  fill: #a58bbf;
+  opacity: .17;
+}
+
+[data-theme="light"] .market-pulse-art :is([fill="#393244"], [fill="#514461"], [fill="#403849"]) { fill: #dfd3ed; }
+[data-theme="light"] .market-pulse-art :is([fill="#1d1e26"], [fill="#25262e"]) { fill: #faf7fe; }
+[data-theme="light"] .market-pulse-art :is([stroke="#3b3946"], [stroke="#363540"], [stroke="#41404b"], [stroke="#4b455b"], [stroke="#383943"], [stroke="#413b4c"], [stroke="#494151"]) { stroke: var(--line); }
+
+[data-theme="light"] .market-pulse-art [fill="#b6a9e3"] { fill: #8260b8; }
+[data-theme="light"] .market-pulse-art [stroke="#b6a9e3"] { stroke: #8260b8; }
+[data-theme="light"] .market-pulse-art [stroke="#c6b5ec"] { stroke: #9274bd; }
+[data-theme="light"] .market-pulse-art [fill="#463c59"] { fill: #e9ddfa; }
+[data-theme="light"] .market-pulse-art [fill="#343d4e"] { fill: #e0e7f3; }
+[data-theme="light"] .market-pulse-art :is([fill="#4b3541"], [fill="#4b3946"]) { fill: #f1dbe6; }
+[data-theme="light"] .market-pulse-art :is([fill="#3b4b49"], [fill="#a4c3b2"]) { fill: #c9e6d9; }
+[data-theme="light"] .market-pulse-art [fill="#7664ac"] { fill: #b7a2de; }
+[data-theme="light"] .market-pulse-art [fill="#c5b098"] { fill: #a07846; }
