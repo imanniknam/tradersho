@@ -50,8 +50,13 @@ try{
  await mkdir('qa/tools',{recursive:true})
  for(const width of [320,390,768,1024,1440,2560])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:900});await page.goto(base+'/panel');await page.locator('.home-tools-copy').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(200)
-  const separated=await page.evaluate(()=>{const a=document.querySelector('.market-pulse').getBoundingClientRect(),b=document.querySelector('.home-tools-copy').getBoundingClientRect();return a.right+8<=b.left||a.bottom+8<=b.top})
-  assert.ok(separated,`Banner artwork must not overlap text: ${width} ${theme}`)
+  assert.ok(await page.locator('.home-tools-entry').evaluate(n=>{
+   const art=n.querySelector('.market-pulse'),link=n.querySelector('.home-tools-copy a')
+   link.scrollIntoView({block:'nearest'})
+   const a=art.getBoundingClientRect(),b=link.getBoundingClientRect(),card=n.getBoundingClientRect()
+   return getComputedStyle(art).pointerEvents==='none'&&Math.abs(a.width-card.width)<=2
+    &&link.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2))
+  }),`Decorative background fills the banner and leaves the link interactive: ${width} ${theme}`)
   await page.locator('.home-tools-entry').screenshot({path:`qa/tools/banner-${width}-${theme}.png`})
  }
  await page.context().route('https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',r=>r.fulfill({contentType:'application/javascript',body:`{const script=document.currentScript;const cfg=JSON.parse(script.textContent);window.__chartConfig=cfg;const frame=document.createElement('iframe');frame.title='نمودار تحلیل بازار TradingView';frame.style='width:100%;height:100%;border:0';frame.srcdoc='<html><body style="background:#f5f5fa;font:16px Arial">XAUUSD · 1h · QA widget</body></html>';script.parentElement.querySelector('.tradingview-widget-container__widget').append(frame)}`}))

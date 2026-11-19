@@ -7,23 +7,43 @@ const {pool}=await import('../server/db.mjs'),{tokenHash}=await import('../serve
 const browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true}),context=await browser.newContext({reducedMotion:'reduce'}),page=await context.newPage(),errors=[]
 page.on('pageerror',e=>errors.push(e.message));const axe=await readFile('node_modules/axe-core/axe.min.js','utf8');await mkdir('qa/expert',{recursive:true})
 const load=async(width=1440,theme='light')=>{if(page.url().startsWith(base)){await page.goto(base+'/panel');await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('tradersho.expert.v1.')).forEach(k=>localStorage.removeItem(k)))};await page.setViewportSize({width,height:1000});await page.goto(base+'/panel/tools/expert');await page.waitForFunction(()=>document.querySelector('.expert-academy')?.dataset.ready==='true');await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(150)}
+const tapCompactControl=async key=>{
+ const control=page.frameLocator('.expert-native-desk iframe').locator(`[data-key="${key}"]`)
+ await control.scrollIntoViewIfNeeded()
+ const target=await control.evaluate(n=>{const r=n.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2,width:innerWidth}})
+ const iframe=await page.locator('.expert-native-desk iframe').boundingBox()
+ const scale=iframe.width/target.width
+ await page.mouse.click(iframe.x+target.x*scale,iframe.y+target.y*scale)
+}
 try{
  await pool.query('INSERT INTO users(id,name,email,password_hash) VALUES($1,$2,$3,$4)',[user,'Academy QA',user+'@example.test','unusable-qa-hash']);await pool.query("INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '1 hour')",[tokenHash(token),user]);await context.addCookies([{name:'tradersho_session',value:token,url:base}])
  assert.equal((await context.request.get(base+'/api/tools/expert/access')).status(),200)
  await load();await page.getByRole('button',{name:'Simple',exact:true}).click();await page.getByRole('button',{name:'جمع‌کردن مانیتور آموزشی'}).click();await page.waitForFunction(()=>{const k=Object.keys(localStorage).find(k=>k.startsWith('tradersho.expert.v1.'));if(!k)return false;const s=JSON.parse(localStorage.getItem(k));return s.snapshot?.state?.mode==='simple'&&s.ui?.minimized===true});await page.reload();await page.waitForFunction(()=>document.querySelector('.expert-academy')?.dataset.ready==='true');await page.frameLocator('iframe').locator('.source-simple').waitFor();assert.equal(await page.getByRole('button',{name:'بازکردن مانیتور آموزشی'}).getAttribute('aria-expanded'),'false')
  for(const width of [320,390,768,1024,1440,1920,2560,3840])for(const theme of ['light','dark']){
   await load(width,theme);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1),'No outer overflow '+width+' '+theme)
-  assert.ok(await page.locator('.expert-static-chart').evaluate(chart=>{
-   const bounds=chart.getBoundingClientRect(),host=chart.closest('.expert-chart-workbench');
-   const axis=chart.querySelector('.expert-price-axis').getBoundingClientRect();
-   const entry=chart.querySelector('.scenario-level.ENTRY rect').getBoundingClientRect();
-   const monitor=host.querySelector('.expert-market-monitor').getBoundingClientRect();
-   return Math.abs(bounds.right-host.getBoundingClientRect().right)<=1&&Math.abs(entry.right-bounds.right)<=1&&(host.classList.contains('compact')||monitor.right<axis.left);
-  }),'Price axis reaches the right edge and monitor clears the scale');
-  assert.ok(await page.locator('.expert-spread-badge').evaluate(n=>{const badge=n.querySelector('rect').getBBox(),entry=n.parentElement.querySelector('.scenario-level.ENTRY rect').getBBox();return badge.x+badge.width<entry.x&&badge.y===entry.y}),'Spread sits beside the right-side entry price');
-  assert.ok(await page.locator('.expert-static-chart').evaluate(n=>{const clip=n.querySelector('clipPath rect'),top=Number(clip.getAttribute('y')),bottom=top+Number(clip.getAttribute('height'));return [...n.querySelectorAll('g[clip-path] g line')].every(w=>Number(w.getAttribute('y1'))>=top&&Number(w.getAttribute('y2'))<=bottom)}),'Every candle wick fits the chart plot '+width+' '+theme);
-  assert.ok(await page.locator('.expert-market-monitor').evaluate(n=>{const r=n.getBoundingClientRect(),h=n.closest('.expert-chart-workbench').getBoundingClientRect();return r.left>=h.left-1&&r.right<=h.right+1&&r.top>=h.top-1&&r.bottom<=h.bottom+1}),'Monitor remains within the chart workspace '+width+' '+theme);
-  const minimize=page.getByRole('button',{name:'جمع‌کردن مانیتور آموزشی'});await minimize.click();assert.equal(await page.getByRole('button',{name:'بازکردن مانیتور آموزشی'}).getAttribute('aria-expanded'),'false');await page.getByRole('button',{name:'بازکردن مانیتور آموزشی'}).click();
+  if(await page.locator('.expert-chart-workbench.compact').count()){
+   assert.equal(await page.locator('.expert-static-chart,.expert-market-monitor').count(),0)
+   await tapCompactControl('risk')
+   const guide=page.locator('.expert-inline-guide')
+   await guide.waitFor()
+   assert.ok(await guide.evaluate(n=>{
+    const guide=n.getBoundingClientRect(),desk=n.previousElementSibling.getBoundingClientRect(),scroll=n.closest('.main-scroll').getBoundingClientRect()
+    return guide.top>=desk.bottom&&guide.top-desk.bottom<=10&&guide.top+70<=Math.min(scroll.bottom,document.querySelector('.mobile-bottom')?.getBoundingClientRect().top||innerHeight)
+   }),'The selected guide starts immediately below the panel and is visible')
+   await guide.getByRole('button',{name:'بستن راهنما'}).click()
+  }else{
+   assert.ok(await page.locator('.expert-static-chart').evaluate(chart=>{
+    const bounds=chart.getBoundingClientRect(),host=chart.closest('.expert-chart-workbench')
+    const axis=chart.querySelector('.expert-price-axis').getBoundingClientRect()
+    const entry=chart.querySelector('.scenario-level.ENTRY rect').getBoundingClientRect()
+    const monitor=host.querySelector('.expert-market-monitor').getBoundingClientRect()
+    const plot=[...chart.querySelectorAll('[data-candle-index],.expert-trade-zones rect,.expert-spread-badge rect')]
+    return Math.abs(bounds.right-host.getBoundingClientRect().right)<=1&&Math.abs(entry.right-bounds.right)<=1
+     &&monitor.right<axis.left&&plot.every(n=>n.getBoundingClientRect().right<monitor.left)
+   }),'Candles, trade zones and right-side price labels clear the monitor')
+   assert.ok(await page.locator('.expert-static-chart').evaluate(n=>{const clip=n.querySelector('clipPath rect'),top=Number(clip.getAttribute('y')),bottom=top+Number(clip.getAttribute('height'));return [...n.querySelectorAll('g[clip-path] g line')].every(w=>Number(w.getAttribute('y1'))>=top&&Number(w.getAttribute('y2'))<=bottom)}),'Every candle wick fits the chart plot '+width+' '+theme)
+   const minimize=page.getByRole('button',{name:'جمع‌کردن مانیتور آموزشی'});await minimize.click();assert.equal(await page.getByRole('button',{name:'بازکردن مانیتور آموزشی'}).getAttribute('aria-expanded'),'false');await page.getByRole('button',{name:'بازکردن مانیتور آموزشی'}).click()
+  }
   await page.locator('.expert-lab').scrollIntoViewIfNeeded();await page.screenshot({path:`qa/expert/${width}-${theme}.png`})
   await page.addScriptTag({content:axe});const issues=await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})));assert.deepEqual(issues,[],width+' '+theme)
   assert.equal(await page.locator('iframe').getAttribute('sandbox'),'allow-scripts');assert.equal(await page.locator('.expert-help-window').count(),0)
@@ -32,7 +52,7 @@ try{
   assert.equal(await page.locator('.analysis-heading h1').innerText(),'اکسپرت');assert.equal(await page.locator('.expert-install-tabs,.expert-install-steps,.expert-version-note').count(),0);assert.ok(await page.locator('.expert-download-guide').evaluate(n=>getComputedStyle(n).fontFamily===getComputedStyle(n.closest('.expert-academy')).fontFamily));await page.screenshot({path:`qa/expert/${width}-${theme}-downloads.png`});assert.ok(await page.getByRole('link',{name:/دریافت نسخهٔ MT4/}).isVisible());
   await page.mouse.move(0,0);const downloads=page.locator('.expert-download-grid a.button');assert.equal(await downloads.count(),3);const bases=await downloads.evaluateAll(ns=>ns.map(n=>getComputedStyle(n).backgroundColor));assert.equal(new Set(bases).size,1,'Download buttons share a resting color');for(const button of await downloads.all()){await button.hover();await page.waitForFunction(()=>{const n=document.querySelector('.expert-download-grid a.button:hover');return n&&getComputedStyle(n).backgroundColor==='rgb(96, 95, 158)'&&getComputedStyle(n).color==='rgb(255, 255, 255)'});}await page.mouse.move(0,0)
  }
- await load();const monitor=page.locator('.expert-market-monitor'),monitorHeader=monitor.locator('header');const before=await monitor.boundingBox();await monitorHeader.scrollIntoViewIfNeeded();const monitorHandle=await monitorHeader.boundingBox();await page.mouse.move(monitorHandle.x+30,monitorHandle.y+10);await page.mouse.down();await page.mouse.move(monitorHandle.x-70,monitorHandle.y+60,{steps:5});await page.mouse.up();const after=await monitor.boundingBox();assert.ok(Math.abs(after.x-before.x)>20,'Monitor can be dragged on desktop');const native=page.frameLocator('iframe'),chartBefore=await page.locator('.expert-static-chart g[clip-path]').innerHTML()
+ await load();const monitor=page.locator('.expert-market-monitor'),monitorHeader=monitor.locator('header');await monitorHeader.scrollIntoViewIfNeeded();const before=await monitor.boundingBox();const monitorHandle=await monitorHeader.boundingBox();await page.mouse.move(monitorHandle.x+30,monitorHandle.y+10);await page.mouse.down();await page.mouse.move(monitorHandle.x-70,monitorHandle.y+60,{steps:5});await page.mouse.up();const after=await monitor.boundingBox();assert.ok(Math.abs(after.y-before.y)>20,'Monitor can be repositioned in its reserved lane');const native=page.frameLocator('iframe'),chartBefore=await page.locator('.expert-static-chart g[clip-path]').innerHTML()
  await page.getByRole('button',{name:'Simple',exact:true}).click();
  assert.ok(await native.locator('.source-simple').evaluate(n=>{const [trade,tools]=n.querySelector('.source-simple-tabs').children,[risk,value,unit]=n.querySelector('.source-simple-risk').children;const a=trade.getBoundingClientRect(),b=risk.getBoundingClientRect(),c=tools.getBoundingClientRect(),d=value.getBoundingClientRect(),e=unit.getBoundingClientRect();return Math.abs(a.left-b.left)<1&&Math.abs(a.right-b.right)<1&&Math.abs(c.left-d.left)<1&&Math.abs(c.right-e.right)<1}),'Simple Risk aligns with Trade; value and unit align with Tools');
  await page.screenshot({path:'qa/expert/simple-alignment.png'});await page.getByRole('button',{name:'Pro',exact:true}).click();await load();
@@ -55,6 +75,6 @@ try{
  const mt4=JSON.parse(await readFile('src/expert/download-mt4.json','utf8')),mt4zip=await context.request.get(base+'/downloads/'+mt4.file);assert.equal(mt4zip.status(),200);assert.equal(createHash('sha256').update(await mt4zip.body()).digest('hex'),mt4.sha256);
  const pdf=await context.request.get(base+'/downloads/Tradersho-Expert-v2.13-Guide.pdf');assert.equal(pdf.status(),200);assert.ok((await pdf.body()).subarray(0,5).equals(Buffer.from('%PDF-')))
  const meta=JSON.parse(await readFile('src/expert/download.json','utf8')),zip=await context.request.get(base+'/downloads/'+meta.file);assert.equal(zip.status(),200);assert.equal(createHash('sha256').update(await zip.body()).digest('hex'),meta.sha256)
- await load();await page.getByRole('button',{name:'Simple',exact:true}).click();assert.ok((await native.locator('#expert').innerText()).includes('SIMPLE'));await native.locator('[data-action=source-simple-tab][data-tab=Tools]').click();await native.locator('[data-action=settings]').click();await native.locator('[data-action=settings-back]').click();await page.getByRole('button',{name:'Pro',exact:true}).click();assert.ok(await native.getByRole('tab',{name:/Portfolio/}).isVisible());await load(390);await page.getByRole('button',{name:'فهرست راهنماها',exact:true}).click();await page.getByRole('textbox',{name:'جستجوی راهنمای اکسپرت'}).fill('تریل');await page.locator('.expert-topic-grid button').first().click();assert.ok(await page.locator('.expert-window-content').count()>0);assert.equal(await page.evaluate(()=>window.scrollY),0)
+ await load();await page.getByRole('button',{name:'Simple',exact:true}).click();assert.ok((await native.locator('#expert').innerText()).includes('SIMPLE'));await native.locator('[data-action=source-simple-tab][data-tab=Tools]').click();await native.locator('[data-action=settings]').click();await native.locator('[data-action=settings-back]').click();await page.getByRole('button',{name:'Pro',exact:true}).click();assert.ok(await native.getByRole('tab',{name:/Portfolio/}).isVisible());await load(390);await tapCompactControl('risk');const firstGuide=await page.locator('.expert-inline-guide h3').textContent();await tapCompactControl('entry');await page.waitForFunction(first=>document.querySelector('.expert-inline-guide h3')?.textContent!==first,firstGuide);assert.equal(await page.locator('.expert-inline-guide').count(),1);assert.equal(await page.evaluate(()=>window.scrollY),0)
  assert.deepEqual(errors,[]);console.log('PASS expert: 16 viewport/theme cases with sticky heading above scrolled content, fixed chart, multiple pinned windows, arrows, no guided tour, search, settings/presets/alerts/colours, no outer overflow, downloads PDF/ZIP integrity, mobile navigation and axe')
 }finally{await pool.query('DELETE FROM users WHERE id=$1',[user]);await pool.end();await browser.close()}
