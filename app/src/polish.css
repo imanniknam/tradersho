@@ -58,7 +58,8 @@ select:not([multiple]){appearance:none!important;-webkit-appearance:none!importa
 
 /* Large desktops: fill the workspace and scale account/dashboard controls for readable physical size. */
 @media(min-width:1900px){
- .app-shell:not(.tools-shell) .main-inner{max-width:none;padding:clamp(28px,2vw,72px)}
+ .app-shell:not(.tools-shell):not(.admin-shell) .main-inner{max-width:1800px;padding:clamp(28px,2vw,48px)}
+ .app-shell.admin-shell .main-inner{max-width:none;padding:clamp(28px,2vw,72px)}
  .app-shell:not(.tools-shell) .sidebar{width:clamp(236px,12vw,340px)}
  .app-shell:not(.tools-shell) .nav-link{font-size:clamp(14px,.7vw,20px);min-height:clamp(46px,2.6vw,66px)}
  .app-shell:not(.tools-shell) .nav-soon{font-size:clamp(9px,.45vw,12px)}

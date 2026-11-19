@@ -30,7 +30,6 @@ html,body,#root{width:100%;min-height:100%;background:var(--canvas)}
 @keyframes auth-contour-drift{from{transform:rotate(20deg)}to{transform:rotate(380deg)}}
 @media(min-width:1800px){
   .main-inner{max-width:1800px;padding:36px 48px 64px}
-  .dashboard-home{max-width:none}
   .sidebar{width:260px;padding-inline:20px}
   .home-tools-entry{min-height:330px;padding:42px}
   .auth-visual{padding:40px clamp(64px,6vw,180px)}

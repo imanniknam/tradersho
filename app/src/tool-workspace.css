@@ -17,7 +17,7 @@
 .flicker-guide dl{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;margin:8px 0}.flicker-guide dl>div{display:flex;gap:5px;padding:0;font-size:10px;line-height:1.8}.flicker-guide dt{font-family:Arial,sans-serif}.flicker-guide dd:before{content:'·';margin-inline-end:5px;color:var(--secondary)}
 /* A viewport-sized analysis desk; scrolling remains available for short screens/zoom. */
 @media(min-width:1201px) and (min-height:700px){
- .tools-shell:has(.analysis-market) .main-inner{height:100%;padding:12px 18px;max-width:none}
+ .tools-shell:has(.analysis-market) .main-inner{height:100%;padding:12px 18px}
  .analysis-market{height:100%;grid-template-columns:86px minmax(0,1fr);gap:14px}
  .analysis-market .analysis-body{height:100%;min-height:0;display:flex;flex-direction:column;gap:10px}
  .analysis-market .analysis-heading{margin:0;min-height:30px;flex:none}.analysis-market .analysis-heading h1{font-size:18px}.analysis-market .analysis-heading p{font-size:12px}
@@ -46,7 +46,7 @@
 
 @media(min-width:1201px) and (min-height:700px){.analysis-market .calendar-preview-event p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}}
 @media(min-width:1201px) and (min-height:700px){
- .tools-shell .main-inner{padding:12px 18px;max-width:none}
+ .tools-shell .main-inner{padding:12px 18px}
  .analysis-center{grid-template-columns:86px minmax(0,1fr);gap:14px}
  .analysis-center .analysis-rail{position:sticky;top:0;height:calc(100dvh - 96px);min-height:0;gap:3px;padding:6px}
  .analysis-center .analysis-rail a{min-height:0;flex:1;padding:5px 2px;font-size:11px;gap:4px}.analysis-center .analysis-rail a svg{width:20px;height:20px}

@@ -8,6 +8,15 @@ const base='http://127.0.0.1:5183',id=randomUUID(),token=randomBytes(32).toStrin
 const browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true}),context=await browser.newContext({reducedMotion:'reduce'}),page=await context.newPage()
 page.on('pageerror',e=>errors.push(e.message));await mkdir('qa/monitors',{recursive:true})
 const settle=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))))
+async function assertCentered(selector,parent,max){
+ const bounds=await page.locator(selector).evaluate((node,parent)=>{
+  const box=node.getBoundingClientRect(),container=node.closest(parent)
+  const left=container.getBoundingClientRect().left+container.clientLeft
+  return {width:box.width,leftGap:box.left-left,rightGap:left+container.clientWidth-box.right}
+ },parent)
+ assert.ok(bounds.width<=max+1&&Math.abs(bounds.leftGap-bounds.rightGap)<=2,
+  `${selector} within ${max}px and centered: ${JSON.stringify(bounds)}`)
+}
 try{
  await pool.query('INSERT INTO users(id,name,email,password_hash) VALUES($1,$2,$3,$4)',[id,'Monitor QA',id+'@example.test','unusable-qa-hash']);await pool.query("INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '1 hour')",[tokenHash(token),id]);await context.addCookies([{name:'tradersho_session',value:token,url:base}])
  const now=Date.now(),day=new Date(now).toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'}),events=Array.from({length:100},(_,i)=>({id:'monitor-'+i,title:'شاخص اقتصادی برای بررسی نمایشگر بزرگ '+i,originalTitle:'US Employment Change NFP '+i,date:day,at:new Date(now+(i+1)*60000).toISOString(),currency:'USD',country:'US',impact:['high','medium','low'][i%3],status:'scheduled',actual:{value:'0',unit:'percent'},forecast:{value:'1',unit:'percent'},previous:{value:'-0.5',unit:'percent'},sourceUrl:'https://persianfx.com/'}))
@@ -18,9 +27,9 @@ try{
  await context.route('https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',r=>r.fulfill({contentType:'application/javascript',body:`{const s=document.currentScript,f=document.createElement('iframe');f.title='TradingView monitor QA';f.style='width:100%;height:100%;border:0';f.srcdoc='<title>Chart QA</title>';s.parentElement.querySelector('.tradingview-widget-container__widget').append(f)}`}))
  for(const [width,height] of [[1920,1080],[2560,1440],[3440,1440],[3840,2160],[5120,1440],[5120,2880]])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height});await context.addInitScript(t=>{if(window===top)localStorage.setItem('tradersho-theme',t)},theme)
-  await page.goto(base+'/panel');const art=page.locator('.market-pulse-art');await art.waitFor();await settle();assert.ok(await art.evaluate(n=>{const r=n.getBoundingClientRect(),card=n.closest('.home-tools-entry').getBoundingClientRect();return r.left>=card.left&&r.top>=card.top&&r.right<=card.right&&r.bottom<=card.bottom}),'Animated artwork fits inside the banner');await page.screenshot({path:`qa/monitors/dashboard-${width}x${height}-${theme}.png`});results.push({tool:'dashboard',width,height,theme});
+  await page.goto(base+'/panel');const art=page.locator('.market-pulse-art');await art.waitFor();await settle();await assertCentered('.dashboard-home','.main-scroll',1440);assert.ok(await art.evaluate(n=>{const r=n.getBoundingClientRect(),card=n.closest('.home-tools-entry').getBoundingClientRect();return r.left>=card.left&&r.top>=card.top&&r.right<=card.right&&r.bottom<=card.bottom}),'Animated artwork fits inside the banner');await page.screenshot({path:`qa/monitors/dashboard-${width}x${height}-${theme}.png`});results.push({tool:'dashboard',width,height,theme});
   for(const tool of ['market','calendar','risk','expert']){
-   await page.goto(base+'/panel/tools'+(tool==='market'?'':'/'+tool));await page.locator('.analysis-heading h1').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
+   await page.goto(base+'/panel/tools'+(tool==='market'?'':'/'+tool));await page.locator('.analysis-heading h1').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await assertCentered('.main-inner','.main-scroll',2200)
    if(tool==='market'){
     await page.locator('.calendar-preview-event').first().waitFor();await page.locator('.tv-host iframe').waitFor();await settle()
     const fit=await page.evaluate(()=>{const scroll=document.querySelector('.main-scroll'),chart=document.querySelector('.tv-chart').getBoundingClientRect(),cards=[...document.querySelectorAll('.analysis-context>section')].map(n=>n.getBoundingClientRect());return {scroll:scroll.scrollHeight,client:scroll.clientHeight,bottom:chart.bottom,context:cards.at(-1).bottom,rows:document.querySelectorAll('.calendar-preview-event').length}})

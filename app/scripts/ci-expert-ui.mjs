@@ -6,7 +6,7 @@ if(!process.env.DATABASE_URL?.endsWith('_qa'))throw Error('Dedicated QA database
 const {pool}=await import('../server/db.mjs'),{tokenHash}=await import('../server/auth.mjs'),user=randomUUID(),token=randomBytes(32).toString('hex'),base='http://127.0.0.1:5183'
 const browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true}),context=await browser.newContext({reducedMotion:'reduce'}),page=await context.newPage(),errors=[]
 page.on('pageerror',e=>errors.push(e.message));const axe=await readFile('node_modules/axe-core/axe.min.js','utf8');await mkdir('qa/expert',{recursive:true})
-const load=async(width=1440,theme='light')=>{if(page.url().startsWith(base)){await page.goto(base+'/panel');await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('tradersho.expert.v1.')).forEach(k=>localStorage.removeItem(k)))};await page.setViewportSize({width,height:1000});await page.goto(base+'/panel/tools/expert');await page.waitForFunction(()=>document.querySelector('.expert-academy')?.dataset.ready==='true');await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(150)}
+const load=async(width=1440,theme='light')=>{if(page.url().startsWith(base)){await page.goto(base+'/panel');await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('tradersho.expert.v1.')).forEach(k=>localStorage.removeItem(k)))};if(!page.url().startsWith(base))await page.goto(base+'/panel');await page.evaluate(t=>localStorage.setItem('tradersho-theme',t),theme);await page.setViewportSize({width,height:1000});await page.goto(base+'/panel/tools/expert');await page.waitForFunction(()=>document.querySelector('.expert-academy')?.dataset.ready==='true');await page.waitForTimeout(150)}
 const tapCompactControl=async key=>{
  const control=page.frameLocator('.expert-native-desk iframe').locator(`[data-key="${key}"]`)
  await control.scrollIntoViewIfNeeded()
@@ -32,6 +32,7 @@ try{
    }),'The selected guide starts immediately below the panel and is visible')
    await guide.getByRole('button',{name:'بستن راهنما'}).click()
   }else{
+   assert.equal(await page.locator('.expert-static-chart>rect').first().evaluate(n=>getComputedStyle(n).fill),theme==='light'?'rgb(255, 255, 255)':'rgb(15, 15, 15)')
    assert.ok(await page.locator('.expert-static-chart').evaluate(chart=>{
     const bounds=chart.getBoundingClientRect(),host=chart.closest('.expert-chart-workbench')
     const axis=chart.querySelector('.expert-price-axis').getBoundingClientRect()
@@ -43,8 +44,13 @@ try{
       &&Math.abs((box.left+box.right)-(zone.left+zone.right))<=2
     })
     const monitor=host.querySelector('.expert-market-monitor').getBoundingClientRect()
+    const ticks=[...chart.querySelectorAll('.expert-axis-tick')]
+    const pricesFit=Math.abs(bounds.right-axis.left-64)<1&&ticks.length===9&&ticks.every(tick=>{
+     const r=tick.getBoundingClientRect()
+     return /^\d+\.\d{2}$/.test(tick.textContent)&&r.left>=axis.left&&r.right<=bounds.right
+    })
     const plot=[...chart.querySelectorAll('[data-candle-index],.expert-trade-zones rect,.scenario-level rect')]
-    return Math.abs(bounds.right-host.getBoundingClientRect().right)<=1&&labelsInZone
+    return Math.abs(bounds.right-host.getBoundingClientRect().right)<=1&&labelsInZone&&pricesFit
      &&!chart.textContent.includes('SPREAD')&&monitor.right<axis.left&&plot.every(n=>n.getBoundingClientRect().right<monitor.left)
    }),'Trade labels are centered in the zones and the chart clears the spread monitor')
    assert.ok(await page.locator('.expert-static-chart').evaluate(n=>{const clip=n.querySelector('clipPath rect'),top=Number(clip.getAttribute('y')),bottom=top+Number(clip.getAttribute('height'));return [...n.querySelectorAll('g[clip-path] g line')].every(w=>Number(w.getAttribute('y1'))>=top&&Number(w.getAttribute('y2'))<=bottom)}),'Every candle wick fits the chart plot '+width+' '+theme)
@@ -72,9 +78,18 @@ try{
  // Test window minimization and independent closing without altering the native panel.
  const windowCount=await page.locator('.expert-help-window').count();await page.getByRole('button',{name:'جمع‌کردن پنجره راهنما',exact:true}).last().click();assert.ok(await page.locator('.expert-help-window.minimized').count()>0);await page.locator('.expert-help-window').last().getByRole('button',{name:/بستن راهنمای/}).click();assert.equal(await page.locator('.expert-help-window').count(),windowCount-1)
  await load();await native.getByRole('tab',{name:/Manage/}).click();await native.locator('[data-action=chart-light]').click();await page.waitForFunction(()=>document.querySelector('.expert-static-chart').style.getPropertyValue('--expert-chart-bg')==='#f5f5f5');await native.locator('[data-action=chart-dark]').click();await page.waitForFunction(()=>document.querySelector('.expert-static-chart').style.getPropertyValue('--expert-chart-bg')==='#071b2e');
+ await page.getByRole('button',{name:'فعال کردن حالت تیره'}).click()
+ await page.waitForFunction(()=>getComputedStyle(document.querySelector('.expert-static-chart>rect')).fill==='rgb(15, 15, 15)')
+ await page.getByRole('button',{name:'فعال کردن حالت روشن'}).click()
+ await page.waitForFunction(()=>getComputedStyle(document.querySelector('.expert-static-chart>rect')).fill==='rgb(7, 27, 46)')
+
  await native.getByRole('tab',{name:/Setup/}).click();for(let i=0;i<4;i++)await native.locator('[data-action=add-tp]').click();await native.locator('[data-action=order-type]').click();await native.locator('[data-action=order-type]').click();await native.locator('[data-action=atr]').click();assert.equal(await native.locator('[data-action=remove-tp]').count(),4);assert.ok(Number(await page.locator('iframe').getAttribute('height'))>=await native.locator('#expert').evaluate(n=>n.offsetHeight));await native.locator('.main-action').scrollIntoViewIfNeeded();await page.screenshot({path:'qa/expert/five-targets-stop-limit.png'});
  await load();await native.getByRole('tab',{name:/Manage/}).click();await native.locator('[data-action=alert]').click();for(let i=0;i<7;i++)await native.locator('[data-action=source-alert-add]').click();assert.ok((await native.locator('.source-alert-footer').innerText()).includes('7 alerts'));await native.locator('[data-action=source-alert-prev]').click();assert.equal(await native.locator('[data-action=source-alert-toggle]').count(),3);await page.screenshot({path:'qa/expert/seven-alerts-pagination.png'});
- await load();await native.getByRole('tab',{name:/Manage/}).click();await native.locator('[data-action=settings]').click();await native.locator('[data-action=settings-page][data-page=Themes]').click();await native.locator('[data-action=source-theme-section][data-section=Panel]').click();await native.locator('[data-action=source-panel-palette][data-index="4"]').click();await native.locator('[data-action=settings-back]').click();assert.equal(await native.getByRole('tab',{name:/Manage/}).evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(79, 104, 128)','Silver changes selected controls, not just the panel background');
+ await load();await native.getByRole('tab',{name:/Manage/}).click();await native.locator('[data-action=settings]').click();await native.locator('[data-action=settings-page][data-page=Themes]').click();await native.locator('[data-action=source-theme-section][data-section=Panel]').click();await native.locator('[data-action=source-panel-palette][data-index="3"]').click();
+ await page.waitForFunction(()=>getComputedStyle(document.querySelector('.expert-help-window.active')).backgroundColor==='rgb(23, 22, 41)');
+ await native.locator('[data-action=source-panel-palette][data-index="4"]').click();
+ await page.waitForFunction(()=>getComputedStyle(document.querySelector('.expert-help-window.active')).backgroundColor==='rgb(233, 237, 242)');
+await native.locator('[data-action=settings-back]').click();assert.equal(await native.getByRole('tab',{name:/Manage/}).evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(79, 104, 128)','Silver changes selected controls, not just the panel background');
  await load();const slField=native.locator('[data-key=sl]'),slBefore=await slField.inputValue(),slHandle=page.locator('.scenario-level.SL rect');await slHandle.scrollIntoViewIfNeeded();const handle=await slHandle.boundingBox();await page.mouse.move(handle.x+handle.width/2,handle.y+handle.height/2);await page.mouse.down();await page.mouse.move(handle.x+handle.width/2,handle.y+handle.height/2+18,{steps:5});await page.mouse.up();for(let i=0;i<20&&(await slField.inputValue())===slBefore;i++)await page.waitForTimeout(50);assert.notEqual(await slField.inputValue(),slBefore,'Dragging SL updates the educational panel');assert.equal(await page.locator('.expert-static-chart g[clip-path]').innerHTML(),chartBefore,'Dragging levels preserves candle geometry');
  await load();for(let i=0;i<5;i++)await native.locator('[data-action=place]').click();await native.getByRole('tab',{name:/Portfolio/}).click();assert.equal(await native.locator('.native-position-row').count(),3);await native.locator('[data-action=portfolio-next]').click();assert.equal(await native.locator('.native-position-row').count(),3);await native.locator('[data-action=portfolio-next]').click();assert.equal(await native.locator('.native-position-row').count(),1);assert.ok(await native.locator('[data-action=stop-arm]').isVisible());await page.screenshot({path:'qa/expert/seven-positions-pagination.png'});
  await load();for(const mode of ['Simple','Pro']){await page.getByRole('button',{name:mode,exact:true}).click();assert.ok(await native.locator('.native-window-tools button').evaluateAll(nodes=>nodes.every(n=>{const a=n.getBoundingClientRect(),b=n.closest('#expert').getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1&&a.top>=b.top-1&&a.bottom<=b.bottom+1})));await native.locator('[data-action=source-native-minimize]').click();assert.ok(await native.locator('#expert').evaluate(n=>n.classList.contains('source-minimized')));await native.locator('[data-action=source-native-minimize]').click();assert.ok(await native.locator('#expert').evaluate(n=>!n.classList.contains('source-minimized')));}
