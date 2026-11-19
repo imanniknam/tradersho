@@ -59,6 +59,16 @@ try{
   }),`Decorative background fills the banner and leaves the link interactive: ${width} ${theme}`)
   await page.locator('.home-tools-entry').screenshot({path:`qa/tools/banner-${width}-${theme}.png`})
  }
+ const motion=page.locator('.market-pulse'),toggle=page.locator('.market-pulse-toggle')
+ assert.equal(await toggle.isVisible(),false,'Reduced motion shows the still artwork')
+ await page.emulateMedia({reducedMotion:'no-preference'})
+ const sequences=await motion.evaluate(n=>n.getAnimations({subtree:true}).map(a=>({name:a.animationName,loops:a.effect.getTiming().iterations===Infinity})))
+ assert.ok(sequences.some(a=>a.name==='tools-trace'&&a.loops)&&sequences.filter(a=>a.name==='tools-float'&&a.loops).length===4)
+ await toggle.click()
+ assert.ok(await motion.evaluate(n=>n.getAnimations({subtree:true}).every(a=>a.playState==='paused')))
+ await toggle.click()
+ assert.ok(await motion.evaluate(n=>n.getAnimations({subtree:true}).every(a=>a.playState==='running')))
+ await page.emulateMedia({reducedMotion:'reduce'})
  await page.context().route('https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',r=>r.fulfill({contentType:'application/javascript',body:`{const script=document.currentScript;const cfg=JSON.parse(script.textContent);window.__chartConfig=cfg;const frame=document.createElement('iframe');frame.title='نمودار تحلیل بازار TradingView';frame.style='width:100%;height:100%;border:0';frame.srcdoc='<html><body style="background:#f5f5fa;font:16px Arial">XAUUSD · 1h · QA widget</body></html>';script.parentElement.querySelector('.tradingview-widget-container__widget').append(frame)}`}))
  for(const theme of ['light','dark']){await page.evaluate(t=>localStorage.setItem('tradersho-theme',t),theme);await page.goto(base+'/panel/tools');await page.locator('.tv-host iframe').waitFor();assert.equal(await page.evaluate(()=>window.__chartConfig.backgroundColor),theme==='dark'?'#0f0f0f':'#ffffff');assert.equal(await page.evaluate(()=>window.__chartConfig.theme),theme)}
  for(const width of [320,390,768,1024,1440,1920,2560,3440,3840])for(const theme of ['light','dark']){

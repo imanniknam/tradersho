@@ -59,14 +59,34 @@
 .mp-needle{transform-origin:500px 259px;transform:rotate(18deg);fill:var(--tools-accent)}
 .mp-needle path+path{fill:#ac8758}
 .mp-factors{stroke:var(--tools-accent);stroke-width:3;stroke-linecap:round;opacity:.55}
+.market-pulse-toggle{display:none}
 @media(prefers-reduced-motion:no-preference){
-  .mp-price-trace{animation:tools-trace 3s ease-out both}
-  .mp-price-levels,.mp-risk-step{animation:tools-pulse 3.6s ease-in-out}
-  .mp-needle{animation:tools-needle 4.5s ease-out}
+  .mp-price-trace{animation:tools-trace 13s ease-in-out infinite}
+  .mp-price-levels,.mp-risk-step{animation:tools-pulse 9s ease-in-out infinite}
+  .mp-needle{animation:tools-needle 7s ease-in-out infinite alternate}
+  .mp-chart-card,.mp-expert-card,.mp-risk-card,.mp-compass-card{
+    animation:tools-float var(--float-time,12s) ease-in-out var(--float-delay,0s) infinite;
+  }
+  .mp-chart-card{--float-x:1px;--float-y:-2px}
+  .mp-expert-card{--float-x:2px;--float-y:-4px;--float-time:11s;--float-delay:-2s}
+  .mp-risk-card{--float-x:-2px;--float-y:-4px;--float-time:13s;--float-delay:-5s}
+  .mp-compass-card{--float-x:2px;--float-y:4px;--float-time:15s;--float-delay:-4s}
+  .market-pulse[data-paused=true] *{animation-play-state:paused}
+  .market-pulse-toggle{
+    position:absolute;inset:10px auto auto 10px;z-index:3;display:grid;place-items:center;
+    width:36px;height:36px;padding:0;border:1px solid var(--tools-stroke);border-radius:9px;
+    color:var(--tools-label);background:var(--tools-card);cursor:pointer;
+  }
+  .market-pulse-toggle:hover,.market-pulse-toggle:focus-visible{color:var(--tools-ink);border-color:var(--tools-accent)}
 }
-@keyframes tools-trace{from{stroke-dashoffset:1;opacity:0}to{stroke-dashoffset:0;opacity:.65}}
-@keyframes tools-pulse{0%,100%{filter:none}55%{filter:brightness(1.45);opacity:.8}}
-@keyframes tools-needle{0%{transform:rotate(-48deg)}65%{transform:rotate(29deg)}100%{transform:rotate(18deg)}}
+@keyframes tools-trace{
+  0%{stroke-dashoffset:1;opacity:0}
+  38%,80%{stroke-dashoffset:0;opacity:.65}
+  97%,100%{stroke-dashoffset:0;opacity:0}
+}
+@keyframes tools-pulse{0%,100%{filter:none}55%{filter:brightness(1.16)}}
+@keyframes tools-needle{from{transform:rotate(9deg)}to{transform:rotate(25deg)}}
+@keyframes tools-float{0%,100%{transform:translate(0,0)}50%{transform:translate(var(--float-x),var(--float-y))}}
 @media(max-width:900px){
   .dashboard-home .home-tools-entry{display:block;min-height:0;padding:clamp(150px,40vw,250px) 22px 24px}
   .home-tools-entry .home-tools-copy{width:100%;max-width:none}
