@@ -35,12 +35,18 @@ try{
    assert.ok(await page.locator('.expert-static-chart').evaluate(chart=>{
     const bounds=chart.getBoundingClientRect(),host=chart.closest('.expert-chart-workbench')
     const axis=chart.querySelector('.expert-price-axis').getBoundingClientRect()
-    const entry=chart.querySelector('.scenario-level.ENTRY rect').getBoundingClientRect()
+    const zone=chart.querySelector('.expert-trade-zones rect').getBoundingClientRect()
+    const labels=[...chart.querySelectorAll('.scenario-level rect')]
+    const labelsInZone=labels.length===3&&labels.every(label=>{
+     const box=label.getBoundingClientRect(),text=label.nextElementSibling.getBoundingClientRect()
+     return box.left>=zone.left&&box.right<=zone.right&&text.left>=box.left-1&&text.right<=box.right+1
+      &&Math.abs((box.left+box.right)-(zone.left+zone.right))<=2
+    })
     const monitor=host.querySelector('.expert-market-monitor').getBoundingClientRect()
-    const plot=[...chart.querySelectorAll('[data-candle-index],.expert-trade-zones rect,.expert-spread-badge rect')]
-    return Math.abs(bounds.right-host.getBoundingClientRect().right)<=1&&Math.abs(entry.right-bounds.right)<=1
-     &&monitor.right<axis.left&&plot.every(n=>n.getBoundingClientRect().right<monitor.left)
-   }),'Candles, trade zones and right-side price labels clear the monitor')
+    const plot=[...chart.querySelectorAll('[data-candle-index],.expert-trade-zones rect,.scenario-level rect')]
+    return Math.abs(bounds.right-host.getBoundingClientRect().right)<=1&&labelsInZone
+     &&!chart.textContent.includes('SPREAD')&&monitor.right<axis.left&&plot.every(n=>n.getBoundingClientRect().right<monitor.left)
+   }),'Trade labels are centered in the zones and the chart clears the spread monitor')
    assert.ok(await page.locator('.expert-static-chart').evaluate(n=>{const clip=n.querySelector('clipPath rect'),top=Number(clip.getAttribute('y')),bottom=top+Number(clip.getAttribute('height'));return [...n.querySelectorAll('g[clip-path] g line')].every(w=>Number(w.getAttribute('y1'))>=top&&Number(w.getAttribute('y2'))<=bottom)}),'Every candle wick fits the chart plot '+width+' '+theme)
    const minimize=page.getByRole('button',{name:'جمع‌کردن مانیتور آموزشی'});await minimize.click();assert.equal(await page.getByRole('button',{name:'بازکردن مانیتور آموزشی'}).getAttribute('aria-expanded'),'false');await page.getByRole('button',{name:'بازکردن مانیتور آموزشی'}).click()
   }

@@ -13,10 +13,10 @@ import './expert.css'
 import {CalendarUserContext} from '../calendar/preferences'
 type Guide=Topic&{tab:ExpertTab;example?:string;rect?:{x:number;y:number;width:number;height:number}|null}
 type GuideWindow={id:string;guide:Guide;pinned:boolean;minimized:boolean;x:number;y:number}
-type Scenario={entry:number;sl:number;tp:number;lines:boolean;direction:string;lot:number;risk:number}
-const isScenario=(v:unknown):v is Scenario=>{const s=v as Scenario;return !!s&&['entry','sl','tp','lot','risk'].every(k=>Number.isFinite(s[k as keyof Scenario])&&Math.abs(Number(s[k as keyof Scenario]))<1e9)&&typeof s.lines==='boolean'&&['Long','Short'].includes(s.direction)}
+type Scenario={entry:number;sl:number;tp:number;lines:boolean;direction:string;lot:number;risk:number;tpNet:number;slPoints:number;tpPoints:number;ratio:number;orderType:string}
+const isScenario=(v:unknown):v is Scenario=>{const s=v as Scenario;return !!s&&['entry','sl','tp','lot','risk','tpNet','slPoints','tpPoints','ratio'].every(k=>Number.isFinite(s[k as keyof Scenario])&&Math.abs(Number(s[k as keyof Scenario]))<1e9)&&typeof s.lines==='boolean'&&['Long','Short'].includes(s.direction)&&['Instant','Pending','Stop Limit'].includes(s.orderType)}
 const demoSpread=0.25
-const initialScenario:Scenario={entry:4012.57,sl:4002.21,tp:4038.51,lines:true,direction:'Long',lot:.06,risk:62.16}
+const initialScenario:Scenario={entry:4012.57,sl:4002.21,tp:4038.51,lines:true,direction:'Long',lot:.06,risk:62.16,tpNet:155.64,slPoints:10360,tpPoints:25940,ratio:2.5,orderType:'Instant'}
 const chartWidth=1400, priceAxis=1290, tradeEnd=1040
 const fa=(v:number)=>v.toLocaleString('fa-IR')
 const isTopic=(v:unknown):boolean=>{const t=v as Topic;return !!t&&typeof t.key==='string'&&t.key.length<160&&typeof t.title==='string'&&t.title.length<500&&typeof t.description==='string'&&t.description.length<6000&&Array.isArray(t.steps)&&t.steps.length<=15&&t.steps.every(s=>typeof s==='string'&&s.length<1500)&&typeof t.note==='string'&&t.note.length<5000}
@@ -96,7 +96,7 @@ function StaticChart({scenario,paint,onLevel}:{scenario:Scenario;paint:Record<st
  // with the educational panel; dragging a level never rescales the candles.
  const candles=bars.map(c=>({...c,open:c.open+offset,high:c.high+offset,low:c.low+offset,close:c.close+offset,volume:12+c.volume%54}))
  const priceMin=Math.floor((Math.min(...candles.map(c=>c.low),initialScenario.sl)-8)/10)*10,priceMax=Math.ceil((Math.max(...candles.map(c=>c.high),initialScenario.tp)+8)/10)*10
- const plotTop=90,plotBottom=640,plotStart=40,lastCandleX=930,candleStep=(lastCandleX-plotStart)/(candles.length-1)
+ const plotTop=90,plotBottom=640,plotStart=40,lastCandleX=820,candleStep=(lastCandleX-plotStart)/(candles.length-1)
  const y=(p:number)=>plotTop+(priceMax-p)/(priceMax-priceMin)*(plotBottom-plotTop)
  const priceLabels = ([
   {label:'ENTRY', price:scenario.entry},
@@ -109,25 +109,32 @@ function StaticChart({scenario,paint,onLevel}:{scenario:Scenario;paint:Record<st
  for(let i=priceLabels.length-1;i>=0;i--){
   priceLabels[i].y=Math.min(660,priceLabels[i].y,i===priceLabels.length-1?660:priceLabels[i+1].y-26)
  }
- const entryLabelY=priceLabels.find(level=>level.label==='ENTRY')!.y
+ const labelWidth=tradeEnd-lastCandleX-28,labelCenter=(tradeEnd+lastCandleX)/2
+ const side=scenario.direction==='Long'?'Buy':'Sell'
+ const order=scenario.orderType==='Instant'?side:scenario.orderType==='Pending'?`Pending ${side}`:`${side} Stop Limit`
+ const net=(value:number)=>`${value<0?'−':value>0?'+':''}$${Math.abs(value).toFixed(2)} Net`
+ const levelDetails={
+  ENTRY:`(${order} ${scenario.lot.toFixed(2)}) R:R ${scenario.ratio.toFixed(2)}`,
+  SL:`(${net(-scenario.risk)}) | ${Math.round(scenario.slPoints)} points`,
+  TP:`(${net(scenario.tpNet)}) | ${Math.round(scenario.tpPoints)} points`
+ }
 
  const moveLevel=(e:React.PointerEvent<SVGSVGElement>)=>{const key=levelDrag.current;if(!key)return;const box=e.currentTarget.getBoundingClientRect(),value=Math.round((priceMax-((e.clientY-box.top)/box.height*780-plotTop)/(plotBottom-plotTop)*(priceMax-priceMin))*100)/100,long=scenario.direction==='Long';if(key==='entry'){onLevel(key,Math.max(priceMin,Math.min(priceMax,long?Math.max(scenario.sl+.01,Math.min(scenario.tp-.01,value)):Math.max(scenario.tp+.01,Math.min(scenario.sl-.01,value)))));return}const below=key==='sl'?long:!long;onLevel(key,below?Math.max(priceMin,Math.min(scenario.entry-.01,value)):Math.min(priceMax,Math.max(scenario.entry+.01,value)))}
- return <svg onPointerMove={moveLevel} onPointerUp={()=>{levelDrag.current=null}} onPointerCancel={()=>{levelDrag.current=null}} className="expert-static-chart" style={{'--expert-chart-bg':paint.background,'--expert-up':paint.up,'--expert-down':paint.down,'--expert-volume':paint.volume,'--expert-sl':paint.sl,'--expert-tp':paint.tp} as React.CSSProperties} viewBox="0 0 1400 780" preserveAspectRatio="none" role="img" aria-label="چارت ثابت آموزشی طلا؛ دادهٔ فرضی، بدون قیمت زنده"><defs><clipPath id="expert-plot-clip"><rect x="30" y="72" width="1260" height="600"/></clipPath></defs><rect width="1400" height="780" fill="var(--expert-chart-bg)"/><line className="expert-price-axis" x1="1290" x2="1290" y1="70" y2="740"/>{Array.from({length:9},(_,i)=><g key={i}><line x1="20" x2="1290" y1={y(priceMax-i*(priceMax-priceMin)/8)} y2={y(priceMax-i*(priceMax-priceMin)/8)}/>{(!scenario.lines||priceLabels.every(level=>Math.abs(level.y-y(priceMax-i*(priceMax-priceMin)/8))>17))&&<text x="1393" textAnchor="end" y={y(priceMax-i*(priceMax-priceMin)/8)+4}>{(priceMax-i*(priceMax-priceMin)/8).toFixed(2)}</text>}</g>)}{Array.from({length:9},(_,i)=><line key={i} x1={plotStart+i*(tradeEnd-plotStart)/8} x2={plotStart+i*(tradeEnd-plotStart)/8} y1="70" y2="740"/>)}<g clipPath="url(#expert-plot-clip)">{candles.map((c,i)=><g key={i} data-candle-index={i} className={c.close>=c.open?'candle-up':'candle-down'}><line x1={plotStart+i*candleStep} x2={plotStart+i*candleStep} y1={y(c.high)} y2={y(c.low)}/><rect x={plotStart-4+i*candleStep} y={Math.min(y(c.open),y(c.close))} width="8" height={Math.max(2,Math.abs(y(c.open)-y(c.close)))}/></g>)}</g>{candles.map((c,i)=><rect className={c.close>=c.open?'volume-up':'volume-down'} key={i} x={plotStart-4+i*candleStep} y={740-c.volume} width="8" height={c.volume}/>)}{scenario.lines&&<g className="expert-trade-zones"><rect x={lastCandleX} width={tradeEnd-lastCandleX} y={Math.min(y(scenario.entry),y(scenario.sl))} height={Math.abs(y(scenario.entry)-y(scenario.sl))} fill={paint.sl||'#c36d77'} opacity=".3"/><rect x={lastCandleX} width={tradeEnd-lastCandleX} y={Math.min(y(scenario.entry),y(scenario.tp))} height={Math.abs(y(scenario.entry)-y(scenario.tp))} fill={paint.tp||'#329b91'} opacity=".3"/></g>}{
+ return <svg onPointerMove={moveLevel} onPointerUp={()=>{levelDrag.current=null}} onPointerCancel={()=>{levelDrag.current=null}} className="expert-static-chart" style={{'--expert-chart-bg':paint.background,'--expert-up':paint.up,'--expert-down':paint.down,'--expert-volume':paint.volume,'--expert-sl':paint.sl,'--expert-tp':paint.tp} as React.CSSProperties} viewBox="0 0 1400 780" preserveAspectRatio="none" role="img" aria-label="چارت ثابت آموزشی طلا؛ دادهٔ فرضی، بدون قیمت زنده"><defs><clipPath id="expert-plot-clip"><rect x="30" y="72" width="1260" height="600"/></clipPath></defs><rect width="1400" height="780" fill="var(--expert-chart-bg)"/><line className="expert-price-axis" x1="1290" x2="1290" y1="70" y2="740"/>{Array.from({length:9},(_,i)=><g key={i}><line x1="20" x2="1290" y1={y(priceMax-i*(priceMax-priceMin)/8)} y2={y(priceMax-i*(priceMax-priceMin)/8)}/><text x="1393" textAnchor="end" y={y(priceMax-i*(priceMax-priceMin)/8)+4}>{(priceMax-i*(priceMax-priceMin)/8).toFixed(2)}</text></g>)}{Array.from({length:9},(_,i)=><line key={i} x1={plotStart+i*(tradeEnd-plotStart)/8} x2={plotStart+i*(tradeEnd-plotStart)/8} y1="70" y2="740"/>)}<g clipPath="url(#expert-plot-clip)">{candles.map((c,i)=><g key={i} data-candle-index={i} className={c.close>=c.open?'candle-up':'candle-down'}><line x1={plotStart+i*candleStep} x2={plotStart+i*candleStep} y1={y(c.high)} y2={y(c.low)}/><rect x={plotStart-4+i*candleStep} y={Math.min(y(c.open),y(c.close))} width="8" height={Math.max(2,Math.abs(y(c.open)-y(c.close)))}/></g>)}</g>{candles.map((c,i)=><rect className={c.close>=c.open?'volume-up':'volume-down'} key={i} x={plotStart-4+i*candleStep} y={740-c.volume} width="8" height={c.volume}/>)}{scenario.lines&&<g className="expert-trade-zones"><rect x={lastCandleX} width={tradeEnd-lastCandleX} y={Math.min(y(scenario.entry),y(scenario.sl))} height={Math.abs(y(scenario.entry)-y(scenario.sl))} fill={paint.sl||'#a66b32'} opacity=".38"/><rect x={lastCandleX} width={tradeEnd-lastCandleX} y={Math.min(y(scenario.entry),y(scenario.tp))} height={Math.abs(y(scenario.entry)-y(scenario.tp))} fill={paint.tp||'#5142bd'} opacity=".42"/></g>}{
   scenario.lines && priceLabels.map(({label,price,y:labelY})=>{
-   const priceY=y(price)
+   const priceY=y(price),title=`${label==='ENTRY'?'Entry':label} ${price.toFixed(2)}`
+   const fitText=title.length+levelDetails[label].length>37
    return <g key={label} className={'scenario-level '+label} style={{cursor:'ns-resize',touchAction:'none'}} onPointerDown={e=>{
     levelDrag.current=label==='ENTRY'?'entry':label==='SL'?'sl':'tp'
     e.currentTarget.setPointerCapture(e.pointerId)
    }}>
     <line className="scenario-level-hit" style={{stroke:'transparent',strokeWidth:14,strokeDasharray:'none'}} x1="30" x2={tradeEnd} y1={priceY} y2={priceY}/>
     <line x1="30" x2={tradeEnd} y1={priceY} y2={priceY}/>
-    {priceY!==labelY&&<line x1="1284" x2="1296" y1={priceY} y2={labelY}/>}
-    <rect x="1296" y={labelY-11} width="104" height="22" rx="3"/>
-    <text x="1393" y={labelY+4} textAnchor="end">{label} {price.toFixed(2)}</text>
+    <line className="scenario-boundary" x1={lastCandleX} x2={tradeEnd} y1={priceY} y2={priceY}/>
+    {priceY!==labelY&&<line className="scenario-boundary" x1={labelCenter} x2={labelCenter} y1={priceY} y2={labelY}/>}
+    <rect x={labelCenter-labelWidth/2} y={labelY-10} width={labelWidth} height="20" rx="2"/>
+    <text x={labelCenter} y={labelY+3.5} textAnchor="middle" textLength={fitText?labelWidth-12:undefined} lengthAdjust="spacingAndGlyphs"><tspan data-level-price="">{title}</tspan>{' '+levelDetails[label]}</text>
    </g>
   })
- }{scenario.lines&&<g className="expert-spread-badge">
-  <rect x={tradeEnd-74} y={entryLabelY-11} width="74" height="22" rx="3"/>
-  <text x={tradeEnd-37} y={entryLabelY+4} textAnchor="middle">SPREAD {demoSpread.toFixed(2)}</text>
- </g>}{[0,1,2,3].map(i=><text key={i} x={plotStart+i*(lastCandleX-plotStart)/3} y="765">{['06:00','09:00','12:00','15:00'][i]}</text>)}</svg>
+ }{[0,1,2,3].map(i=><text key={i} x={plotStart+i*(lastCandleX-plotStart)/3} y="765">{['06:00','09:00','12:00','15:00'][i]}</text>)}</svg>
 }
