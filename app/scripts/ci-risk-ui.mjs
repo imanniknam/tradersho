@@ -17,6 +17,14 @@ try{
  for(const width of [320,390,768,1024,1280,1440,1920,2560,3840])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:900});await page.goto(base+'/panel/tools/risk');await page.locator('.risk-stats').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
   assert.equal(await page.locator('.analysis-rail [aria-current=page]').innerText(),'پنل مدیریت ریسک');assert.equal(await page.locator('.risk-table-scroll tbody tr').count(),6)
+  const heading=await page.locator('.analysis-risk .analysis-heading').evaluate(node=>{
+   const bounds=node.getBoundingClientRect(),workspace=document.querySelector('.risk-workspace').getBoundingClientRect()
+   const title=node.querySelector('h1').getBoundingClientRect(),subtitle=node.querySelector('p').getBoundingClientRect()
+   return {leftGap:bounds.left-workspace.left,rightGap:bounds.right-workspace.right,
+    textAlignment:title.right-subtitle.right,textSpacing:subtitle.top-title.bottom}
+  })
+  assert.ok(Math.abs(heading.leftGap)<1&&Math.abs(heading.rightGap)<1&&Math.abs(heading.textAlignment)<1&&heading.textSpacing>=0,
+   'Risk heading shares the planner edges and stacks its RTL text '+JSON.stringify({width,theme,heading}))
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No page overflow '+width+' '+theme)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1),'No outer vertical overflow / blank page tail '+width+' '+theme)
   assert.ok(await page.locator('.risk-input').evaluateAll(nodes=>nodes.every(n=>{const a=n.getBoundingClientRect(),b=n.parentElement.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1})))

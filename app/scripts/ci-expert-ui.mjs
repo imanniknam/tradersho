@@ -77,11 +77,33 @@ try{
  await page.getByRole('button',{name:'فهرست راهنماها',exact:true}).click();await page.getByRole('textbox',{name:'جستجوی راهنمای اکسپرت'}).waitFor();assert.ok(await page.locator('.expert-topic-grid button').count()>=169);await page.getByRole('textbox',{name:'جستجوی راهنمای اکسپرت'}).fill('نصب صحیح');await page.locator('.expert-topic-grid button').first().click();assert.ok((await page.locator('.expert-window-content').last().innerText()).includes('MQL5'))
  // Test window minimization and independent closing without altering the native panel.
  const windowCount=await page.locator('.expert-help-window').count();await page.getByRole('button',{name:'جمع‌کردن پنجره راهنما',exact:true}).last().click();assert.ok(await page.locator('.expert-help-window.minimized').count()>0);await page.locator('.expert-help-window').last().getByRole('button',{name:/بستن راهنمای/}).click();assert.equal(await page.locator('.expert-help-window').count(),windowCount-1)
- await load();await native.getByRole('tab',{name:/Manage/}).click();await native.locator('[data-action=chart-light]').click();await page.waitForFunction(()=>document.querySelector('.expert-static-chart').style.getPropertyValue('--expert-chart-bg')==='#f5f5f5');await native.locator('[data-action=chart-dark]').click();await page.waitForFunction(()=>document.querySelector('.expert-static-chart').style.getPropertyValue('--expert-chart-bg')==='#071b2e');
- await page.getByRole('button',{name:'فعال کردن حالت تیره'}).click()
- await page.waitForFunction(()=>getComputedStyle(document.querySelector('.expert-static-chart>rect')).fill==='rgb(15, 15, 15)')
+ const chartFill=expected=>page.waitForFunction(color=>getComputedStyle(document.querySelector('.expert-static-chart>rect')).fill===color,expected)
+ await load(1440,'dark')
+ await native.getByRole('tab',{name:/Manage/}).click()
+ await native.locator('[data-action=chart-light]').click()
+ await chartFill('rgb(245, 245, 245)')
+ await native.locator('[data-action=chart-dark]').click()
+ await chartFill('rgb(15, 15, 15)')
+ await native.locator('[data-action=chart-light]').click()
+ await chartFill('rgb(245, 245, 245)')
+ await native.locator('[data-action=restore]').click()
+ await chartFill('rgb(15, 15, 15)')
  await page.getByRole('button',{name:'فعال کردن حالت روشن'}).click()
- await page.waitForFunction(()=>getComputedStyle(document.querySelector('.expert-static-chart>rect')).fill==='rgb(7, 27, 46)')
+ await chartFill('rgb(255, 255, 255)')
+ await page.getByRole('button',{name:'فعال کردن حالت تیره'}).click()
+ await chartFill('rgb(15, 15, 15)')
+
+ // Normalize a previously saved built-in Dark color without removing a custom theme.
+ await page.evaluate(id=>{
+  const key='tradersho.expert.v1.'+id,saved=JSON.parse(localStorage.getItem(key))
+  saved.ui.chartPaint={dark:{background:'#071b2e'},light:{background:'#f8ede3'}}
+  localStorage.setItem(key,JSON.stringify(saved))
+ },user)
+ await page.reload()
+ await page.locator('.expert-academy[data-ready=true]').waitFor()
+ await chartFill('rgb(15, 15, 15)')
+ await page.getByRole('button',{name:'فعال کردن حالت روشن'}).click()
+ await chartFill('rgb(248, 237, 227)')
 
  await native.getByRole('tab',{name:/Setup/}).click();for(let i=0;i<4;i++)await native.locator('[data-action=add-tp]').click();await native.locator('[data-action=order-type]').click();await native.locator('[data-action=order-type]').click();await native.locator('[data-action=atr]').click();assert.equal(await native.locator('[data-action=remove-tp]').count(),4);assert.ok(Number(await page.locator('iframe').getAttribute('height'))>=await native.locator('#expert').evaluate(n=>n.offsetHeight));await native.locator('.main-action').scrollIntoViewIfNeeded();await page.screenshot({path:'qa/expert/five-targets-stop-limit.png'});
  await load();await native.getByRole('tab',{name:/Manage/}).click();await native.locator('[data-action=alert]').click();for(let i=0;i<7;i++)await native.locator('[data-action=source-alert-add]').click();assert.ok((await native.locator('.source-alert-footer').innerText()).includes('7 alerts'));await native.locator('[data-action=source-alert-prev]').click();assert.equal(await native.locator('[data-action=source-alert-toggle]').count(),3);await page.screenshot({path:'qa/expert/seven-alerts-pagination.png'});

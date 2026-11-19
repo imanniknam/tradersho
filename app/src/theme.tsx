@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Moon, Sun } from 'lucide-react'
-type Theme = 'light' | 'dark'
+export const chartBackground = {light:'#ffffff',dark:'#0f0f0f'} as const
+type Theme = keyof typeof chartBackground
 const ThemeContext = createContext<{theme: Theme; toggle: () => void}>({theme:'light',toggle:()=>{}})
 export function ThemeProvider({children}:{children:ReactNode}) {
   const [theme,setTheme] = useState<Theme>(() => { try { return localStorage.getItem('tradersho-theme') === 'dark' ? 'dark' : 'light' } catch { return 'light' } })
