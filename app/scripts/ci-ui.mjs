@@ -104,14 +104,12 @@ try{
   await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))),[])
   await page.screenshot({path:`qa/tools/workspace-${width}-${theme}.png`,fullPage:true})
   await page.getByRole('button',{name:'نمای تمام‌صفحه',exact:true}).click();await page.getByRole('dialog',{name:'محیط تحلیل بازار'}).waitFor();await page.keyboard.press('Escape');assert.equal(await page.locator('.tv-expanded').count(),0)
-  const railBefore=await page.locator('.analysis-rail').boundingBox()
-  assert.ok(await page.locator('.analysis-rail').evaluate(nav=>[...nav.querySelectorAll('a')].every(link=>{
+  assert.ok(await page.locator('.analysis-rail a').evaluateAll(links=>links.every(link=>{
    const icon=link.querySelector('.analysis-tool-icon').getBoundingClientRect()
-   const text=link.querySelector('.analysis-tool-copy')
-   const label=text.getBoundingClientRect(),row=link.getBoundingClientRect()
-   return label.right<=icon.left&&label.left>=row.left&&row.height>=44&&parseFloat(getComputedStyle(text).fontSize)>=14
-  })),`Readable inline tool labels at ${width} ${theme}`)
-  if(width>900)assert.ok(width-railBefore.x-railBefore.width<=24,`Tool rail stays against the right edge at ${width} ${theme}`)
+   const label=link.querySelector('.analysis-tool-icon + span').getBoundingClientRect()
+   return icon.bottom<=label.top+1&&Math.abs(icon.left+icon.width/2-label.left-label.width/2)<=2
+  })),`Tool labels sit below their icons at ${width} ${theme}`)
+  const railBefore=await page.locator('.analysis-rail').boundingBox()
   const mountedChart=await page.locator('.tv-host iframe').elementHandle()
   await page.getByRole('navigation',{name:'ابزارهای تحلیل'}).getByRole('link',{name:'پنل مدیریت ریسک'}).click();await page.locator('.risk-stats').waitFor();assert.equal(await page.locator('.tv-host').isVisible(),false)
   if(width>=1201){const railAfter=await page.locator('.analysis-rail').boundingBox();assert.ok(Math.abs(railBefore.height-railAfter.height)<2&&Math.abs(railBefore.width-railAfter.width)<2&&Math.abs(railBefore.x-railAfter.x)<2&&Math.abs(railBefore.y-railAfter.y)<2,'Tool rail must keep its size and position across tabs '+JSON.stringify({width,theme,railBefore,railAfter}))}
