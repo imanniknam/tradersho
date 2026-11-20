@@ -61,7 +61,11 @@ try{
    const n=page.getByLabel(label,{exact:true});await n.scrollIntoViewIfNeeded();await n.focus();await settle();const top=(await n.boundingBox()).y,scroll=await page.locator('.main-scroll').evaluate(e=>e.scrollTop)
    for(const v of values){await n.fill(v);await settle();assert.ok(Math.abs((await n.boundingBox()).y-top)<1.1,'Editing preserves focused field position '+label+' '+v+' '+width);assert.ok(Math.abs(await page.locator('.main-scroll').evaluate(e=>e.scrollTop)-scroll)<1.1,'No scroller clamp on invalid/recovered values');if(!v||v==='122'||v==='1222')assert.equal(await page.locator('.risk-stat,.risk-table-scroll').count(),4);assert.equal(await n.evaluate(e=>e===document.activeElement),true);await checkRoot()}
   }
-  await page.getByRole('button',{name:'مشاهدهٔ برنامه',exact:true}).click();assert.ok(await page.locator('.risk-results').evaluate(n=>n.getBoundingClientRect().top<innerHeight));await page.screenshot({path:`qa/feedback/risk-edit-stable-${width}.png`});console.log('PASS stable risk edits',width,height)
+  const budget=page.locator('.risk-budget')
+  assert.match(await budget.innerText(),/\$6\.00/,'The recovered inputs update the cycle budget automatically')
+  await budget.scrollIntoViewIfNeeded()
+  assert.ok(await budget.evaluate(n=>{const box=n.getBoundingClientRect();return box.top<innerHeight&&box.bottom>0}))
+  await page.screenshot({path:`qa/feedback/risk-edit-stable-${width}.png`});console.log('PASS stable risk edits',width,height)
  }
  assert.deepEqual(errors,[]);console.log('PASS feedback e2e: real clicks, five TP/ATR/Stop Limit, 12 viewport/theme cases, native sizing/minimize/close, ATR period/timeframe/multiplier, preset None/capture/edit, shortcuts, full reset, and invalid-input scroll stability')
 }catch(e){console.error('Browser errors:',errors);await page.screenshot({path:'qa/feedback/failure.png'});throw e}finally{await pool.query('DELETE FROM users WHERE id=$1',[user]);await pool.end();await browser.close()}
