@@ -29,7 +29,16 @@ try{
   await page.setViewportSize({width,height});await context.addInitScript(t=>{if(window===top)localStorage.setItem('tradersho-theme',t)},theme)
   await page.goto(base+'/panel');const art=page.locator('.market-pulse-art');await art.waitFor();await settle();await assertCentered('.dashboard-home','.main-scroll',1440);assert.ok(await art.evaluate(n=>{const r=n.getBoundingClientRect(),card=n.closest('.home-tools-entry').getBoundingClientRect();return r.left>=card.left&&r.top>=card.top&&r.right<=card.right&&r.bottom<=card.bottom}),'Animated artwork fits inside the banner');await page.screenshot({path:`qa/monitors/dashboard-${width}x${height}-${theme}.png`});results.push({tool:'dashboard',width,height,theme});
   for(const tool of ['market','calendar','risk','expert']){
-   await page.goto(base+'/panel/tools'+(tool==='market'?'':'/'+tool));await page.locator('.analysis-heading h1').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await assertCentered('.main-inner','.main-scroll',2200)
+   await page.goto(base+'/panel/tools'+(tool==='market'?'':'/'+tool));await page.locator('.analysis-heading h1').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
+   const layout=await page.locator('.analysis-center').evaluate(node=>{
+    const grid=node.getBoundingClientRect()
+    const rail=node.querySelector('.analysis-rail').getBoundingClientRect()
+    const body=node.querySelector('.analysis-body').getBoundingClientRect()
+    const gap=parseFloat(getComputedStyle(node).columnGap)
+    return {width:body.width,leftGap:body.left-grid.left,rightGap:rail.left-gap-body.right,railGap:innerWidth-rail.right}
+   })
+   assert.ok(layout.width<=2033&&Math.abs(layout.leftGap-layout.rightGap)<=2&&layout.railGap<=24,
+    `Tool content centered beside the right-aligned rail: ${JSON.stringify(layout)}`)
    if(tool==='market'){
     await page.locator('.calendar-preview-event').first().waitFor();await page.locator('.tv-host iframe').waitFor();await settle()
     const fit=await page.evaluate(()=>{const scroll=document.querySelector('.main-scroll'),chart=document.querySelector('.tv-chart').getBoundingClientRect(),cards=[...document.querySelectorAll('.analysis-context>section')].map(n=>n.getBoundingClientRect());return {scroll:scroll.scrollHeight,client:scroll.clientHeight,bottom:chart.bottom,context:cards.at(-1).bottom,rows:document.querySelectorAll('.calendar-preview-event').length}})
