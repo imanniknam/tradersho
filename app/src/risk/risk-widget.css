@@ -3,7 +3,6 @@
 .risk-widget-content{display:grid;gap:16px;padding:18px 28px 28px;min-width:0}
 .risk-widget-content>header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-18px -28px 0;padding:18px 28px;border-bottom:1px solid var(--line)}
 .risk-widget-title{display:flex;align-items:center;gap:12px;min-width:0}
-.risk-widget-title>svg{box-sizing:content-box;padding:6px;background:var(--tint);color:var(--accent);border-radius:10px;flex:none}
 .risk-widget-title h2{font-size:20px;color:var(--ink);margin:0;white-space:nowrap}
 .risk-widget header a{display:flex;align-items:center;gap:7px;color:var(--ink);font-size:12px;font-weight:700;min-height:34px;white-space:nowrap}
 .risk-widget header a:hover,.risk-widget-empty a{color:var(--accent)}

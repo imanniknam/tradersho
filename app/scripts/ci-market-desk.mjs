@@ -56,6 +56,19 @@ try{
  await mkdir('qa/market-desk',{recursive:true})
  for(const [width,height] of [[1280,720],[1440,900],[1920,1080],[5120,1440],[5120,2880],[1024,768],[390,844]])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height});await page.goto(base+'/panel/tools');await page.locator('.tv-host iframe').waitFor();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await settle()
+  const tools=await page.locator('.analysis-rail a').evaluateAll(links=>links.map(link=>({
+   path:link.getAttribute('href'),soon:!!link.querySelector('small')
+  })))
+  assert.deepEqual(tools.map(tool=>tool.path),['/panel/tools',...['risk','expert','calendar','journal','compass','scenario','widgets'].map(id=>'/panel/tools/'+id)])
+  assert.deepEqual(tools.map(tool=>tool.soon),[false,false,false,false,true,true,true,true])
+  const icons=await page.locator('.calendar-preview-card > header > svg, .risk-widget-title > svg').evaluateAll(nodes=>nodes.map(node=>{
+   const style=getComputedStyle(node)
+   const {width,height}=node.getBoundingClientRect()
+   return {width,height,color:style.color,background:style.backgroundColor,padding:style.padding}
+  }))
+  assert.equal(icons.length,2)
+  assert.deepEqual(icons[0],icons[1],`Matched calendar and risk icons at ${width} ${theme}`)
+  assert.equal(icons[0].background,'rgba(0, 0, 0, 0)')
   const fit=await page.evaluate(()=>{const s=document.querySelector('.main-scroll'),c=document.querySelector('.tv-chart').getBoundingClientRect(),g=document.querySelector('.flicker-card').getBoundingClientRect();return {outer:document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1,scroll:s.scrollHeight,client:s.clientHeight,bottom:c.bottom,gold:g.bottom}})
   assert.ok(fit.outer,JSON.stringify({width,height,theme,fit}));if(width>1200){assert.ok(await page.locator('.risk-widget-content').evaluate(n=>{const r=n.getBoundingClientRect(),card=n.closest('.risk-widget').getBoundingClientRect();return r.bottom<=card.bottom+1}),'Risk widget fits its card');}
   const widget=page.locator('.risk-widget'),a=await widget.boundingBox();await page.waitForTimeout(150);const b=await widget.boundingBox();assert.ok(Math.abs(a.width-b.width)<1&&Math.abs(a.height-b.height)<1)
