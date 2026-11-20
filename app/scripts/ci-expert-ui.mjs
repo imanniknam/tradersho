@@ -77,7 +77,10 @@ try{
  await page.getByRole('button',{name:'فهرست راهنماها',exact:true}).click();await page.getByRole('textbox',{name:'جستجوی راهنمای اکسپرت'}).waitFor();assert.ok(await page.locator('.expert-topic-grid button').count()>=169);await page.getByRole('textbox',{name:'جستجوی راهنمای اکسپرت'}).fill('نصب صحیح');await page.locator('.expert-topic-grid button').first().click();assert.ok((await page.locator('.expert-window-content').last().innerText()).includes('MQL5'))
  // Test window minimization and independent closing without altering the native panel.
  const windowCount=await page.locator('.expert-help-window').count();await page.getByRole('button',{name:'جمع‌کردن پنجره راهنما',exact:true}).last().click();assert.ok(await page.locator('.expert-help-window.minimized').count()>0);await page.locator('.expert-help-window').last().getByRole('button',{name:/بستن راهنمای/}).click();assert.equal(await page.locator('.expert-help-window').count(),windowCount-1)
- const chartFill=expected=>page.waitForFunction(color=>getComputedStyle(document.querySelector('.expert-static-chart>rect')).fill===color,expected)
+ const chartFill=expected=>page.waitForFunction(color=>{
+  const chart=document.querySelector('.expert-static-chart>rect')
+  return chart&&getComputedStyle(chart).fill===color
+ },expected)
  await load(1440,'dark')
  await native.getByRole('tab',{name:/Manage/}).click()
  await native.locator('[data-action=chart-light]').click()
@@ -107,10 +110,17 @@ try{
 
  await native.getByRole('tab',{name:/Setup/}).click();for(let i=0;i<4;i++)await native.locator('[data-action=add-tp]').click();await native.locator('[data-action=order-type]').click();await native.locator('[data-action=order-type]').click();await native.locator('[data-action=atr]').click();assert.equal(await native.locator('[data-action=remove-tp]').count(),4);assert.ok(Number(await page.locator('iframe').getAttribute('height'))>=await native.locator('#expert').evaluate(n=>n.offsetHeight));await native.locator('.main-action').scrollIntoViewIfNeeded();await page.screenshot({path:'qa/expert/five-targets-stop-limit.png'});
  await load();await native.getByRole('tab',{name:/Manage/}).click();await native.locator('[data-action=alert]').click();for(let i=0;i<7;i++)await native.locator('[data-action=source-alert-add]').click();assert.ok((await native.locator('.source-alert-footer').innerText()).includes('7 alerts'));await native.locator('[data-action=source-alert-prev]').click();assert.equal(await native.locator('[data-action=source-alert-toggle]').count(),3);await page.screenshot({path:'qa/expert/seven-alerts-pagination.png'});
- await load();await native.getByRole('tab',{name:/Manage/}).click();await native.locator('[data-action=settings]').click();await native.locator('[data-action=settings-page][data-page=Themes]').click();await native.locator('[data-action=source-theme-section][data-section=Panel]').click();await native.locator('[data-action=source-panel-palette][data-index="3"]').click();
- await page.waitForFunction(()=>getComputedStyle(document.querySelector('.expert-help-window.active')).backgroundColor==='rgb(23, 22, 41)');
+ await load(1600)
+ await native.locator('[data-key=risk]').click()
+ await page.locator('.expert-help-window.active').waitFor()
+ await native.getByRole('tab',{name:/Manage/}).click();await native.locator('[data-action=settings]').click();await native.locator('[data-action=settings-page][data-page=Themes]').click();await native.locator('[data-action=source-theme-section][data-section=Panel]').click();await native.locator('[data-action=source-panel-palette][data-index="3"]').click();
+ const guideBackground=expected=>page.waitForFunction(color=>{
+  const guide=document.querySelector('.expert-help-window.active')
+  return guide&&getComputedStyle(guide).backgroundColor===color
+ },expected)
+ await guideBackground('rgb(23, 22, 41)');
  await native.locator('[data-action=source-panel-palette][data-index="4"]').click();
- await page.waitForFunction(()=>getComputedStyle(document.querySelector('.expert-help-window.active')).backgroundColor==='rgb(233, 237, 242)');
+ await guideBackground('rgb(233, 237, 242)');
 await native.locator('[data-action=settings-back]').click();assert.equal(await native.getByRole('tab',{name:/Manage/}).evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(79, 104, 128)','Silver changes selected controls, not just the panel background');
  await load();const slField=native.locator('[data-key=sl]'),slBefore=await slField.inputValue(),slHandle=page.locator('.scenario-level.SL rect');await slHandle.scrollIntoViewIfNeeded();const handle=await slHandle.boundingBox();await page.mouse.move(handle.x+handle.width/2,handle.y+handle.height/2);await page.mouse.down();await page.mouse.move(handle.x+handle.width/2,handle.y+handle.height/2+18,{steps:5});await page.mouse.up();for(let i=0;i<20&&(await slField.inputValue())===slBefore;i++)await page.waitForTimeout(50);assert.notEqual(await slField.inputValue(),slBefore,'Dragging SL updates the educational panel');assert.equal(await page.locator('.expert-static-chart g[clip-path]').innerHTML(),chartBefore,'Dragging levels preserves candle geometry');
  await load();for(let i=0;i<5;i++)await native.locator('[data-action=place]').click();await native.getByRole('tab',{name:/Portfolio/}).click();assert.equal(await native.locator('.native-position-row').count(),3);await native.locator('[data-action=portfolio-next]').click();assert.equal(await native.locator('.native-position-row').count(),3);await native.locator('[data-action=portfolio-next]').click();assert.equal(await native.locator('.native-position-row').count(),1);assert.ok(await native.locator('[data-action=stop-arm]').isVisible());await page.screenshot({path:'qa/expert/seven-positions-pagination.png'});
