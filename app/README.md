@@ -162,3 +162,5 @@ Monitor queue counts by status/purpose and generic `Mail delivery` / `Mail worke
 
 - برای Google Cloud یک OAuth Client از نوع Web application بسازید و `https://my.tradersho.com/api/auth/social/google/callback` را در Authorized redirect URIs وارد کنید. مقادیر `GOOGLE_OIDC_CLIENT_ID` و `GOOGLE_OIDC_CLIENT_SECRET` را در محیط خصوصی VPS بگذارید. [مستندات Google](https://developers.google.com/identity/openid-connect/openid-connect)
 - در `@BotFather` بخش Web Login را برای بات تریدر شو باز کنید، دامنهٔ پنل و `https://my.tradersho.com/api/auth/social/telegram/callback` را ثبت کنید و `TELEGRAM_OIDC_CLIENT_ID` و `TELEGRAM_OIDC_CLIENT_SECRET` را در محیط خصوصی VPS بگذارید. امضای RS256 را حفظ کنید. [مستندات Telegram](https://core.telegram.org/bots/telegram-login)
+
+برای منوی کلاسیک BotFather که فقط Domain دارد، دامنهٔ پنل را ثبت و TELEGRAM_BOT_USERNAME و TELEGRAM_BOT_TOKEN را در محیط خصوصی سرور تنظیم کنید. در نبود تنظیمات OIDC، دکمهٔ تلگرام ویجت رسمی را باز می‌کند. امضای داده و سن درخواست در سرور اعتبارسنجی می‌شود و درخواست با کوکی HttpOnly و state یک‌بارمصرف به مرورگر متصل است. ثبت‌نام جدید پس از تأیید ایمیل کامل می‌شود.

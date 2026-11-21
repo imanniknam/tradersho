@@ -1,3 +1,4 @@
+import {verifyTelegramWidget,telegramWidgetPage} from './telegram-widget.mjs'
 import {createHash,randomBytes} from 'node:crypto'
 import {createRemoteJWKSet,jwtVerify} from 'jose'
 import {pool} from './db.mjs'
@@ -30,10 +31,11 @@ function config(name){
   if(!provider||!Object.hasOwn(providers,name))return null
   const prefix=name.toUpperCase()+'_OIDC_'
   const clientId=process.env[prefix+'CLIENT_ID'], secret=process.env[prefix+'CLIENT_SECRET']
-  if(!clientId||!secret||!process.env.APP_PUBLIC_URL)return null
+  const widget=name==='telegram'&&!clientId&&/^\d+:[\w-]{30,}$/.test(process.env.TELEGRAM_BOT_TOKEN||'')&&/^[A-Za-z0-9_]{5,32}$/.test(process.env.TELEGRAM_BOT_USERNAME||'')
+  if((!widget&&(!clientId||!secret))||!process.env.APP_PUBLIC_URL)return null
   const origin=new URL(process.env.APP_PUBLIC_URL)
   if(origin.protocol!=='https:'&&!(origin.protocol==='http:'&&['localhost','127.0.0.1'].includes(origin.hostname)))throw Error('Invalid OIDC origin')
-  return {...provider,clientId,secret,callback:new URL('/api/auth/social/'+name+'/callback',origin).href}
+  return {...provider,widget,clientId,secret,callback:new URL('/api/auth/social/'+name+'/callback',origin).href}
 }
 
 export async function migrateSocialAuth(client){
@@ -110,6 +112,15 @@ export async function socialRoute({path,method,req,res,body,json,fail,rateLimit,
     await pool.query(`INSERT INTO social_auth_flows(ticket,provider,state_hash,verifier,nonce,link_user,session_hash)
       VALUES ($1,$2,$3,$4,$5,$6,$7)`,[tokenHash(ticket),provider,tokenHash(state),verifier,nonce,
       user?user.id:null,user?tokenHash(cookies(req).tradersho_session):null])
+    if(oidc.widget){
+      const callback=new URL(oidc.callback)
+      callback.searchParams.set('state',state)
+      res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store',
+        'X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer',
+        'Set-Cookie':cookie('tradersho_social_flow',ticket,600)})
+      res.end(telegramWidgetPage(process.env.TELEGRAM_BOT_USERNAME,callback.href))
+      return true
+    }
     const target=new URL(oidc.auth)
     target.search=new URLSearchParams({client_id:oidc.clientId,redirect_uri:oidc.callback,response_type:'code',
       scope:oidc.scope,state,nonce,code_challenge:createHash('sha256').update(verifier).digest('base64url'),
@@ -125,9 +136,9 @@ export async function socialRoute({path,method,req,res,body,json,fail,rateLimit,
     AND expires_at>now() RETURNING *`,[tokenHash(ticket),provider,tokenHash(state)])).rows[0]
   if(!flow){redirect(errorRedirect,headers);return true}
   const failed=flow.link_user?'/panel/account?social=failed':errorRedirect
-  if(!code||code.length>4096){redirect(failed,headers);return true}
+  if(!oidc.widget&&(!code||code.length>4096)){redirect(failed,headers);return true}
   try{
-    const identity=await exchange(provider,oidc,flow,code)
+    const identity=oidc.widget?verifyTelegramWidget(url.searchParams,process.env.TELEGRAM_BOT_TOKEN):await exchange(provider,oidc,flow,code)
     if(flow.link_user){
       const inserted=await pool.query(`INSERT INTO social_identities(provider,subject,user_id)
         SELECT $1,$2,user_id FROM sessions WHERE user_id=$3 AND token_hash=$4 AND expires_at>now()
