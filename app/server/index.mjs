@@ -198,7 +198,7 @@ const server = http.createServer(async (req, res) => {
     }
     if(['/api/account/email/verify','/api/account/email/resend'].includes(path)&&method==='POST')
       return await verifyRegistration({input:await body(req),path,req,res,rateLimit,fail,json,user,
-        login:updated=>json(res,200,{user:await publicUser(updated)})})
+        login:async updated=>json(res,200,{user:await publicUser(updated)})})
     if(await adminUsersRoute({path,method,user,req,res,body,json,fail,rateLimit}))return
     if(path==='/api/news')return fail(res,410,'بخش خبرها حذف شده است.')
     if(await riskSetupsRoute({path,method,user,req,res,body,json,fail,rateLimit}))return
