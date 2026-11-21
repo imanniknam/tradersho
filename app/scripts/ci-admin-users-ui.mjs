@@ -1,3 +1,5 @@
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 import assert from 'node:assert/strict'
 import {randomUUID,randomBytes} from 'node:crypto'
 import {chromium} from 'playwright-core'
@@ -34,7 +36,7 @@ try{
    const checkbox=await page.getByLabel('مدیریت کاربران',{exact:true}).boundingBox()
    assert.ok(checkbox.width<=22&&checkbox.height<=22,JSON.stringify(checkbox))
    await page.locator('.main-scroll').evaluate(el=>{el.scrollTop=0})
-   await page.screenshot({path:'/private/tmp/admin-users-'+width+'-'+theme+'.png',fullPage:true})
+   await page.screenshot({path:join(tmpdir(),'admin-users-'+width+'-'+theme+'.png'),fullPage:true})
    await context.close()
    console.log('PASS admin UI',width,theme)
  }
@@ -46,7 +48,7 @@ try{
  await button.waitFor()
  assert.equal(await button.locator('svg').count(),1)
  assert.ok((await button.boundingBox()).height>=44)
- await page.screenshot({path:'/private/tmp/telegram-button-new.png',fullPage:true})
+ await page.screenshot({path:join(tmpdir(),'telegram-button-new.png'),fullPage:true})
  await context.close()
 }finally{
  await browser.close()
