@@ -64,7 +64,7 @@ export async function adminUsersRoute({path,method,user,req,res,body,json,fail,r
    const page=Number(url.searchParams.get('page')||1)
    if(query.length>160||!Number.isInteger(page)||page<1||page>10000||!['all','active','invited','suspended'].includes(status)||!['all','admin','support','user'].includes(role))
      throw error(400,'فیلتر نامعتبر است.')
-   const where=`($1='' OR position(lower($1) in lower(u.name||' '||u.email))>0)
+   const where=`($1='' OR position(lower($1) in lower(u.name||' '||COALESCE(u.email,'')))>0)
     AND ($2='all' OR u.account_status=$2)
     AND ($3='all' OR ($3='admin' AND EXISTS(SELECT 1 FROM user_admins a WHERE a.user_id=u.id))
       OR ($3='support' AND EXISTS(SELECT 1 FROM support_agents a WHERE a.user_id=u.id))
@@ -127,7 +127,7 @@ export async function adminUsersRoute({path,method,user,req,res,body,json,fail,r
          throw error(400,'حداقل یک مدیر فعال باید باقی بماند.')
      }
      if(method==='DELETE'&&!section){
-       if(input.confirmEmail!==target.email)throw error(400,'ایمیل کاربر را برای تأیید حذف وارد کنید.')
+       if(input.confirmEmail!==(target.email||target.id))throw error(400,'ایمیل کاربر را برای تأیید حذف وارد کنید.')
        await audit(db,user.id,id,'delete',{email:target.email})
        await db.query('DELETE FROM support_messages WHERE author_id=$1',[id])
        await db.query('DELETE FROM social_auth_flows WHERE link_user=$1',[id])
@@ -140,19 +140,21 @@ export async function adminUsersRoute({path,method,user,req,res,body,json,fail,r
        await db.query("DELETE FROM sessions WHERE user_id=$1 AND ($2::text IS NULL OR left(token_hash,16)=$2)",[id,input.sessionId??null])
        await audit(db,user.id,id,'revoke_sessions')
      }else if(method==='POST'&&section==='reset-password'){
+       if(!target.email)throw error(400,'این حساب ایمیلی ثبت نکرده است.')
        if(target.account_status==='suspended')throw error(400,'برای حساب تعلیق‌شده ایمیل بازیابی ارسال نمی‌شود.')
        await sendAccessLink(db,target,target.account_status==='invited')
        await audit(db,user.id,id,'send_access_link')
      }else if(method==='DELETE'&&section==='identities'){
        if(!['google','telegram'].includes(input.provider))throw error(400,'روش ورود نامعتبر است.')
-       if(!target.password_hash.startsWith('scrypt$'))throw error(400,'ابتدا با ارسال لینک بازیابی، رمز عبور حساب را تنظیم کنید.')
+       if(!target.password_hash.startsWith('scrypt$'))throw error(400,'ابتدا ایمیل حساب را تأیید و با لینک بازیابی، رمز عبور تنظیم کنید.')
        await db.query('DELETE FROM social_identities WHERE user_id=$1 AND provider=$2',[id,input.provider])
        await db.query('DELETE FROM sessions WHERE user_id=$1',[id])
        await audit(db,user.id,id,'unlink_identity',{provider:input.provider})
      }else if(method==='PATCH'&&!section){
-       if(!validName(input.name)||!validEmail(input.email)||!['active','invited','suspended'].includes(input.status)
+       if(!validName(input.name)||!(input.email===null||input.email===''||validEmail(input.email))||!['active','invited','suspended'].includes(input.status)
           ||typeof input.isAdmin!=='boolean'||typeof input.isSupportAgent!=='boolean')throw error(400,'اطلاعات کاربر معتبر نیست.')
-       const email=input.email.trim().toLowerCase(),changedEmail=email!==target.email
+       const email=typeof input.email==='string'&&input.email.trim()?input.email.trim().toLowerCase():null,changedEmail=email!==target.email
+       if(changedEmail&&!email)throw error(400,'حذف ایمیل ثبت‌شده از این فرم مجاز نیست.')
        if(id===user.id&&changedEmail)throw error(400,'ایمیل مدیر فعلی را از این فرم تغییر ندهید.')
        if(target.activation_required&&input.status==='active')throw error(400,'فعال‌سازی حساب دعوت‌شده با تأیید ایمیل انجام می‌شود.')
        if(input.status==='invited'&&!target.activation_required&&!changedEmail)throw error(400,'برای دعوت دوباره از ارسال لینک استفاده کنید.')

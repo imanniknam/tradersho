@@ -3,7 +3,7 @@ import type {FormEvent} from 'react'
 import {Link,useNavigate,useParams} from 'react-router-dom'
 import {ArrowLeft,ArrowRight,Headphones,MessageSquare,Plus,RefreshCw,Send,Check,LockKeyhole} from 'lucide-react'
 import {api} from './api'
-export type SupportTicket={id:string;subject:string;status:string;category:string;priority:string;version:number;createdAt:string;updatedAt:string;messageCount?:number;ownerName:string;ownerEmail:string}
+export type SupportTicket={id:string;subject:string;status:string;category:string;priority:string;version:number;createdAt:string;updatedAt:string;messageCount?:number;ownerName:string;ownerEmail:string|null}
 export type TicketList={tickets:SupportTicket[];summary:{total:number;active:number;answered:number};total:number;page:number}
 export const ticketStatuses:Record<string,string>={open:'در انتظار پاسخ',in_progress:'در حال بررسی',answered:'پاسخ داده شده',closed:'بسته‌شده'}
 const categories:Record<string,string>={general:'عمومی',technical:'مشکل فنی',account:'حساب کاربری'}

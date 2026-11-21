@@ -83,7 +83,7 @@ const activePlan = async userId => {
 const publicUser = async user => {
   const { rows } = await pool.query('SELECT course_id, completed_lessons FROM course_progress WHERE user_id = $1', [user.id])
   const agent = await pool.query('SELECT 1 FROM support_agents WHERE user_id=$1', [user.id])
-  return { isAdmin:await isUserAdmin(user.id), isSupportAgent: agent.rowCount > 0, id: user.id, name: user.name, email: user.email, plan: await activePlan(user.id), createdAt: user.created_at, progress: Object.fromEntries(rows.map(row => [row.course_id, row.completed_lessons])) }
+  return { isAdmin:await isUserAdmin(user.id), isSupportAgent: agent.rowCount > 0, hasPassword:user.password_hash.startsWith('scrypt$')||user.password_hash.includes(':'), id: user.id, name: user.name, email: user.email, emailVerifiedAt:user.email_verified_at, plan: await activePlan(user.id), createdAt: user.created_at, progress: Object.fromEntries(rows.map(row => [row.course_id, row.completed_lessons])) }
 }
 const sessionUser = async req => {
   const token = cookies(req).tradersho_session
@@ -189,6 +189,16 @@ const server = http.createServer(async (req, res) => {
     }
     const user = await sessionUser(req)
     if (!user) return fail(res, 401, 'برای ادامه وارد حساب خود شوید.')
+    if(path==='/api/account/email/start'&&method==='POST'){
+      if(user.email)return fail(res,409,'این حساب قبلاً ایمیل دارد.')
+      const input=await body(req),email=typeof input.email==='string'?input.email.trim().toLowerCase():''
+      if(email.length>160||!mailAddress(email))return fail(res,400,'ایمیل معتبر وارد کنید.')
+      if(await rateLimit(req,res,'account-email',user.id,5)||await rateLimit(req,res,'signup',email,5))return
+      return json(res,202,await startRegistration({name:user.name,email,passwordHash:user.password_hash,accountUserId:user.id}))
+    }
+    if(['/api/account/email/verify','/api/account/email/resend'].includes(path)&&method==='POST')
+      return await verifyRegistration({input:await body(req),path,req,res,rateLimit,fail,json,user,
+        login:updated=>json(res,200,{user:await publicUser(updated)})})
     if(await adminUsersRoute({path,method,user,req,res,body,json,fail,rateLimit}))return
     if(path==='/api/news')return fail(res,410,'بخش خبرها حذف شده است.')
     if(await riskSetupsRoute({path,method,user,req,res,body,json,fail,rateLimit}))return
@@ -211,7 +221,7 @@ const server = http.createServer(async (req, res) => {
       if (await rateLimit(req, res, 'password-change', user.id, 5)) return
       const input = await body(req)
       if (typeof input.currentPassword !== 'string' || !await verifyPassword(input.currentPassword, user.password_hash)) return fail(res, 400, 'رمز عبور فعلی نادرست است.')
-      const invalidPassword = passwordError(input.newPassword, { email: user.email, name: user.name })
+      const invalidPassword = passwordError(input.newPassword, { email: user.email||'', name: user.name })
       if (invalidPassword) return fail(res, 400, invalidPassword)
       if (input.newPassword !== input.confirmPassword) return fail(res, 400, 'تکرار رمز عبور با رمز جدید یکسان نیست.')
       if (await verifyPassword(input.newPassword, user.password_hash)) return fail(res, 400, 'رمز جدید باید با رمز فعلی متفاوت باشد.')

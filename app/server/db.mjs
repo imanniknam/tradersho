@@ -35,6 +35,7 @@ export async function migrate() {
         created_at timestamptz NOT NULL DEFAULT now(),
         updated_at timestamptz NOT NULL DEFAULT now()
       );
+      ALTER TABLE users ALTER COLUMN email DROP NOT NULL;
       CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_unique ON users (lower(email));
 
       CREATE TABLE IF NOT EXISTS sessions (

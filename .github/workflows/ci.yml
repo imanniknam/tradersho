@@ -58,6 +58,7 @@ jobs:
           node scripts/ci-calendar.mjs
           node scripts/ci-mail.mjs
           node scripts/ci-signup-verification.mjs
+          node scripts/ci-telegram-account.mjs
           node scripts/ci-social-auth.mjs
           node scripts/ci-admin-users.mjs
       - name: Desktop and mobile browser checks

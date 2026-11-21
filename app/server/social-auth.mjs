@@ -1,5 +1,5 @@
 import {verifyTelegramWidget,telegramWidgetPage} from './telegram-widget.mjs'
-import {createHash,randomBytes} from 'node:crypto'
+import {createHash,randomBytes,randomUUID} from 'node:crypto'
 import {createRemoteJWKSet,jwtVerify} from 'jose'
 import {pool} from './db.mjs'
 import {tokenHash} from './auth.mjs'
@@ -53,6 +53,24 @@ export async function migrateSocialAuth(client){
     ticket text PRIMARY KEY, provider text NOT NULL, subject text NOT NULL,
     name text NOT NULL, email text NOT NULL, expires_at timestamptz NOT NULL DEFAULT now()+interval '15 minutes'
   );`)
+}
+
+
+export async function telegramAccount(identity){
+  const db=await pool.connect()
+  try{
+    await db.query('BEGIN')
+    await db.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))",['telegram:'+identity.subject])
+    let account=(await db.query("SELECT u.* FROM social_identities i JOIN users u ON u.id=i.user_id WHERE i.provider='telegram' AND i.subject=$1",[identity.subject])).rows[0]
+    if(!account){
+      account=(await db.query("INSERT INTO users(id,name,email,password_hash) VALUES($1,$2,NULL,'social-only') RETURNING *",[randomUUID(),identity.name])).rows[0]
+      await db.query("INSERT INTO social_identities(provider,subject,user_id) VALUES('telegram',$1,$2)",[identity.subject,account.id])
+    }
+    if(account.account_status!=='active')throw Error('Account unavailable')
+    await db.query('COMMIT')
+    return account
+  }catch(cause){await db.query('ROLLBACK');throw cause}
+  finally{db.release()}
 }
 
 async function exchange(provider,oidc,flow,code){
@@ -151,6 +169,11 @@ export async function socialRoute({path,method,req,res,body,json,fail,rateLimit,
     const {rows:[account]}=await pool.query('SELECT i.user_id,u.account_status FROM social_identities i JOIN users u ON u.id=i.user_id WHERE provider=$1 AND subject=$2',[provider,identity.subject])
     if(account&&account.account_status!=='active'){redirect(errorRedirect,headers);return true}
     if(account){redirect('/auth',[...headers,await createSession(req,account.user_id)]);return true}
+    if(provider==='telegram'){
+      const created=await telegramAccount(identity)
+      redirect('/auth',[...headers,await createSession(req,created.id)])
+      return true
+    }
     if(!verificationEnabled()||!mailConfig()){redirect(errorRedirect,headers);return true}
     const registration=random()
     await pool.query('DELETE FROM social_registrations WHERE expires_at<=now()')

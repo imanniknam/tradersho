@@ -30,7 +30,7 @@ export async function recoveryRoute({path,method,req,res,body,json,fail,rateLimi
  const user=(await client.query('SELECT * FROM users WHERE id=$1 FOR UPDATE',[candidate.user_id])).rows[0]
  const row=(await client.query('SELECT * FROM password_recovery WHERE token_hash=$1 AND expires_at>now()',[tokenHash(input.token)])).rows[0]
  if(!row||!user||user.account_status==='suspended'||row.password_version!==tokenHash(user.password_hash)){await client.query('ROLLBACK');fail(res,400,'لینک بازیابی نامعتبر یا منقضی است.');return true}
- const error=passwordError(input.password,{email:user.email,name:user.name});if(error){await client.query('ROLLBACK');fail(res,400,error);return true}
+ const error=passwordError(input.password,{email:user.email||'',name:user.name});if(error){await client.query('ROLLBACK');fail(res,400,error);return true}
  await client.query("UPDATE users SET password_hash=$1,email_verified_at=CASE WHEN activation_required THEN now() ELSE email_verified_at END,account_status='active',activation_required=false,updated_at=now() WHERE id=$2",[await hashPassword(input.password),user.id]);await client.query('DELETE FROM sessions WHERE user_id=$1',[user.id]);await client.query('DELETE FROM password_recovery WHERE user_id=$1',[user.id]);await client.query('COMMIT');json(res,200,{ok:true})
  }catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}
  return true

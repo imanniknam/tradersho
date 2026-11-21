@@ -5,7 +5,7 @@ import {api} from './api'
 import './admin-users.css'
 
 interface ManagedUser {
- id:string;name:string;email:string;status:'active'|'invited'|'suspended';version:number;
+ id:string;name:string;email:string|null;status:'active'|'invited'|'suspended';version:number;
  createdAt:string;emailVerifiedAt:string|null;isAdmin:boolean;isSupportAgent:boolean;sessionCount:number;providers:string[]
 }
 interface AuditEntry {id:string;action:string;actorName:string;subjectId:string;createdAt:string;details:Record<string,unknown>}
@@ -55,7 +55,7 @@ function UserDetails({id,actorId,onChange,onClose}:{id:string;actorId:string;onC
      <form className="stack-form" onSubmit={submit}>
        <fieldset disabled={busy}>
          <label>نام و نام خانوادگی<input required minLength={2} maxLength={80} value={user.name} onChange={event=>setUser({...user,name:event.target.value})}/></label>
-         <label>ایمیل<input required type="email" maxLength={160} dir="ltr" value={user.email} disabled={id===actorId} onChange={event=>setUser({...user,email:event.target.value})}/></label>
+         <label>ایمیل<input type="email" maxLength={160} dir="ltr" value={user.email||''} disabled={id===actorId} onChange={event=>setUser({...user,email:event.target.value})}/></label>
          <label>وضعیت حساب<select value={user.status} disabled={id===actorId} onChange={event=>setUser({...user,status:event.target.value as ManagedUser['status']})}>
            {Object.entries(statusLabels).map(([value,label])=><option value={value} key={value}>{label}</option>)}
          </select></label>
@@ -67,14 +67,14 @@ function UserDetails({id,actorId,onChange,onClose}:{id:string;actorId:string;onC
          <button className="button primary" disabled={busy}>ذخیرهٔ تغییرات</button>
        </fieldset>
      </form>
-     <div className="admin-user-actions"><button className="button secondary" disabled={busy||user.status==='suspended'} onClick={()=>void perform('/reset-password','POST',{},'لینک در صف ارسال ایمیل قرار گرفت.')}><Mail size={17}/>ارسال لینک فعال‌سازی / بازیابی</button></div>
+     <div className="admin-user-actions"><button className="button secondary" disabled={busy||!user.email||user.status==='suspended'} onClick={()=>void perform('/reset-password','POST',{},'لینک در صف ارسال ایمیل قرار گرفت.')}><Mail size={17}/>ارسال لینک فعال‌سازی / بازیابی</button></div>
      <section><h3>روش‌های ورود</h3>{!user.providers.length?<p className="muted">ورود با ایمیل و رمز عبور</p>:user.providers.map(provider=><div className="admin-detail-row" key={provider}><span>{provider==='telegram'?'تلگرام':'گوگل'}</span><button className="button secondary" disabled={busy} onClick={()=>void perform('/identities','DELETE',{provider},'روش ورود قطع شد.')}>قطع اتصال</button></div>)}</section>
      <section><header><h3>نشست‌های فعال ({number(sessions.length)})</h3><button className="button secondary" disabled={busy||!sessions.length} onClick={()=>void perform('/sessions','DELETE',{},'نشست‌ها بسته شدند.')}>خروج از همهٔ دستگاه‌ها</button></header>
        {!sessions.length?<p className="muted">نشست فعالی وجود ندارد.</p>:sessions.map(session=><div className="admin-detail-row" key={session.id}><div><strong>ورود {date(session.createdAt)}</strong><small>انقضا {date(session.expiresAt)}</small></div><button className="button secondary" disabled={busy} onClick={()=>void perform('/sessions','DELETE',{sessionId:session.id},'نشست بسته شد.')}>خروج</button></div>)}
      </section>
      <section><h3>تاریخچهٔ مدیریت</h3>{!audit.length?<p className="muted">عملیاتی ثبت نشده است.</p>:<ol className="admin-audit-list">{audit.map(entry=><li key={entry.id}><strong>{auditLabels[entry.action]||entry.action}</strong><span>{entry.actorName} · {date(entry.createdAt)}</span></li>)}</ol>}</section>
      {id!==actorId&&<section className="admin-delete-box"><h3>حذف حساب کاربری</h3><p>حساب، نشست‌ها، تیکت‌ها و ستاپ‌های این کاربر حذف می‌شوند. برای ورود دوباره باید ثبت‌نام کند.</p>
-       {!deleting?<button className="button secondary" disabled={busy} onClick={()=>setDeleting(true)}>بررسی حذف حساب</button>:<div className="stack-form"><label>برای تأیید حذف، ایمیل کاربر را وارد کنید<input dir="ltr" type="email" value={confirmEmail} onChange={event=>setConfirmEmail(event.target.value)} autoComplete="off"/></label><div className="admin-user-actions"><button className="button danger" disabled={busy||confirmEmail!==user.email} onClick={()=>void perform('','DELETE',{confirmEmail},'')}>حذف دائمی حساب</button><button className="button secondary" disabled={busy} onClick={()=>setDeleting(false)}>انصراف</button></div></div>}
+       {!deleting?<button className="button secondary" disabled={busy} onClick={()=>setDeleting(true)}>بررسی حذف حساب</button>:<div className="stack-form"><label>{user.email?'برای تأیید حذف، ایمیل کاربر را وارد کنید':'برای تأیید حذف، شناسهٔ '+user.id+' را وارد کنید'}<input dir="ltr" type="text" value={confirmEmail} onChange={event=>setConfirmEmail(event.target.value)} autoComplete="off"/></label><div className="admin-user-actions"><button className="button danger" disabled={busy||confirmEmail!==(user.email||user.id)} onClick={()=>void perform('','DELETE',{confirmEmail},'')}>حذف دائمی حساب</button><button className="button secondary" disabled={busy} onClick={()=>setDeleting(false)}>انصراف</button></div></div>}
      </section>}
    </>}
  </section>
@@ -116,7 +116,7 @@ export default function AdminUsers({actorId}:{actorId:string}){
          <label>وضعیت<select value={status} onChange={event=>{setStatus(event.target.value);setPage(1)}}><option value="all">همهٔ وضعیت‌ها</option>{Object.entries(statusLabels).map(([key,label])=><option value={key} key={key}>{label}</option>)}</select></label>
          <label>نقش<select value={role} onChange={event=>{setRole(event.target.value);setPage(1)}}><option value="all">همهٔ نقش‌ها</option><option value="admin">مدیر</option><option value="support">پشتیبانی</option><option value="user">کاربر</option></select></label>
        </form>
-       <div className="admin-table-scroll" aria-busy={loading}><table><caption className="sr-only">فهرست کاربران پنل</caption><thead><tr><th>کاربر</th><th>وضعیت</th><th>نقش</th><th>نشست</th><th>عملیات</th></tr></thead><tbody>{data?.users.map(user=><tr key={user.id} className={selected===user.id?'selected':''}><td><strong>{user.name}</strong><bdi>{user.email}</bdi></td><td><span className={'admin-status status-'+user.status}>{statusLabels[user.status]}</span></td><td>{[user.isAdmin?'مدیر':'',user.isSupportAgent?'پشتیبانی':''].filter(Boolean).join('، ')||'کاربر'}</td><td>{number(user.sessionCount)}</td><td><button className="button secondary" onClick={()=>setSelected(user.id)} aria-expanded={selected===user.id}>مدیریت</button></td></tr>)}</tbody></table></div>
+       <div className="admin-table-scroll" aria-busy={loading}><table><caption className="sr-only">فهرست کاربران پنل</caption><thead><tr><th>کاربر</th><th>وضعیت</th><th>نقش</th><th>نشست</th><th>عملیات</th></tr></thead><tbody>{data?.users.map(user=><tr key={user.id} className={selected===user.id?'selected':''}><td><strong>{user.name}</strong><bdi>{user.email||'ایمیل ثبت نشده'}</bdi></td><td><span className={'admin-status status-'+user.status}>{statusLabels[user.status]}</span></td><td>{[user.isAdmin?'مدیر':'',user.isSupportAgent?'پشتیبانی':''].filter(Boolean).join('، ')||'کاربر'}</td><td>{number(user.sessionCount)}</td><td><button className="button secondary" onClick={()=>setSelected(user.id)} aria-expanded={selected===user.id}>مدیریت</button></td></tr>)}</tbody></table></div>
        {loading&&<p role="status" className="muted">در حال دریافت…</p>}
        {data&&!data.users.length&&!loading&&<p className="muted">کاربری با این فیلترها پیدا نشد.</p>}
        <div className="admin-pagination"><span>{number(data?.total||0)} کاربر · صفحهٔ {number(page)}</span><div><button className="icon-button" aria-label="صفحه قبل" disabled={page===1||loading} onClick={()=>setPage(value=>value-1)}><ArrowRight size={18}/></button><button className="icon-button" aria-label="صفحه بعد" disabled={loading||page*25>=(data?.total||0)} onClick={()=>setPage(value=>value+1)}><ArrowLeft size={18}/></button></div></div>

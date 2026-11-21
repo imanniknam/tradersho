@@ -86,3 +86,11 @@
 .social-icon{flex:none}
 [data-theme=dark] .social-login-button.social-telegram{background:#1c2e3b;border-color:#31536b;color:#9dd4fa}
 [data-theme=dark] .social-login-button.social-telegram:hover{background:#243e51;border-color:#5aa6d8}
+
+.account-email{margin-top:20px;border-top:1px solid var(--line);padding-top:18px}
+.account-email h3{display:flex;align-items:center;gap:8px;font-size:15px;margin:0 0 16px}
+.account-email-actions{display:flex;flex-wrap:wrap;gap:8px}
+.account-email .button{min-height:40px;font-size:12px;padding:8px 12px}
+.account-email .muted{font-size:12px;line-height:1.9}
+.account-verified-email{display:grid;gap:6px;margin-top:20px}
+.account-verified-email small{display:flex;gap:5px;align-items:center;color:var(--success)}

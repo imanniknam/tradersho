@@ -15,7 +15,8 @@ export async function migrateRegistration(client){
       password_hash text NOT NULL, code_hash bytea NOT NULL, expires_at timestamptz NOT NULL,
       issued_at timestamptz NOT NULL DEFAULT now(), attempts integer NOT NULL DEFAULT 0,
       provider text, subject text
-    );`)
+    );
+    ALTER TABLE pending_registrations ADD COLUMN IF NOT EXISTS account_user_id text REFERENCES users(id) ON DELETE CASCADE;`)
 }
 
 async function transaction(operation){
@@ -43,26 +44,32 @@ async function issueCode(client,mail,row,insert){
   if(!queued)throw invalid(503,'ارسال کد تأیید در دسترس نیست. دوباره تلاش کنید.')
 }
 
-export async function startRegistration({name,email,passwordHash,social}){
+export async function startRegistration({name,email,passwordHash,social,accountUserId=null}){
   const mail=mailConfig()
   if(!mail)throw invalid(503,'ارسال کد تأیید در دسترس نیست. دوباره تلاش کنید.')
   const token=randomBytes(32).toString('hex'),id=tokenHash(token)
   await transaction(async client=>{
+    if(accountUserId){
+      const account=(await client.query('SELECT * FROM users WHERE id=$1 FOR UPDATE',[accountUserId])).rows[0]
+      if(!account||account.email!==null||account.account_status!=='active')throw invalid(409,'اطلاعات حساب تغییر کرده است.')
+      passwordHash=account.password_hash
+      await client.query('DELETE FROM pending_registrations WHERE account_user_id=$1',[accountUserId])
+    }
     await client.query('DELETE FROM pending_registrations WHERE expires_at<=now()')
     if((await client.query('SELECT 1 FROM users WHERE lower(email)=$1',[email])).rowCount)
       throw invalid(409,'این ایمیل قبلاً ثبت شده است. پس از ورود می‌توانید روش ورود جدید را از حساب کاربری متصل کنید.')
     if(social&&!(await client.query('DELETE FROM social_registrations WHERE ticket=$1 AND expires_at>now()',[social.ticket])).rowCount)
       throw invalid(400,'درخواست ورود منقضی شده است. دوباره وارد شوید.')
     await issueCode(client,mail,{id,email},hash=>client.query(`INSERT INTO pending_registrations
-      (id,name,email,password_hash,code_hash,expires_at,provider,subject)
-      VALUES ($1,$2,$3,$4,$5,now()+interval '15 minutes',$6,$7)`,
-      [id,name,email,passwordHash,hash,social?.provider??null,social?.subject??null]))
+      (id,name,email,password_hash,code_hash,expires_at,provider,subject,account_user_id)
+      VALUES ($1,$2,$3,$4,$5,now()+interval '15 minutes',$6,$7,$8)`,
+      [id,name,email,passwordHash,hash,social?.provider??null,social?.subject??null,accountUserId]))
   })
   return {verificationToken:token}
 }
 
-export async function verifyRegistration({input,res,req,path,rateLimit,fail,json,login}){
-  if (!verificationEnabled()) return fail(res,404,'مسیر پیدا نشد.')
+export async function verifyRegistration({input,res,req,path,rateLimit,fail,json,login,user=null}){
+  if (!verificationEnabled()&&!user) return fail(res,404,'مسیر پیدا نشد.')
   const token=input.verificationToken
   if(typeof token!=='string'||!/^[a-f0-9]{64}$/.test(token))return fail(res,400,missing)
   const resend=path.endsWith('/resend'), id=tokenHash(token)
@@ -75,9 +82,10 @@ export async function verifyRegistration({input,res,req,path,rateLimit,fail,json
   let result
   try{
     result=await transaction(async client=>{
+      if(user)await client.query('SELECT id FROM users WHERE id=$1 FOR UPDATE',[user.id])
       const row=(await client.query(`SELECT *, issued_at > now()-interval '1 minute' AS cooling_down
         FROM pending_registrations WHERE id=$1 AND expires_at>now() FOR UPDATE`,[id])).rows[0]
-      if(!row)return {status:400,error:missing}
+      if(!row||(row.account_user_id??null)!==(user?.id??null))return {status:400,error:missing}
       if(resend){
         if(row.cooling_down)return {status:429,error:'برای ارسال مجدد، یک دقیقه صبر کنید.'}
         await issueCode(client,mail,row,hash=>client.query(`UPDATE pending_registrations
@@ -89,11 +97,20 @@ export async function verifyRegistration({input,res,req,path,rateLimit,fail,json
         await client.query('UPDATE pending_registrations SET attempts=attempts+1 WHERE id=$1',[id])
         return {status:400,error:'کد تأیید نادرست است.'}
       }
-      const {rows:[user]}=await client.query(`INSERT INTO users (id,name,email,password_hash,email_verified_at)
+      if(row.account_user_id){
+        const account=(await client.query('SELECT * FROM users WHERE id=$1 FOR UPDATE',[row.account_user_id])).rows[0]
+        if(!account||account.email!==null||account.account_status!=='active'||account.password_hash!==row.password_hash)
+          return {status:409,error:'اطلاعات حساب تغییر کرده است. درخواست جدید ثبت کنید.'}
+        const {rows:[updated]}=await client.query(`UPDATE users SET email=$2,email_verified_at=now(),admin_version=admin_version+1,updated_at=now()
+          WHERE id=$1 RETURNING *`,[account.id,row.email])
+        await client.query('DELETE FROM pending_registrations WHERE account_user_id=$1',[account.id])
+        return {user:updated}
+      }
+      const {rows:[createdUser]}=await client.query(`INSERT INTO users (id,name,email,password_hash,email_verified_at)
         VALUES ($1,$2,$3,$4,now()) RETURNING *`,[randomUUID(),row.name,row.email,row.password_hash])
-      if(row.provider)await client.query('INSERT INTO social_identities(provider,subject,user_id) VALUES ($1,$2,$3)',[row.provider,row.subject,user.id])
+      if(row.provider)await client.query('INSERT INTO social_identities(provider,subject,user_id) VALUES ($1,$2,$3)',[row.provider,row.subject,createdUser.id])
       await client.query('DELETE FROM pending_registrations WHERE id=$1',[id])
-      return {user}
+      return {user:createdUser}
     })
   }catch(error){
     if(error.code==='23505')return fail(res,409,'این حساب قبلاً ثبت شده است. وارد حساب خود شوید.')

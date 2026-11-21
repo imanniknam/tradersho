@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link,useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, LogOut, ShieldCheck } from 'lucide-react'
 import { api } from './api'
 
-export default function SecurityCard({ onLogoutAll }: { onLogoutAll: () => void }) {
+export default function SecurityCard({ onLogoutAll,hasPassword=true,emailAvailable=true }: { onLogoutAll: () => void;hasPassword?:boolean;emailAvailable?:boolean }) {
   const navigate = useNavigate()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -31,8 +31,8 @@ export default function SecurityCard({ onLogoutAll }: { onLogoutAll: () => void 
     catch (cause) { setError((cause as Error).message) }
     finally { setBusy(false) }
   }
-  return <div className="surface security-surface"><ShieldCheck size={29}/><h3>امنیت حساب</h3><p>رمز عبورتان را تغییر دهید یا همهٔ دستگاه‌های واردشده را خارج کنید.</p>
-    <form className="stack-form" onSubmit={submit}>
+  return <div className="surface security-surface"><ShieldCheck size={29}/><h3>امنیت حساب</h3><p>{hasPassword?'رمز عبورتان را تغییر دهید یا همهٔ دستگاه‌های واردشده را خارج کنید.':'این حساب با تلگرام وارد می‌شود.'}</p>
+    {hasPassword?<form className="stack-form" onSubmit={submit}>
       <label>رمز عبور فعلی<input required dir="ltr" maxLength={128} type={show ? 'text' : 'password'} autoComplete="current-password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)}/></label>
       <label>رمز عبور جدید<input required dir="ltr" maxLength={128} type={show ? 'text' : 'password'} autoComplete="new-password" minLength={8} value={newPassword} onChange={event => setNewPassword(event.target.value)}/></label>
       <small>حداقل ۸ کاراکتر، شامل حرف کوچک و بزرگ انگلیسی، عدد و کاراکتر خاص.</small>
@@ -40,7 +40,7 @@ export default function SecurityCard({ onLogoutAll }: { onLogoutAll: () => void 
       <button type="button" className="security-show" onClick={() => setShow(!show)}>{show ? <EyeOff size={16}/> : <Eye size={16}/>} {show ? 'پنهان کردن رمزها' : 'نمایش رمزها'}</button>
       {error && <div className="form-error" role="alert">{error}</div>}{message && <div className="form-success" role="status">{message}</div>}
       <button className="button primary" disabled={busy}>تغییر رمز عبور</button>
-    </form>
+    </form>:<>{emailAvailable&&<Link to="/forgot-password" className="button secondary">تعیین رمز عبور با ایمیل</Link>}{error&&<div className="form-error" role="alert">{error}</div>}</>}
     <button className="security-logout" type="button" disabled={busy} onClick={logoutAll}><LogOut size={17}/> خروج از همهٔ دستگاه‌ها</button>
   </div>
 }
