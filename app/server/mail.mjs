@@ -25,24 +25,32 @@ export function openMail(value,key,id){
 export async function migrateMail(client){
   await client.query(`CREATE TABLE IF NOT EXISTS mail_outbox (
     id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    purpose text NOT NULL CHECK(purpose IN ('recovery','support_reply')),
+    purpose text NOT NULL,
     recovery_hash text REFERENCES password_recovery(token_hash) ON DELETE CASCADE,
     message_id text REFERENCES support_messages(id) ON DELETE CASCADE,
     payload text, status text NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','sent','failed')),
     attempts integer NOT NULL DEFAULT 0, next_attempt_at timestamptz NOT NULL DEFAULT now(),
     expires_at timestamptz NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), sent_at timestamptz,
     last_error varchar(40)
-  ); CREATE INDEX IF NOT EXISTS mail_outbox_pending ON mail_outbox(next_attempt_at) WHERE status='pending';
+  ); ALTER TABLE mail_outbox ALTER COLUMN user_id DROP NOT NULL;
+  ALTER TABLE mail_outbox ADD COLUMN IF NOT EXISTS registration_id text REFERENCES pending_registrations(id) ON DELETE CASCADE;
+  ALTER TABLE mail_outbox DROP CONSTRAINT IF EXISTS mail_outbox_purpose_check;
+  ALTER TABLE mail_outbox ADD CONSTRAINT mail_outbox_purpose_check CHECK(
+    (purpose IN ('recovery','support_reply') AND user_id IS NOT NULL AND registration_id IS NULL)
+    OR (purpose='signup_verification' AND user_id IS NULL AND registration_id IS NOT NULL)
+  );
+  CREATE INDEX IF NOT EXISTS mail_outbox_registration ON mail_outbox(registration_id) WHERE registration_id IS NOT NULL;
+  CREATE INDEX IF NOT EXISTS mail_outbox_pending ON mail_outbox(next_attempt_at) WHERE status='pending';
   CREATE TABLE IF NOT EXISTS mail_dispatch_clock (id integer PRIMARY KEY CHECK(id=1), next_at timestamptz NOT NULL);
   INSERT INTO mail_dispatch_clock VALUES(1,now()) ON CONFLICT DO NOTHING;`)
 }
-export async function enqueueMail(client,{id,userId,purpose,to,subject,text,recoveryHash=null,messageId=null}){
+export async function enqueueMail(client,{id,userId=null,purpose,to,subject,text,recoveryHash=null,messageId=null,registrationId=null}){
   const config=mailConfig()
   if(!config)return false
   if(!mailAddress(to)){console.warn('Mail recipient invalid');return false}
-  await client.query(`INSERT INTO mail_outbox(id,user_id,purpose,recovery_hash,message_id,payload,expires_at)
-    VALUES($1,$2,$3,$4,$5,$6,now()+CASE WHEN $3='recovery' THEN interval '14 minutes' ELSE interval '24 hours' END)
-    ON CONFLICT(id) DO NOTHING`,[id,userId,purpose,recoveryHash,messageId,sealMail({to,subject,text},config.key,id)])
+  await client.query(`INSERT INTO mail_outbox(id,user_id,purpose,recovery_hash,message_id,payload,registration_id,expires_at)
+    VALUES($1,$2,$3,$4,$5,$6,$7,now()+CASE WHEN $3 IN ('recovery','signup_verification') THEN interval '14 minutes' ELSE interval '24 hours' END)
+    ON CONFLICT(id) DO NOTHING`,[id,userId,purpose,recoveryHash,messageId,sealMail({to,subject,text},config.key,id),registrationId])
   return true
 }
 export function supportReplyMail(base,ticketId){
@@ -63,11 +71,12 @@ export async function dispatchMail(pool,config,transport){
   try{
     locked=(await client.query('SELECT pg_try_advisory_lock(734901,32) AS locked')).rows[0].locked
     if(!locked)return false
-    await client.query(`DELETE FROM mail_outbox WHERE created_at<now()-interval '7 days';
+    await client.query(`DELETE FROM pending_registrations WHERE expires_at<=now();
+      DELETE FROM mail_outbox WHERE created_at<now()-interval '7 days';
       UPDATE mail_outbox SET status='failed',payload=NULL,last_error='expired' WHERE status='pending' AND expires_at<=now();`)
     if(!(await client.query('SELECT 1 FROM mail_dispatch_clock WHERE id=1 AND next_at<=now()')).rowCount)return false
     const row=(await client.query(`SELECT o.* FROM mail_outbox o WHERE status='pending' AND next_attempt_at<=now()
-      ORDER BY CASE WHEN purpose='recovery' THEN 0 ELSE 1 END,created_at,id LIMIT 1`)).rows[0]
+      ORDER BY CASE WHEN purpose IN ('recovery','signup_verification') THEN 0 ELSE 1 END,created_at,id LIMIT 1`)).rows[0]
     if(!row)return false
     // Password changes invalidate recovery before sending, not only before redemption.
     if(row.recovery_hash&&!(await client.query(`SELECT 1 FROM password_recovery r JOIN users u ON u.id=r.user_id

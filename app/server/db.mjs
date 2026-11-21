@@ -1,3 +1,5 @@
+import {migrateRegistration} from './registration.mjs'
+import {migrateSocialAuth} from './social-auth.mjs'
 import {migrateRiskSetups} from './risk-setups.mjs'
 import {migrateMail} from './mail.mjs'
 import {migrateCalendar} from './calendar.mjs'
@@ -155,6 +157,8 @@ export async function migrate() {
     await migrateRiskSetups(client)
     await migrateSupport(client)
     await migrateRecovery(client)
+    await migrateRegistration(client)
+    await migrateSocialAuth(client)
     await migrateMail(client)
     await migrateCaptcha(client)
     await migrateCalendar(client)

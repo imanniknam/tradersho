@@ -57,6 +57,8 @@ jobs:
           node scripts/ci-smoke.mjs
           node scripts/ci-calendar.mjs
           node scripts/ci-mail.mjs
+          node scripts/ci-signup-verification.mjs
+          node scripts/ci-social-auth.mjs
       - name: Desktop and mobile browser checks
         run: |
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-ui.mjs

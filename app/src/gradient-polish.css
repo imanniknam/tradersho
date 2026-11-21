@@ -75,3 +75,5 @@
 .home-school>p{margin-bottom:22px}
 .home-complete-name{display:inline-flex;align-items:center;gap:6px;font-size:13px;line-height:1.8;margin-top:10px;color:var(--accent)}
 @media(max-width:600px){.dashboard-home{gap:16px}.dashboard-home>.home-service-grid,.dashboard-home>.home-lower-grid{gap:16px}}
+
+.social-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-block:12px 0}.social-actions .button{min-height:42px;padding:8px 12px;font-size:13px}

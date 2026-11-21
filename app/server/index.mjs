@@ -1,6 +1,8 @@
+import {startRegistration,verificationEnabled,verifyRegistration} from './registration.mjs'
+import {socialRoute} from './social-auth.mjs'
 import {getFlickerStatus} from './flicker-status.mjs'
 import {riskSetupsRoute} from './risk-setups.mjs'
-import {mailConfig,startMailWorker} from './mail.mjs'
+import {mailAddress,mailConfig,startMailWorker} from './mail.mjs'
 import {calendarIntegration,calendarRoute} from './calendar.mjs'
 import {captchaEnabled,issueCaptcha,verifyCaptcha} from './captcha.mjs'
 import {recoveryRoute} from './recovery.mjs'
@@ -134,22 +136,32 @@ const server = http.createServer(async (req, res) => {
     if(await calendarIntegration({path,method,req,res,body,json,fail,rateLimit}))return
     if(path.startsWith('/api/integrations/news'))return fail(res,410,'بخش خبرها حذف شده است.')
     if(await recoveryRoute({path,method,req,res,body,json,fail,rateLimit}))return
+    const login=async (user,status=200)=>json(res,status,{user:await publicUser(user)},{'Set-Cookie':await createSession(req,user.id)})
+    const redirect=(location,setCookies)=>{
+      res.writeHead(303,{...securityHeaders,'Referrer-Policy':'no-referrer','Cache-Control':'no-store',Location:location,'Set-Cookie':setCookies})
+      res.end()
+    }
+    if(await socialRoute({path,method,req,res,body,json,fail,rateLimit,cookies,sessionUser,createSession,redirect}))return
+    if(method==='POST'&&['/api/auth/signup/verify','/api/auth/signup/resend'].includes(path))
+      return await verifyRegistration({input:await body(req),path,req,res,rateLimit,fail,json,login:user=>login(user,201)})
     if (path === '/api/auth/signup' && method === 'POST') {
       const input = await body(req)
       const name = typeof input.name === 'string' && input.name.trim().length >= 2 ? input.name.trim().slice(0, 80) : 'کاربر تریدر شو'
-      const email = String(input.email || '').trim().toLowerCase().slice(0, 160)
+      const email = typeof input.email==='string' ? input.email.trim().toLowerCase() : ''
       const password = input.password
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail(res, 400, 'ایمیل معتبر نیست.')
+      if (email.length>160 || !mailAddress(email)) return fail(res, 400, 'ایمیل معتبر نیست.')
       if (await rateLimit(req, res, 'signup-ip', '', 50)) return
       if (await rateLimit(req, res, 'signup', email, 10)) return
       const invalidPassword = passwordError(password, { email, name })
       if (invalidPassword) return fail(res, 400, invalidPassword)
       if (password !== input.confirmPassword) return fail(res, 400, 'تکرار رمز عبور با رمز اصلی یکسان نیست.')
       if(!await verifyCaptcha(input.captchaId,input.captchaAnswer))return fail(res,400,'کد امنیتی نادرست یا منقضی است. کد جدید را وارد کنید.')
+      const passwordHash=await hashPassword(password)
+      if(verificationEnabled())return json(res,202,await startRegistration({name,email,passwordHash}))
       const id = randomUUID()
       try {
-        const { rows } = await pool.query('INSERT INTO users (id, name, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING *', [id, name, email, await hashPassword(password)])
-        return json(res, 201, { user: await publicUser(rows[0]) }, { 'Set-Cookie': await createSession(req, id) })
+        const { rows } = await pool.query('INSERT INTO users (id, name, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING *', [id, name, email, passwordHash])
+        return await login(rows[0],201)
       } catch (error) {
         if (error.code === '23505') return fail(res, 409, 'این ایمیل قبلاً ثبت شده است.')
         throw error
@@ -273,7 +285,7 @@ const server = http.createServer(async (req, res) => {
   }
 })
 
-mailConfig() // Fail startup on incomplete enabled SMTP configuration.
+if(!mailConfig()&&verificationEnabled())throw Error('Email verification requires SMTP')
 await migrate()
 const stopMailWorker=startMailWorker(pool)
 server.listen(port, host, () => console.log('Tradersho API listening on http://' + host + ':' + port))

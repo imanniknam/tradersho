@@ -155,3 +155,10 @@ Monitor queue counts by status/purpose and generic `Mail delivery` / `Mail worke
 سند۶۷: پس‌زمینهٔ اکسپرت۴۸کندل واضح با محور ثابت متناسب با همهٔ سایه‌ها دارد؛ آموزش مرحله‌ای/شروع حذف و سه دانلود پایه و هاور یکسان دارند. تقویم بازار با عرض خود کادر typography/ارتفاع ردیف و شمار ردیف تطبیقی دارد؛ فیلترها در کادر باریک دو ردیف می‌شوند و حداقل ارتفاع از محتوای واقعی محاسبه می‌شود.
 
 سند۶۸: مانیتور اکسپرت نواری جدا بالای چارت است. نبود صریح شاخص طلای Flicker از embedعمومی در endpointنشست‌دار/کش‌شده بررسی می‌شود؛ UIپیام فارسی/زمان بررسی/retryو لینک منبع دارد و با بازگشت منبع، ویجت رسمی را دوباره نشان می‌دهد. عددی جایگزین/حدس زده نمی‌شود.
+
+### تأیید ایمیل و ورود با گوگل و تلگرام
+
+در استقرار VPS ارسال کد ۶ رقمی هنگام ساخت حساب به‌صورت پیش‌فرض فعال است و از SMTP و صف رمزنگاری‌شدهٔ برنامه استفاده می‌کند. حساب پس از تأیید کد ساخته می‌شود. برای توسعهٔ محلی و آزمون با SMTP آزمایشی، `SIGNUP_EMAIL_VERIFICATION=1` را تنظیم کنید. حساب‌های موجود با روش فعلی وارد می‌شوند و می‌توانند گوگل یا تلگرام را از صفحهٔ حساب کاربری متصل کنند. حساب‌های جدید در مسیر ورود اجتماعی هم کد ایمیل را تأیید می‌کنند.
+
+- برای Google Cloud یک OAuth Client از نوع Web application بسازید و `https://my.tradersho.com/api/auth/social/google/callback` را در Authorized redirect URIs وارد کنید. مقادیر `GOOGLE_OIDC_CLIENT_ID` و `GOOGLE_OIDC_CLIENT_SECRET` را در محیط خصوصی VPS بگذارید. [مستندات Google](https://developers.google.com/identity/openid-connect/openid-connect)
+- در `@BotFather` بخش Web Login را برای بات تریدر شو باز کنید، دامنهٔ پنل و `https://my.tradersho.com/api/auth/social/telegram/callback` را ثبت کنید و `TELEGRAM_OIDC_CLIENT_ID` و `TELEGRAM_OIDC_CLIENT_SECRET` را در محیط خصوصی VPS بگذارید. امضای RS256 را حفظ کنید. [مستندات Telegram](https://core.telegram.org/bots/telegram-login)

@@ -1,3 +1,4 @@
+import { SocialLogin } from './SocialLogin'
 import CaptchaField from './CaptchaField'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
@@ -18,7 +19,13 @@ const rules = [
 
 export default function AuthScreen({ user, loading, setUser, brand, mobileBrand, spinner }: Props) {
   const navigate = useNavigate()
-  const [params] = useSearchParams()
+  const [params,setParams] = useSearchParams()
+  const socialRegister = params.get('social') === 'register'
+  const [verificationToken,setVerificationToken] = useState('')
+  const [code,setCode] = useState('')
+  const [delivery,setDelivery] = useState('')
+  const [resendAt,setResendAt] = useState(0)
+  const [socialReady,setSocialReady] = useState(false)
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const [name,setName]=useState('')
@@ -30,11 +37,72 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
   const [error, setError] = useState('')
   const [captcha,setCaptcha]=useState({captchaId:'',captchaAnswer:''}),[captchaReady,setCaptchaReady]=useState(false),[captchaRevision,setCaptchaRevision]=useState(0)
   const updateCaptcha=useCallback((v:{captchaId:string;captchaAnswer:string})=>setCaptcha(v),[])
+  useEffect(() => {
+    if (!socialRegister) return
+    let active = true
+    api<{email:string}>('/auth/social/register').then(result => {
+      if (active) { setEmail(result.email); setSocialReady(true) }
+    }).catch(cause => { if (active) setError(cause.message) })
+    return () => { active = false }
+  },[socialRegister])
+  useEffect(() => {
+    if (!resendAt) return
+    const timer = window.setTimeout(() => setResendAt(0),Math.max(0,resendAt-Date.now()))
+    return () => window.clearTimeout(timer)
+  }, [resendAt])
   const errorRef=useRef<HTMLDivElement>(null)
   useEffect(()=>{if(error)errorRef.current?.focus()},[error])
   const next = params.get('next')
   const destination = next && /^\/(panel|admin)(\/|$)/.test(next) ? next : '/panel'
   useEffect(() => { if (!loading && user) navigate(destination, { replace: true }) }, [loading, user, destination, navigate])
+  const beginVerification = (token: string) => {
+    setVerificationToken(token)
+    setPassword('')
+    setConfirmPassword('')
+    setCode('')
+    setResendAt(Date.now()+60000)
+    setDelivery('کد تأیید در صف ارسال است. صندوق ورودی و پوشهٔ هرزنامه را بررسی کنید.')
+  }
+  const submitVerification = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try {
+      if (!verificationToken) {
+        const data = await api<{verificationToken:string}>('/auth/social/register','POST',{email})
+        beginVerification(data.verificationToken)
+      } else {
+        const data = await api<{user:User}>('/auth/signup/verify','POST',{verificationToken,code})
+        setUser(data.user)
+        navigate(destination,{replace:true})
+      }
+    } catch (cause) { setError((cause as Error).message) }
+    finally { setBusy(false) }
+  }
+  const resend = async () => {
+    if (busy || resendAt) return
+    setBusy(true)
+    setError('')
+    try {
+      await api('/auth/signup/resend','POST',{verificationToken})
+      setCode('')
+      setResendAt(Date.now()+60000)
+      setDelivery('کد جدید در صف ارسال است.')
+    } catch (cause) { setError((cause as Error).message) }
+    finally { setBusy(false) }
+  }
+  const restart = () => {
+    setVerificationToken('')
+    setDelivery('')
+    setResendAt(0)
+    setCode('')
+    setError('')
+    setSocialReady(false)
+    setCaptchaRevision(value=>value+1)
+    setParams(previous=>{const next=new URLSearchParams(previous);next.delete('social');return next},{replace:true})
+  }
+  const verifying = Boolean(verificationToken || socialRegister)
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     if(busy||!captchaReady)return
@@ -44,7 +112,8 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
     if (mode === 'signup' && password !== confirmPassword) return setError('تکرار رمز عبور با رمز اصلی یکسان نیست.')
     setBusy(true)
     try {
-      const data = await api<{ user: User }>(mode === 'login' ? '/auth/login' : '/auth/signup', 'POST', mode === 'login' ? { email, password,...captcha } : { name:name.trim(),email, password, confirmPassword,...captcha })
+      const data = await api<{ user: User; verificationToken?: string }>(mode === 'login' ? '/auth/login' : '/auth/signup', 'POST', mode === 'login' ? { email, password,...captcha } : { name:name.trim(),email, password, confirmPassword,...captcha })
+      if (data.verificationToken) { beginVerification(data.verificationToken); return }
       setUser(data.user)
       navigate(destination, { replace: true })
     } catch (cause) { setError((cause as Error).message);setCaptchaRevision(v=>v+1) }
@@ -58,6 +127,23 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
 
     </section>
     <section className="auth-form-side"><div className="auth-form-top"><div className="auth-mobile-brand">{mobileBrand}</div><span className="auth-product-label">پنل کاربری تریدر شو</span><div className="auth-display-controls"><button type="button" className="icon-button auth-motion-toggle" onClick={()=>setMotionPaused(v=>!v)} aria-pressed={motionPaused} aria-label={motionPaused?'فعال کردن حرکت پس‌زمینه':'توقف حرکت پس‌زمینه'} title={motionPaused?'فعال کردن حرکت پس‌زمینه':'توقف حرکت پس‌زمینه'}>{motionPaused?<Play size={17}/>:<Pause size={17}/>}</button><ThemeToggle/></div></div><div className="auth-card">
+      {verifying ? <>
+        <h1>تأیید ایمیل</h1>
+        <p className="muted">{verificationToken?<>کد ۶ رقمی ارسال‌شده به <bdi>{email}</bdi> را وارد کنید.</>:'ایمیل خود را وارد کنید تا کد تأیید را دریافت کنید.'}</p>
+        <form className="auth-form" onSubmit={submitVerification} aria-busy={busy}>
+          {verificationToken
+            ? <label><span>کد تأیید ایمیل</span><div className="input-icon"><Mail size={19}/><input autoFocus required disabled={busy} value={code} onChange={event=>setCode(event.target.value)} inputMode="numeric" autoComplete="one-time-code" dir="ltr" maxLength={6} pattern="[0-9۰-۹٠-٩]{6}"/></div></label>
+            : <label><span>ایمیل</span><div className="input-icon"><Mail size={19}/><input autoFocus required disabled={busy||!socialReady} type="email" maxLength={160} autoComplete="email" dir="ltr" value={email} onChange={event=>setEmail(event.target.value)}/></div></label>}
+          {delivery&&<p className="muted" role="status">{delivery}</p>}
+          {error&&<div ref={errorRef} tabIndex={-1} className="form-error" role="alert">{error}</div>}
+          <button className="button primary auth-submit" disabled={busy||(!verificationToken&&!socialReady)}>{busy?'لطفاً صبر کنید…':verificationToken?'تأیید و ورود':'ارسال کد تأیید'}</button>
+          <div className="social-actions">
+            {verificationToken&&<button type="button" className="button secondary" disabled={busy||Boolean(resendAt)} onClick={resend}>{resendAt?'ارسال مجدد پس از یک دقیقه':'ارسال مجدد کد'}</button>}
+            <button type="button" className="button secondary" disabled={busy} onClick={restart}>بازگشت</button>
+          </div>
+        </form>
+      </> : <>
+      {params.get('social')==='failed'&&<div className="form-error" role="alert">ورود انجام نشد. دوباره تلاش کنید.</div>}
       <h1>{mode === 'login' ? 'ورود به حساب کاربری' : 'ساخت حساب کاربری'}</h1><p className="muted">{mode === 'login' ? 'ایمیل و رمز عبور خود را وارد کنید.' : 'با ایمیل و یک رمز عبور امن ثبت‌نام کنید.'}</p>
       <div className="auth-tabs" role="tablist" aria-label="ورود یا ثبت‌نام" onKeyDown={event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const target=event.key==='Home'?'login':event.key==='End'?'signup':mode==='login'?'signup':'login';setMode(target);setError('');document.getElementById('auth-tab-'+target)?.focus()}}}><button type="button" disabled={busy} role="tab" id="auth-tab-login" aria-selected={mode==='login'} aria-controls="auth-fields" tabIndex={mode==='login'?0:-1} className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setError('') }}>ورود</button><button type="button" disabled={busy} role="tab" id="auth-tab-signup" aria-selected={mode==='signup'} aria-controls="auth-fields" tabIndex={mode==='signup'?0:-1} className={mode === 'signup' ? 'active' : ''} onClick={() => { setMode('signup'); setError('') }}>ثبت‌نام</button></div>
       <div id="auth-fields" role="tabpanel" aria-labelledby={'auth-tab-'+mode}><form onSubmit={submit} className="auth-form" aria-busy={busy}>
@@ -68,7 +154,7 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
         {<CaptchaField key={mode} revision={captchaRevision} disabled={busy} onChange={updateCaptcha} onReady={setCaptchaReady}/>}
         {error && <div ref={errorRef} tabIndex={-1} className="form-error" role="alert"><Info size={17}/>{error}</div>}
         <button type="submit" className="button primary auth-submit" disabled={busy||!captchaReady}>{busy ? 'لطفاً صبر کنید…' : mode === 'login' ? 'ورود به پنل' : 'ایجاد حساب'}<ArrowLeft size={18}/></button>
-      </form>{mode==='login'&&<Link className="forgot-link" to="/forgot-password">رمز عبور را فراموش کرده‌اید؟</Link>}</div><div className="auth-note"><ShieldCheck size={18}/><span>برای امنیت حساب، از رمز عبور منحصربه‌فرد استفاده کنید.</span></div>
+      </form>{mode==='login'&&<Link className="forgot-link" to="/forgot-password">رمز عبور را فراموش کرده‌اید؟</Link>}</div><SocialLogin/><div className="auth-note"><ShieldCheck size={18}/><span>برای امنیت حساب، از رمز عبور منحصربه‌فرد استفاده کنید.</span></div></>}
     </div><footer className="auth-side-bottom"><Link to="/privacy">حریم خصوصی</Link><span>© ۲۰۲۶ تریدر شو</span></footer></section>
   </main>
 }
