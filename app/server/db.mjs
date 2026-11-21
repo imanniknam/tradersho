@@ -1,3 +1,4 @@
+import {migrateAdminUsers} from './admin-users.mjs'
 import {migrateRegistration} from './registration.mjs'
 import {migrateSocialAuth} from './social-auth.mjs'
 import {migrateRiskSetups} from './risk-setups.mjs'
@@ -162,6 +163,7 @@ export async function migrate() {
     await migrateMail(client)
     await migrateCaptcha(client)
     await migrateCalendar(client)
+    await migrateAdminUsers(client)
     await client.query('COMMIT')
   } catch (error) {
     await client.query('ROLLBACK')

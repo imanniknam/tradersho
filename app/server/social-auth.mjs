@@ -141,14 +141,15 @@ export async function socialRoute({path,method,req,res,body,json,fail,rateLimit,
     const identity=oidc.widget?verifyTelegramWidget(url.searchParams,process.env.TELEGRAM_BOT_TOKEN):await exchange(provider,oidc,flow,code)
     if(flow.link_user){
       const inserted=await pool.query(`INSERT INTO social_identities(provider,subject,user_id)
-        SELECT $1,$2,user_id FROM sessions WHERE user_id=$3 AND token_hash=$4 AND expires_at>now()
+        SELECT $1,$2,user_id FROM sessions WHERE user_id=$3 AND token_hash=$4 AND expires_at>now() AND EXISTS(SELECT 1 FROM users u WHERE u.id=$3 AND u.account_status='active')
         ON CONFLICT DO NOTHING RETURNING user_id`,[provider,identity.subject,flow.link_user,flow.session_hash])
       const existing=inserted.rowCount||await pool.query(`SELECT 1 FROM social_identities i JOIN sessions s ON s.user_id=i.user_id
         WHERE i.provider=$1 AND i.subject=$2 AND i.user_id=$3 AND s.token_hash=$4 AND s.expires_at>now()`,[provider,identity.subject,flow.link_user,flow.session_hash])
       redirect(inserted.rowCount||existing.rowCount?'/panel/account?social=linked':failed,headers)
       return true
     }
-    const {rows:[account]}=await pool.query('SELECT user_id FROM social_identities WHERE provider=$1 AND subject=$2',[provider,identity.subject])
+    const {rows:[account]}=await pool.query('SELECT i.user_id,u.account_status FROM social_identities i JOIN users u ON u.id=i.user_id WHERE provider=$1 AND subject=$2',[provider,identity.subject])
+    if(account&&account.account_status!=='active'){redirect(errorRedirect,headers);return true}
     if(account){redirect('/auth',[...headers,await createSession(req,account.user_id)]);return true}
     if(!verificationEnabled()||!mailConfig()){redirect(errorRedirect,headers);return true}
     const registration=random()

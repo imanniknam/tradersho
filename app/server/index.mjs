@@ -1,3 +1,4 @@
+import {adminUsersRoute,isUserAdmin} from './admin-users.mjs'
 import {startRegistration,verificationEnabled,verifyRegistration} from './registration.mjs'
 import {socialRoute} from './social-auth.mjs'
 import {getFlickerStatus} from './flicker-status.mjs'
@@ -82,12 +83,12 @@ const activePlan = async userId => {
 const publicUser = async user => {
   const { rows } = await pool.query('SELECT course_id, completed_lessons FROM course_progress WHERE user_id = $1', [user.id])
   const agent = await pool.query('SELECT 1 FROM support_agents WHERE user_id=$1', [user.id])
-  return { isSupportAgent: agent.rowCount > 0, id: user.id, name: user.name, email: user.email, plan: await activePlan(user.id), createdAt: user.created_at, progress: Object.fromEntries(rows.map(row => [row.course_id, row.completed_lessons])) }
+  return { isAdmin:await isUserAdmin(user.id), isSupportAgent: agent.rowCount > 0, id: user.id, name: user.name, email: user.email, plan: await activePlan(user.id), createdAt: user.created_at, progress: Object.fromEntries(rows.map(row => [row.course_id, row.completed_lessons])) }
 }
 const sessionUser = async req => {
   const token = cookies(req).tradersho_session
   if (!token || !/^[a-f0-9]{64}$/.test(token)) return null
-  const { rows } = await pool.query('SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = $1 AND s.expires_at > now() AND s.created_at + make_interval(secs => $2) > now()', [digest(token), sessionAge])
+  const { rows } = await pool.query("SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = $1 AND s.expires_at > now() AND u.account_status='active' AND s.created_at + make_interval(secs => $2) > now()", [digest(token), sessionAge])
   return rows[0] || null
 }
 const insertSession = (db, token, userId) => db.query(
@@ -176,7 +177,7 @@ const server = http.createServer(async (req, res) => {
       if(!await verifyCaptcha(input.captchaId,input.captchaAnswer))return fail(res,400,'کد امنیتی نادرست یا منقضی است. کد جدید را وارد کنید.')
       const { rows } = await pool.query('SELECT * FROM users WHERE lower(email) = $1', [email])
       const user = rows[0]
-      if (!user || !await verifyPassword(input.password, user.password_hash)) return fail(res, 401, 'ایمیل یا رمز عبور نادرست است.')
+      if (!user || user.account_status!=='active' || !await verifyPassword(input.password, user.password_hash)) return fail(res, 401, 'ایمیل یا رمز عبور نادرست است.')
       if (!user.password_hash.startsWith('scrypt$')) await pool.query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [await hashPassword(input.password), user.id])
       await pool.query('DELETE FROM auth_throttle WHERE key_hash = $1', [throttleKey(req, 'login', email)])
       return json(res, 200, { user: await publicUser(user) }, { 'Set-Cookie': await createSession(req, user.id) })
@@ -188,6 +189,7 @@ const server = http.createServer(async (req, res) => {
     }
     const user = await sessionUser(req)
     if (!user) return fail(res, 401, 'برای ادامه وارد حساب خود شوید.')
+    if(await adminUsersRoute({path,method,user,req,res,body,json,fail,rateLimit}))return
     if(path==='/api/news')return fail(res,410,'بخش خبرها حذف شده است.')
     if(await riskSetupsRoute({path,method,user,req,res,body,json,fail,rateLimit}))return
     if(await calendarRoute({path,method,req,res,json,fail}))return
@@ -195,7 +197,8 @@ const server = http.createServer(async (req, res) => {
     if (path === '/api/session' && method === 'GET') return json(res, 200, { user: await publicUser(user) })
     if (path === '/api/admin/session' && method === 'GET') {
       const agent=await pool.query('SELECT 1 FROM support_agents WHERE user_id=$1',[user.id])
-      return agent.rowCount ? json(res,200,{allowed:true}) : fail(res,403,'دسترسی به پنل مدیریت مجاز نیست.')
+      const administrator=await isUserAdmin(user.id)
+      return agent.rowCount||administrator ? json(res,200,{allowed:true,isAdmin:administrator,isSupportAgent:agent.rowCount>0}) : fail(res,403,'دسترسی به پنل مدیریت مجاز نیست.')
     }
     if (path === '/api/tools' && method === 'GET') return json(res, 200, { tools: toolCatalog })
     if (!subscriptionsEnabled && ['/api/subscription', '/api/plan-interest'].includes(path)) return fail(res, 409, 'بخش اشتراک فعلاً فعال نیست.')
@@ -233,7 +236,7 @@ const server = http.createServer(async (req, res) => {
       const input = await body(req)
       const name = String(input.name || '').trim().slice(0, 80)
       if (name.length < 2) return fail(res, 400, 'نام باید حداقل دو نویسه باشد.')
-      const { rows } = await pool.query('UPDATE users SET name = $1, updated_at = now() WHERE id = $2 RETURNING *', [name, user.id])
+      const { rows } = await pool.query('UPDATE users SET name = $1, admin_version=admin_version+1, updated_at = now() WHERE id = $2 RETURNING *', [name, user.id])
       return json(res, 200, { user: await publicUser(rows[0]) })
     }
     if (await supportRoute({path,method,user,req,res,body,json,fail,rateLimit})) return

@@ -77,3 +77,12 @@
 @media(max-width:600px){.dashboard-home{gap:16px}.dashboard-home>.home-service-grid,.dashboard-home>.home-lower-grid{gap:16px}}
 
 .social-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-block:12px 0}.social-actions .button{min-height:42px;padding:8px 12px;font-size:13px}
+.social-login-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:11px 20px;border:1px solid var(--line);border-radius:12px;color:var(--ink);background:var(--surface);font:inherit;font-weight:600;font-size:14px;text-decoration:none;transition:background .18s,border-color .18s,box-shadow .18s}
+.auth-card>.social-actions{margin-top:20px}
+.auth-card>.social-actions .social-login-button{width:100%}
+.social-login-button.social-telegram{background:#eaf5fe;border-color:#c8e4fa;color:#176a9c}
+.social-login-button.social-telegram:hover{background:#d9edfc;border-color:#7dbde8;box-shadow:0 3px 12px #229ed920}
+.social-login-button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.social-icon{flex:none}
+[data-theme=dark] .social-login-button.social-telegram{background:#1c2e3b;border-color:#31536b;color:#9dd4fa}
+[data-theme=dark] .social-login-button.social-telegram:hover{background:#243e51;border-color:#5aa6d8}
