@@ -138,3 +138,9 @@
  .tools-shell .analysis-center>.analysis-rail .analysis-tool-icon{width:32px;height:32px;border-radius:10px}
  .tools-shell .analysis-center>.analysis-rail small{font-size:9px;line-height:1.2}
 }
+
+/* Keep the risk title above its sticky setup controls without covering either. */
+.analysis-risk .analysis-heading{position:sticky;top:0;z-index:16;padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px #00000008}
+.analysis-risk .risk-workspace .risk-intro{top:calc(var(--risk-heading-height,80px) + 10px)}
+.tools-shell .main-scroll:has(.analysis-risk){scroll-padding-block-start:calc(var(--risk-heading-height,80px) + 100px)}
+@media(max-width:900px){.analysis-risk .risk-workspace .risk-intro{position:static}}
