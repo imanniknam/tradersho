@@ -11,6 +11,10 @@ try{
  await page.setContent('<iframe title="Expert QA" style="width:1000px;height:800px;border:0"></iframe>')
  await Promise.all([page.waitForEvent('framenavigated',f=>f.url()==='about:srcdoc'),page.locator('iframe').evaluate((n,html)=>{n.srcdoc=html},html)])
  const f=page.frames().find(f=>f!==page.mainFrame());await f.waitForSelector('#tabs button',{state:'attached',timeout:8000});
+ // Original v2.14 EX5 labels captured in the isolated native terminal.
+ assert.equal(await f.locator('.native-label').filter({hasText:/^Risk, money:$/}).count(),1);
+ assert.equal(await f.locator('.native-label').filter({hasText:/^Reward, money:$/}).count(),1);
+ assert.match(await f.locator('.native-brand').innerText(),/Trade With Control/);
  const measured=JSON.parse(await readFile(new URL('./fixtures/expert-native-layout.json',import.meta.url),'utf8'));
  for(const [tab,expected] of Object.entries(measured.panels)){
   await f.evaluate(tab=>{state=initial();state.tab=tab;renderTabs();renderPanel()},tab);
