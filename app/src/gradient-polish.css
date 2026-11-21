@@ -1,8 +1,8 @@
 /* Contrast-preserving busy state; disabled primary actions remain legible. */
 .button.primary:disabled,.auth-form .auth-submit:disabled{color:#fff;background:#605f9e;border-color:#605f9e;opacity:1;box-shadow:none;cursor:wait}
 .button.primary:disabled svg{color:currentColor}
-.logout{background:var(--tint);color:var(--accent);text-decoration:none;transition:background .2s,color .2s}
-.logout:hover,.logout:focus-visible{background:#605f9e;color:#fff;text-decoration:none}
+.logout,.icon-button.home-shortcut{background:var(--tint);color:var(--accent);text-decoration:none;transition:background .2s,color .2s}
+.logout:hover,.logout:focus-visible,.icon-button.home-shortcut:hover,.icon-button.home-shortcut:focus-visible{background:#605f9e;color:#fff;text-decoration:none}
 /* Brand-only, single-color card outlines. */
 :root{--card-edge:#403867}
 [data-theme=light]{--card-edge:#ded8f2}
