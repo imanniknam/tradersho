@@ -128,3 +128,13 @@
 .tools-shell .analysis-panel-back{background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:none}
 .tools-shell .analysis-panel-back:is(:hover,:focus-visible){background:#605f9e;color:#fff;border-color:#9291ce}
 .tools-shell .analysis-panel-back:focus-visible{outline:2px solid var(--focus,var(--accent));outline-offset:3px}
+
+/* Anchor desktop navigation to the viewport while retaining bounded tool content. */
+@media(min-width:901px){
+ .tools-shell:has(.analysis-center) .main-inner{padding-inline-start:118px;padding-inline-end:22px}
+ .analysis-center{display:block}
+ .tools-shell .analysis-center>.analysis-rail{position:fixed;inset-inline-start:18px;top:84px;bottom:18px;height:auto;width:86px;max-height:calc(100dvh - 102px);min-height:0;padding:6px;gap:3px;overflow-y:auto;z-index:25}
+ .tools-shell .analysis-center>.analysis-rail a{flex:1 0 76px;min-height:76px;padding:5px 2px;gap:4px;font-size:11px}
+ .tools-shell .analysis-center>.analysis-rail .analysis-tool-icon{width:32px;height:32px;border-radius:10px}
+ .tools-shell .analysis-center>.analysis-rail small{font-size:9px;line-height:1.2}
+}
