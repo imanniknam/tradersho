@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import {readFile,mkdir} from 'node:fs/promises'
 import {chromium} from 'playwright-core'
 const market=(await readFile(new URL('../src/expert/demo-market.mjs',import.meta.url),'utf8')).replace(/^export /gm,'')
-const html=(await readFile(new URL('../src/expert/simulator.html',import.meta.url),'utf8')).replace('/* SHARED_DEMO_MARKET */',market)
+const html=(await readFile(new URL('../src/expert/simulator.html',import.meta.url),'utf8')).replace('/* SHARED_DEMO_MARKET */',market).replaceAll('__EXPERT_VERSION__','2.14')
 const browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true})
 const page=await browser.newPage({viewport:{width:1100,height:900}}),errors=[]
 page.on('pageerror',e=>errors.push(e.message))
@@ -22,6 +22,28 @@ try{
   assert.deepEqual(actual,{width:expected.width,height:expected.height,field:expected.field},'Measured native '+tab);
  }
 
+ // Six original v2.14 screenshots supplied by the owner: exact captions and empty state.
+ await f.evaluate(()=>{state=initial();state.tab='manage';renderTabs();renderPanel()});
+ assert.deepEqual(await f.locator('.native-danger-actions button').allTextContents(),['CLOSE POSITIONS','CANCEL PENDING ORDERS','CLOSE + CANCEL ALL']);
+ assert.equal(await f.locator('[data-action=alert]').innerText(),'Add Alert');
+ assert.equal(await f.locator('[data-action=settings]').innerText(),'More Settings');
+ for(const tab of ['setup','portfolio','margin','swaps','manage']){
+  await f.evaluate(tab=>{state=initial();state.tab=tab;if(tab==='portfolio')state.positions=[];renderTabs();renderPanel()},tab);
+  if(tab==='portfolio'){
+   assert.equal(await f.locator('.native-empty-positions').innerText(),'NO POSITIONS OR ORDERS');
+   assert.equal(await f.locator('[data-action=portfolio-next],[data-action=execute],[data-action=arm]').count(),0);
+  }
+  if(tab==='swaps')assert.equal(await f.locator('.source-swap-volume>span').innerText(),'lot');
+  await f.locator('#expert').screenshot({path:`qa/expert-parity/v214-${tab}.png`});
+ }
+ await f.locator('[data-action=settings]').click();
+ assert.equal((await f.locator('.expert-title').innerText()).replace(/\s+/g,' '),'Tradersho | More Settings');
+ assert.deepEqual(await f.locator('.more-nav button').allTextContents(),['General','Presets','Others','Themes']);
+ assert.equal(await f.locator('[data-action=shortcuts]').innerText(),'Configure shortcuts...');
+ assert.equal(await f.locator('[data-key=wheel]').inputValue(),'1.0');assert.equal(await f.locator('[data-key=beExtra]').inputValue(),'0.00');assert.equal(await f.locator('[data-key=dailyLimit]').inputValue(),'2.00');
+ const nav=await f.locator('.more-nav button').evaluateAll(ns=>ns.map(n=>n.getBoundingClientRect().y));assert.equal(nav[1]-nav[0],42);
+ await f.locator('#expert').screenshot({path:'qa/expert-parity/v214-general.png'});
+ await f.evaluate(()=>{state=initial();renderTabs();renderPanel()});
  await f.locator('#tabs [data-tab=manage]').click();await f.locator('[data-action=settings]').click();await f.locator('[data-page=Presets]').click();await f.locator('[data-action=source-preset-new]').click()
  const geometry=await f.evaluate(()=>{const box=n=>{const a=n.getBoundingClientRect(),b=document.querySelector('#expert').getBoundingClientRect();return {x:a.x-b.x,y:a.y-b.y,w:a.width,h:a.height}};return {panel:box(document.querySelector('#expert')),content:box(document.querySelector('.more-content')),name:box(document.querySelector('[data-source-field=name]')),sections:[...document.querySelectorAll('.source-section summary')].map(box),footer:box(document.querySelector('[data-action=source-preset-save]'))}})
  assert.equal(geometry.panel.w,840);assert.equal(geometry.name.x,390);assert.equal(geometry.name.w,432);assert.ok(Math.abs(geometry.sections[0].y-165)<=2,JSON.stringify(geometry));assert.ok(geometry.sections.every(s=>s.h===23));
