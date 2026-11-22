@@ -1,4 +1,5 @@
 import {verifyTelegramWidget,telegramWidgetPage} from './telegram-widget.mjs'
+import {responseSecurityHeaders} from './security.mjs'
 import {createHash,randomBytes,randomUUID} from 'node:crypto'
 import {createRemoteJWKSet,jwtVerify} from 'jose'
 import {pool} from './db.mjs'
@@ -134,7 +135,7 @@ export async function socialRoute({path,method,req,res,body,json,fail,rateLimit,
       const callback=new URL(oidc.callback)
       callback.searchParams.set('state',state)
       res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store',
-        'X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer',
+        ...responseSecurityHeaders,'Referrer-Policy':'no-referrer',
         'Set-Cookie':cookie('tradersho_social_flow',ticket,600)})
       res.end(telegramWidgetPage(process.env.TELEGRAM_BOT_USERNAME,callback.href))
       return true

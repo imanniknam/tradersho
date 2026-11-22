@@ -10,31 +10,31 @@ if(!process.env.QA_BRAND_FONTS)await page.context().route('**/fonts/**',r=>r.abo
 await page.context().route('https://flicker.finance/embed/**',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html lang="en"><head><title>QA gold widget</title></head><body>Gold Ounce · XAU — widget QA fixture</body></html>'}))
 page.on('pageerror',e=>errors.push(e.message))
 try{
- await page.goto(base+'/auth');await page.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await page.getByPlaceholder('نام و نام خانوادگی',{exact:true}).fill('آزمون کاربر');await page.getByPlaceholder('name@example.com').fill(email);await page.getByPlaceholder('رمز عبور قوی').fill('UiRelease#2026');await page.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill('UiRelease#2026');await page.getByAltText('تصویر کد امنیتی پنج‌رقمی').waitFor();await page.getByLabel('کد امنیتی',{exact:true}).fill('00000');await page.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await page.getByRole('alert').waitFor()
+ await page.goto(base+'/auth');await page.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await page.getByPlaceholder('نام و نام خانوادگی',{exact:true}).fill('آزمون کاربر');await page.getByPlaceholder('name@example.com').fill(email);await page.getByPlaceholder('رمز عبور قوی').fill('UiRelease#2026');await page.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill('UiRelease#2026');await page.getByAltText('تصویر کد امنیتی شش‌رقمی').waitFor();await page.getByLabel('کد امنیتی',{exact:true}).fill('000000');await page.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await page.getByRole('alert').waitFor()
  await page.waitForFunction(()=>document.querySelector('.captcha-refresh')?.disabled===false)
  const signupResponse=page.waitForResponse(r=>r.url().endsWith('/api/auth/captcha')&&r.status()===200)
  await page.getByRole('button',{name:'دریافت کد امنیتی جدید'}).click();const signupCap=await (await signupResponse).json()
- await pool.query('UPDATE login_captcha SET answer_hash=$1 WHERE id=$2',[createHmac('sha256',process.env.CAPTCHA_SECRET).update(signupCap.id+':12345').digest('hex'),signupCap.id])
- await page.getByLabel('کد امنیتی',{exact:true}).fill('12345');await page.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await page.waitForURL(base+'/panel')
+ await pool.query('UPDATE login_captcha SET answer_hash=$1 WHERE id=$2',[createHmac('sha256',process.env.CAPTCHA_SECRET).update(signupCap.id+':123456').digest('hex'),signupCap.id])
+ await page.getByLabel('کد امنیتی',{exact:true}).fill('123456');await page.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await page.waitForURL(base+'/panel')
  const guest=await browser.newContext({reducedMotion:'reduce'}),loginPage=await guest.newPage()
  if(!process.env.QA_BRAND_FONTS)await guest.route('**/fonts/**',r=>r.abort())
  for(const width of [320,390,1440])for(const theme of ['light','dark'])for(const mode of ['login','signup']){
-  await loginPage.setViewportSize({width,height:720});await loginPage.goto(base+'/auth');if(mode==='signup')await loginPage.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await loginPage.getByAltText('تصویر کد امنیتی پنج‌رقمی').waitFor();await loginPage.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(350)
+  await loginPage.setViewportSize({width,height:720});await loginPage.goto(base+'/auth');if(mode==='signup')await loginPage.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await loginPage.getByAltText('تصویر کد امنیتی شش‌رقمی').waitFor();await loginPage.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(350)
   assert.ok(await loginPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
   if(width===1440)assert.ok(await loginPage.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),'CAPTCHA desktop authentication must fit at 720px height')
   await loginPage.addScriptTag({content:axe});assert.deepEqual(await loginPage.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))),[])
  }
  await guest.close()
  await page.context().request.post(base+'/api/auth/logout')
- await page.goto(base+'/auth');await page.getByAltText('تصویر کد امنیتی پنج‌رقمی').waitFor()
+ await page.goto(base+'/auth');await page.getByAltText('تصویر کد امنیتی شش‌رقمی').waitFor()
  await page.getByPlaceholder('name@example.com').fill(email);await page.getByPlaceholder('رمز عبور',{exact:true}).fill('UiRelease#2026')
- await page.getByLabel('کد امنیتی',{exact:true}).fill('00000');await page.getByRole('button',{name:'ورود به پنل',exact:true}).click();await page.getByRole('alert').waitFor()
+ await page.getByLabel('کد امنیتی',{exact:true}).fill('000000');await page.getByRole('button',{name:'ورود به پنل',exact:true}).click();await page.getByRole('alert').waitFor()
  await page.waitForFunction(()=>document.querySelector('.captcha-refresh')?.disabled===false)
  const response=page.waitForResponse(r=>r.url().endsWith('/api/auth/captcha')&&r.status()===200)
  await page.getByRole('button',{name:'دریافت کد امنیتی جدید'}).click();const cap=await (await response).json()
- const answerHash=createHmac('sha256',process.env.CAPTCHA_SECRET).update(cap.id+':12345').digest('hex')
+ const answerHash=createHmac('sha256',process.env.CAPTCHA_SECRET).update(cap.id+':123456').digest('hex')
  await pool.query('UPDATE login_captcha SET answer_hash=$1 WHERE id=$2',[answerHash,cap.id])
- await page.getByLabel('کد امنیتی',{exact:true}).fill('12345');await page.getByRole('button',{name:'ورود به پنل',exact:true}).click();await page.waitForURL(base+'/panel')
+ await page.getByLabel('کد امنیتی',{exact:true}).fill('123456');await page.getByRole('button',{name:'ورود به پنل',exact:true}).click();await page.waitForURL(base+'/panel')
  const ticketResponse=await page.context().request.post(base+'/api/tickets',{headers:{Origin:base},data:{subject:'بررسی چیدمان درخواست با عنوان فارسی طولانی برای تست رابط',message:'این درخواست صرفاً دادهٔ آزمون رابط در پایگاه QA است و اطلاعات واقعی کاربر ندارد.',category:'technical',priority:'normal',requestId:randomUUID()}});assert.equal(ticketResponse.status(),201);const auditTicket=await ticketResponse.json()
  const website='https://tradersho.com/'
  await page.route(website,route=>route.fulfill({body:'Tradersho website QA'}))
@@ -138,7 +138,7 @@ try{
   {id:'released',title:'رویداد منتشرشده QA',currency:'USD',country:'US',at:new Date(now+60000).toISOString(),date:new Date(now).toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'}),status:'released'},
   {id:'untimed',title:'رویداد بدون ساعت QA',currency:'USD',country:'US',at:null,date:new Date(now).toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'}),status:'scheduled'},
   {id:'soon',title:'رویداد نزدیک QA',currency:'USD',country:'US',at:new Date(now+5000).toISOString(),date:new Date(now).toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'}),status:'scheduled'},
-  {id:'future',title:'رویداد آینده QA',currency:'USD',country:'US',at:new Date(now+600000).toISOString(),date:new Date(now).toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'}),status:'scheduled'}]}})})
+  {id:'future',title:'رویداد آینده QA',currency:'USD',country:'US',at:new Date(now+6000000).toISOString(),date:new Date(now).toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'}),status:'scheduled'}]}})})
  await page.goto(base+'/panel/tools');await page.getByText('رویداد نزدیک QA',{exact:true}).waitFor();assert.equal(await page.locator('.calendar-preview-event').count(),2)
  await page.waitForFunction(()=>![...document.querySelectorAll('.calendar-preview-event')].some(n=>n.textContent.includes('رویداد نزدیک QA')),{},{timeout:8000});assert.equal(await page.locator('.calendar-preview-event').count(),1);assert.ok(await page.getByText('رویداد آینده QA',{exact:true}).isVisible())
  await page.context().unroute('**/api/calendar?**')

@@ -4,10 +4,10 @@ if(!process.env.DATABASE_URL?.endsWith('_qa'))throw Error('A dedicated _qa datab
 const {pool}=await import('../server/db.mjs')
 const {tokenHash}=await import('../server/auth.mjs')
 const base='http://127.0.0.1:5183',email=`ci-${randomUUID()}@example.test`,password='ReleaseTest#2026'
-let cookie='',id
+let cookie='',captchaCookie='',id
 async function request(path,method='GET',data,headers={}){
- const r=await fetch(base+'/api'+path,{method,headers:{Origin:base,'Content-Type':'application/json',Cookie:cookie,...headers},body:data===undefined?undefined:JSON.stringify(data)})
- const value=r.headers.get('set-cookie');if(value)cookie=value.split(';')[0]
+ const r=await fetch(base+'/api'+path,{method,headers:{Origin:base,'Content-Type':'application/json',Cookie:[cookie,captchaCookie].filter(Boolean).join('; '),...headers},body:data===undefined?undefined:JSON.stringify(data)})
+ const value=r.headers.get('set-cookie');if(value){const pair=value.split(';')[0];if(pair.startsWith('tradersho_captcha='))captchaCookie=pair;else cookie=pair}
  return {status:r.status,body:await r.json(),setCookie:value}
 }
 try{
@@ -18,14 +18,14 @@ try{
  assert.equal((await request('/auth/login','POST',{email,password,captchaId:challenge.body.id,captchaAnswer:'wrong'})).status,400)
  assert.equal((await request('/auth/signup','POST',{email,password,confirmPassword:password})).status,400)
  const invalid=(await request('/auth/captcha')).body
- assert.equal((await request('/auth/signup','POST',{email,password,confirmPassword:password,captchaId:invalid.id,captchaAnswer:'00000'})).status,400)
+ assert.equal((await request('/auth/signup','POST',{email,password,confirmPassword:password,captchaId:invalid.id,captchaAnswer:'000000'})).status,400)
  assert.equal((await pool.query('SELECT count(*)::int AS count FROM users WHERE email=$1',[email])).rows[0].count,0)
  const signupCap=(await request('/auth/captcha')).body
- const signupHash=createHmac('sha256',process.env.CAPTCHA_SECRET).update(signupCap.id+':12345').digest('hex')
+ const signupHash=createHmac('sha256',process.env.CAPTCHA_SECRET).update(signupCap.id+':123456').digest('hex')
  await pool.query('UPDATE login_captcha SET answer_hash=$1 WHERE id=$2',[signupHash,signupCap.id])
- const account=await request('/auth/signup','POST',{email,password,confirmPassword:password,captchaId:signupCap.id,captchaAnswer:'۱۲۳۴۵'});assert.equal(account.status,201);id=account.body.user.id
+ const account=await request('/auth/signup','POST',{email,password,confirmPassword:password,captchaId:signupCap.id,captchaAnswer:'۱۲۳۴۵۶'});assert.equal(account.status,201);id=account.body.user.id
  assert.match(account.setCookie, /Max-Age=259200(?:;|$)/)
- assert.equal((await request('/auth/signup','POST',{email:'reuse-'+email,password,confirmPassword:password,captchaId:signupCap.id,captchaAnswer:'12345'})).status,400)
+ assert.equal((await request('/auth/signup','POST',{email:'reuse-'+email,password,confirmPassword:password,captchaId:signupCap.id,captchaAnswer:'123456'})).status,400)
  assert.equal((await request('/session')).body.user.id,id)
  assert.equal((await request('/admin/session')).status,403)
  const ticket=await request('/tickets','POST',{subject:'CI technical chart',message:'A dedicated deployment smoke test ticket.',category:'technical',priority:'normal',requestId:randomUUID()});assert.equal(ticket.status,201)
@@ -40,9 +40,9 @@ try{
  assert.equal((await request('/market/gold-sentiment/status')).status,401)
  assert.equal((await request('/auth/reset-password','POST',{token,password,confirmPassword:password})).status,400)
  const cap=(await request('/auth/captcha')).body
- const answerHash=createHmac('sha256',process.env.CAPTCHA_SECRET).update(cap.id+':12345').digest('hex')
+ const answerHash=createHmac('sha256',process.env.CAPTCHA_SECRET).update(cap.id+':123456').digest('hex')
  await pool.query('UPDATE login_captcha SET answer_hash=$1 WHERE id=$2',[answerHash,cap.id])
- const login=await request('/auth/login','POST',{email,password:'ReleaseNew#2027',captchaId:cap.id,captchaAnswer:'۱۲۳۴۵'})
+ const login=await request('/auth/login','POST',{email,password:'ReleaseNew#2027',captchaId:cap.id,captchaAnswer:'۱۲۳۴۵۶'})
  assert.equal(login.status,200)
  assert.match(login.setCookie,/Max-Age=259200(?:;|$)/)
  const passwordChange=await request('/account/password','POST',{currentPassword:'ReleaseNew#2027',newPassword:'ReleaseFinal#2028',confirmPassword:'ReleaseFinal#2028'})
@@ -54,7 +54,7 @@ try{
  assert.equal((await request('/session')).status,200)
  await pool.query("UPDATE sessions SET created_at=now()-interval '72 hours' WHERE token_hash=$1",[sessionHash])
  assert.equal((await request('/session')).status,401)
- assert.equal((await request('/auth/login','POST',{email,password:'ReleaseNew#2027',captchaId:cap.id,captchaAnswer:'12345'})).status,400)
+ assert.equal((await request('/auth/login','POST',{email,password:'ReleaseNew#2027',captchaId:cap.id,captchaAnswer:'123456'})).status,400)
 
  console.log('PASS: PostgreSQL health, signup/password policy, session, admin isolation, ticket filters, recovery/reuse/revocation, CSRF.')
 }finally{if(id){await pool.query('DELETE FROM support_tickets WHERE user_id=$1',[id]);await pool.query('DELETE FROM users WHERE id=$1',[id]);}await pool.end()}

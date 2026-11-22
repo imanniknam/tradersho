@@ -1,4 +1,5 @@
 import {adminUsersRoute,isUserAdmin} from './admin-users.mjs'
+import {allowedOrigin,browserBindingHash,secureCookie,responseSecurityHeaders} from './security.mjs'
 import {startRegistration,verificationEnabled,verifyRegistration} from './registration.mjs'
 import {socialRoute} from './social-auth.mjs'
 import {getFlickerStatus} from './flicker-status.mjs'
@@ -11,7 +12,9 @@ import { supportRoute } from './support.mjs'
 import http from 'node:http'
 import {isIP} from 'node:net'
 import { randomBytes, randomUUID } from 'node:crypto'
-import { readFile, stat } from 'node:fs/promises'
+import { stat } from 'node:fs/promises'
+import { createReadStream } from 'node:fs'
+import { pipeline } from 'node:stream/promises'
 import { join, dirname, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { pool, migrate } from './db.mjs'
@@ -25,10 +28,9 @@ if(captchaEnabled()&&(!process.env.CAPTCHA_SECRET||process.env.CAPTCHA_SECRET.le
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const port = Number(process.env.PORT || 3001)
 const host = process.env.HOST || '0.0.0.0'
-const production = process.env.NODE_ENV === 'production'
 const sessionAge = 3 * 24 * 60 * 60
 const courseLengths = { basics: 8, risk: 6, psychology: 5 }
-const securityHeaders = { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin' }
+const securityHeaders = responseSecurityHeaders
 const json = (res, status, data, headers = {}) => {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...securityHeaders, ...headers })
   res.end(JSON.stringify(data))
@@ -54,9 +56,7 @@ const cookies = req => Object.fromEntries((req.headers.cookie || '').split(';').
 }))
 const digest = tokenHash
 const setCookie = (req, token, age) => {
-  const requestHost = String(req.headers.host || '').split(':')[0]
-  const local = ['localhost', '127.0.0.1'].includes(requestHost)
-  return 'tradersho_session=' + token + '; HttpOnly; SameSite=Strict; Path=/; Max-Age=' + age + (production && !local ? '; Secure' : '')
+  return 'tradersho_session=' + token + '; HttpOnly; SameSite=Strict; Path=/; Max-Age=' + age + (secureCookie(req) ? '; Secure' : '')
 }
 const clientAddress = req => {
   const direct = String(req.socket.remoteAddress || '')
@@ -81,9 +81,12 @@ const activePlan = async userId => {
   return rows[0]?.plan_code || 'free'
 }
 const publicUser = async user => {
-  const { rows } = await pool.query('SELECT course_id, completed_lessons FROM course_progress WHERE user_id = $1', [user.id])
-  const agent = await pool.query('SELECT 1 FROM support_agents WHERE user_id=$1', [user.id])
-  return { isAdmin:await isUserAdmin(user.id), isSupportAgent: agent.rowCount > 0, hasPassword:user.password_hash.startsWith('scrypt$')||user.password_hash.includes(':'), id: user.id, name: user.name, email: user.email, emailVerifiedAt:user.email_verified_at, plan: await activePlan(user.id), createdAt: user.created_at, progress: Object.fromEntries(rows.map(row => [row.course_id, row.completed_lessons])) }
+  const {rows:[access]}=await pool.query(`SELECT
+    EXISTS(SELECT 1 FROM user_admins WHERE user_id=$1) AS "isAdmin",
+    EXISTS(SELECT 1 FROM support_agents WHERE user_id=$1) AS "isSupportAgent",
+    COALESCE((SELECT plan_code FROM subscriptions WHERE user_id=$1 AND status='active' AND starts_at<=now() AND ends_at>now() ORDER BY ends_at DESC LIMIT 1),'free') AS plan,
+    COALESCE((SELECT jsonb_object_agg(course_id,completed_lessons) FROM course_progress WHERE user_id=$1),'{}'::jsonb) AS progress`,[user.id])
+  return { ...access, hasPassword:user.password_hash.startsWith('scrypt$')||user.password_hash.includes(':'), id: user.id, name: user.name, email: user.email, emailVerifiedAt:user.email_verified_at, createdAt: user.created_at }
 }
 const sessionUser = async req => {
   const token = cookies(req).tradersho_session
@@ -101,39 +104,59 @@ const createSession = async (req, userId) => {
   await insertSession(pool, token, userId)
   return setCookie(req, token, sessionAge)
 }
-const sameOrigin = req => {
-  if (!req.headers.origin) return true
-  try {
-    const origin = new URL(req.headers.origin)
-    const requestHost = String(req.headers['x-forwarded-host'] || req.headers.host || '')
-    if (['localhost', '127.0.0.1'].includes(origin.hostname) && ['localhost', '127.0.0.1'].includes(requestHost.split(':')[0]) && ['localhost', '127.0.0.1'].includes(String(req.headers.host || '').split(':')[0])) return true
-    return origin.host === requestHost && origin.protocol === 'https:'
-  } catch { return false }
-}
+const sameOrigin = allowedOrigin
 const mime = { '.pdf': 'application/pdf', '.zip': 'application/zip', '.txt': 'text/plain; charset=utf-8', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.woff': 'font/woff' }
-const staticFile = async (path, res) => {
+const staticFile = async (path, req, res) => {
+  if(!['GET','HEAD'].includes(req.method||'GET'))return json(res,405,{error:'این عملیات مجاز نیست.'},{Allow:'GET, HEAD'})
   const dist = join(root, 'dist')
   let file = join(dist, path === '/' ? 'index.html' : path)
   if (!file.startsWith(dist + '/') && file !== join(dist, 'index.html')) return fail(res, 403, 'مسیر نامعتبر است.')
   try { if (!(await stat(file)).isFile()) file = join(dist, 'index.html') } catch { file = join(dist, 'index.html') }
   try {
-    const content = await readFile(file)
-    res.writeHead(200, { 'Content-Type': mime[extname(file)] || 'application/octet-stream', 'Cache-Control': file.endsWith('index.html') ? 'no-cache' : 'public, max-age=86400', ...securityHeaders })
-    res.end(content)
-  } catch { fail(res, 404, 'اپلیکیشن را ابتدا build کنید یا از npm run dev استفاده کنید.') }
+    const info=await stat(file),etag=`W/"${info.size.toString(16)}-${Math.floor(info.mtimeMs).toString(16)}"`
+    const immutable=/\/assets\/[^/]+-[\w-]{8,}\.(?:js|css|woff2?)$/.test(file)
+    const headers={...securityHeaders,'Content-Type':mime[extname(file)]||'application/octet-stream',ETag:etag,
+      'Cache-Control':file.endsWith('index.html')?'no-cache':immutable?'public, max-age=31536000, immutable':'public, max-age=86400'}
+    if(String(req.headers['if-none-match']||'').split(',').some(value=>value.trim()===etag||value.trim()==='*')){res.writeHead(304,headers);res.end();return}
+    const ranged=['.zip','.pdf'].includes(extname(file))
+    if(ranged)headers['Accept-Ranges']='bytes'
+    let start=0,end=info.size-1,status=200
+    const range=req.headers.range
+    if(ranged&&range&&!req.headers['if-range']){
+      const match=/^bytes=(\d*)-(\d*)$/.exec(range)
+      if(match&&(match[1]||match[2])){
+        if(match[1]){start=Number(match[1]);if(match[2])end=Math.min(end,Number(match[2]))}
+        else start=Math.max(0,info.size-Number(match[2]))
+        if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start>end||start>=info.size){res.writeHead(416,{...headers,'Content-Range':`bytes */${info.size}`});res.end();return}
+        status=206;headers['Content-Range']=`bytes ${start}-${end}/${info.size}`
+      }
+    }
+    headers['Content-Length']=Math.max(0,end-start+1)
+    res.writeHead(status,headers)
+    if(req.method==='HEAD'||!info.size){res.end();return}
+    await pipeline(createReadStream(file,{start,end}),res)
+  } catch {
+    if(res.headersSent){res.destroy();return}
+    fail(res,404,'فایل در دسترس نیست.')
+  }
 }
 
 const server = http.createServer(async (req, res) => {
   try {
     const path = new URL(req.url, 'http://' + (req.headers.host || 'localhost')).pathname
-    if (!path.startsWith('/api/')) return await staticFile(path, res)
+    if (!path.startsWith('/api/')) return await staticFile(path, req, res)
     const method = req.method || 'GET'
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && (req.headers['sec-fetch-site'] === 'cross-site' || !sameOrigin(req))) return fail(res, 403, 'مبدأ درخواست مجاز نیست.')
     if (path === '/api/health' && method === 'GET') {
       await pool.query('SELECT 1')
       return json(res, 200, { ok: true, database: 'ready', version: process.env.APP_VERSION || 'development' })
     }
-    if(path==='/api/auth/captcha'&&method==='GET'){if(!captchaEnabled())return json(res,200,{enabled:false});if(await rateLimit(req,res,'captcha-ip','',100))return;return json(res,200,await issueCaptcha())}
+    if(path==='/api/auth/captcha'&&method==='GET'){
+      if(!captchaEnabled())return json(res,200,{enabled:false})
+      if(await rateLimit(req,res,'captcha-ip','',60))return
+      const previous=cookies(req).tradersho_captcha,binding=browserBindingHash(previous)?previous:randomBytes(32).toString('hex')
+      return json(res,200,await issueCaptcha(binding),{'Set-Cookie':'tradersho_captcha='+binding+'; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=900'+(secureCookie(req)?'; Secure':'')})
+    }
     if(await calendarIntegration({path,method,req,res,body,json,fail,rateLimit}))return
     if(path.startsWith('/api/integrations/news'))return fail(res,410,'بخش خبرها حذف شده است.')
     if(await recoveryRoute({path,method,req,res,body,json,fail,rateLimit}))return
@@ -151,12 +174,12 @@ const server = http.createServer(async (req, res) => {
       const email = typeof input.email==='string' ? input.email.trim().toLowerCase() : ''
       const password = input.password
       if (email.length>160 || !mailAddress(email)) return fail(res, 400, 'ایمیل معتبر نیست.')
-      if (await rateLimit(req, res, 'signup-ip', '', 50)) return
+      if (await rateLimit(req, res, 'signup-ip', '', 15)) return
       if (await rateLimit(req, res, 'signup', email, 10)) return
       const invalidPassword = passwordError(password, { email, name })
       if (invalidPassword) return fail(res, 400, invalidPassword)
       if (password !== input.confirmPassword) return fail(res, 400, 'تکرار رمز عبور با رمز اصلی یکسان نیست.')
-      if(!await verifyCaptcha(input.captchaId,input.captchaAnswer))return fail(res,400,'کد امنیتی نادرست یا منقضی است. کد جدید را وارد کنید.')
+      if(!await verifyCaptcha(input.captchaId,input.captchaAnswer,cookies(req).tradersho_captcha))return fail(res,400,'کد امنیتی نادرست یا منقضی است. کد جدید را وارد کنید.')
       const passwordHash=await hashPassword(password)
       if(verificationEnabled())return json(res,202,await startRegistration({name,email,passwordHash}))
       const id = randomUUID()
@@ -172,9 +195,9 @@ const server = http.createServer(async (req, res) => {
       const input = await body(req)
       const email = String(input.email || '').trim().toLowerCase()
       if (email.length > 160 || typeof input.password !== 'string' || input.password.length > 128) return fail(res, 401, 'ایمیل یا رمز عبور نادرست است.')
-      if (await rateLimit(req, res, 'login-ip', '', 100)) return
+      if (await rateLimit(req, res, 'login-ip', '', 30)) return
       if (await rateLimit(req, res, 'login', email, 10)) return
-      if(!await verifyCaptcha(input.captchaId,input.captchaAnswer))return fail(res,400,'کد امنیتی نادرست یا منقضی است. کد جدید را وارد کنید.')
+      if(!await verifyCaptcha(input.captchaId,input.captchaAnswer,cookies(req).tradersho_captcha))return fail(res,400,'کد امنیتی نادرست یا منقضی است. کد جدید را وارد کنید.')
       const { rows } = await pool.query('SELECT * FROM users WHERE lower(email) = $1', [email])
       const user = rows[0]
       if (!user || user.account_status!=='active' || !await verifyPassword(input.password, user.password_hash)) return fail(res, 401, 'ایمیل یا رمز عبور نادرست است.')
@@ -293,10 +316,16 @@ const server = http.createServer(async (req, res) => {
     return fail(res, 404, 'مسیر پیدا نشد.')
   } catch (error) {
     if (error.status && error.status < 500) return fail(res, error.status, error.message)
+    if (error.status===503) return json(res,503,{error:'سرور موقتاً مشغول یا در دسترس نیست؛ کمی بعد دوباره تلاش کنید.'},{'Retry-After':'5'})
     console.error(error)
     return fail(res, 500, 'خطای داخلی سرور رخ داد.')
   }
 })
+server.headersTimeout=15_000
+server.requestTimeout=30_000
+server.keepAliveTimeout=5_000
+server.maxRequestsPerSocket=1000
+server.maxConnections=256
 
 if(!mailConfig()&&verificationEnabled())throw Error('Email verification requires SMTP')
 await migrate()

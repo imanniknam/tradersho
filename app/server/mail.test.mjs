@@ -23,6 +23,7 @@ test('queued content is encrypted, authenticated and bound to its job',()=>{
   assert.throws(()=>openMail(sealed,key,'job-b'));assert.throws(()=>openMail(sealed,Buffer.alloc(32),'job-a'))
   const tampered=Buffer.from(sealed,'base64');tampered[tampered.length-1]^=1
   assert.throws(()=>openMail(tampered.toString('base64'),key,'job-a'))
+  for(const length of [0,12,16,27,28])assert.throws(()=>openMail(Buffer.from(sealed,'base64').subarray(0,length).toString('base64'),key,'job-a'))
 })
 test('retry stops on permanent rejection and max attempts; ticket email contains only panel link',()=>{
   assert.equal(retryMail({responseCode:451},1),true)

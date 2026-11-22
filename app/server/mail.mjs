@@ -12,13 +12,15 @@ export function mailConfig(env=process.env) {
   return {host:env.SMTP_HOST,port,user:env.SMTP_USER,password:env.SMTP_PASSWORD,from:env.MAIL_FROM,replyTo:env.MAIL_REPLY_TO,key:Buffer.from(env.MAIL_ENCRYPTION_KEY,'hex'),base,interval}
 }
 export function sealMail(payload,key,id){
-  const iv=randomBytes(12), cipher=createCipheriv('aes-256-gcm',key,iv)
+  const iv=randomBytes(12), cipher=createCipheriv('aes-256-gcm',key,iv,{authTagLength:16})
   cipher.setAAD(Buffer.from(id))
   const data=Buffer.concat([cipher.update(JSON.stringify(payload),'utf8'),cipher.final()])
   return Buffer.concat([iv,cipher.getAuthTag(),data]).toString('base64')
 }
 export function openMail(value,key,id){
-  const b=Buffer.from(value,'base64'),cipher=createDecipheriv('aes-256-gcm',key,b.subarray(0,12))
+  const b=Buffer.from(value,'base64')
+  if(b.length<=28)throw Error('Invalid encrypted mail')
+  const cipher=createDecipheriv('aes-256-gcm',key,b.subarray(0,12),{authTagLength:16})
   cipher.setAAD(Buffer.from(id));cipher.setAuthTag(b.subarray(12,28))
   return JSON.parse(Buffer.concat([cipher.update(b.subarray(28)),cipher.final()]).toString('utf8'))
 }

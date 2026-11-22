@@ -1,8 +1,9 @@
 import {lazy,Suspense,useEffect,useRef,useState} from 'react'
 import type {ReactNode} from 'react'
 import MarketDesk from './MarketDesk'
+import ComingSoon from './ComingSoon'
 import {Link,useParams} from 'react-router-dom'
-import {ArrowLeft,SlidersHorizontal,ChartNoAxesCombined,Clock3,RefreshCw,CalendarDays,ShieldCheck,BookOpen,Compass,Workflow,LayoutGrid} from 'lucide-react'
+import {ArrowLeft,SlidersHorizontal,ChartNoAxesCombined,RefreshCw,CalendarDays,ShieldCheck,BookOpen,Compass,Workflow,LayoutGrid} from 'lucide-react'
 import {api} from './api'
 import TradingViewChart from './TradingViewChart'
 import RiskWidget from './risk/RiskWidget'
@@ -26,7 +27,6 @@ const sections=[
  {id:'scenario',title:'سناریو',icon:Workflow,soon:true},
  {id:'widgets',title:'ویجت‌ها',icon:LayoutGrid,soon:true},
 ]
-export function ComingSoon({title,description}:{title:string;description?:string}){return <section className="surface coming-soon"><div className="coming-symbol"><Clock3 size={32}/></div><span className="badge badge-muted">به‌زودی</span><h2>{title} در حال آماده‌سازی است</h2><p>{description||'این بخش پس از تکمیل و بررسی در دسترس قرار می‌گیرد.'}</p><div><Link className="button primary" to="/panel/tools">بازگشت به نمای بازار <ArrowLeft size={17}/></Link><Link className="button secondary" to="/panel">بازگشت به داشبورد</Link></div></section>}
 export function ToolDetail(){const {toolId}=useParams();return <ToolWorkspace selected={toolId||'chart'}/>}
 function ToolWorkspace({selected}:{selected:string}){
  const heading=useRef<HTMLElement>(null)

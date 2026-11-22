@@ -1,7 +1,9 @@
 import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
+import {workLimiter} from './security.mjs'
 
 const scrypt = promisify(scryptCallback)
+const passwordWork=workLimiter()
 const params = { N: 1 << 17, r: 8, p: 1, maxmem: 256 * 1024 * 1024 }
 const common = new Set([
   'password', 'password123', 'password1234', 'password123456', '123456789012345',
@@ -28,7 +30,7 @@ export function passwordError(password, { email = '', name = '' } = {}) {
 
 export async function hashPassword(password) {
   const salt = randomBytes(16).toString('hex')
-  const result = await scrypt(normalize(password), Buffer.from(salt, 'hex'), 64, params)
+  const result = await passwordWork(()=>scrypt(normalize(password), Buffer.from(salt, 'hex'), 64, params))
   return `scrypt$${params.N}$${params.r}$${params.p}$${salt}$${result.toString('hex')}`
 }
 
@@ -39,14 +41,14 @@ export async function verifyPassword(password, stored) {
       const [, n, r, p, salt, hex] = parts
       const expected = Buffer.from(hex, 'hex')
       if (expected.length !== 64) return false
-      const result = await scrypt(normalize(password), Buffer.from(salt, 'hex'), 64, { N: Number(n), r: Number(r), p: Number(p), maxmem: 256 * 1024 * 1024 })
+      const result = await passwordWork(()=>scrypt(normalize(password), Buffer.from(salt, 'hex'), 64, { N: Number(n), r: Number(r), p: Number(p), maxmem: 256 * 1024 * 1024 }))
       return timingSafeEqual(result, expected)
     }
     // Accounts created before this migration used Node's default scrypt cost.
     const [salt, hex] = stored.split(':')
     const expected = Buffer.from(hex, 'hex')
     if (expected.length !== 64) return false
-    const result = await scrypt(password, salt, 64)
+    const result = await passwordWork(()=>scrypt(password, salt, 64))
     return timingSafeEqual(result, expected)
-  } catch { return false }
+  } catch (error) { if(error.status===503)throw error;return false }
 }
