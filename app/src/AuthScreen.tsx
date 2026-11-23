@@ -154,7 +154,7 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
         {<CaptchaField key={mode} revision={captchaRevision} disabled={busy} onChange={updateCaptcha} onReady={setCaptchaReady}/>}
         {error && <div ref={errorRef} tabIndex={-1} className="form-error" role="alert"><Info size={17}/>{error}</div>}
         <button type="submit" className="button primary auth-submit" disabled={busy||!captchaReady}>{busy ? 'لطفاً صبر کنید…' : mode === 'login' ? 'ورود به پنل' : 'ایجاد حساب'}<ArrowLeft size={18}/></button>
-      </form>{mode==='login'&&<Link className="forgot-link" to="/forgot-password">رمز عبور را فراموش کرده‌اید؟</Link>}</div><SocialLogin/><div className="auth-note"><ShieldCheck size={18}/><span>برای امنیت حساب، از رمز عبور منحصربه‌فرد استفاده کنید.</span></div></>}
+      </form>{mode==='login'&&<Link className="forgot-link" to="/forgot-password">رمز عبور را فراموش کرده‌اید؟</Link>}</div><SocialLogin mode={mode}/><div className="auth-note"><ShieldCheck size={18}/><span>برای امنیت حساب، از رمز عبور منحصربه‌فرد استفاده کنید.</span></div></>}
     </div><footer className="auth-side-bottom"><Link to="/privacy">حریم خصوصی</Link><span>© ۲۰۲۶ تریدر شو</span></footer></section>
   </main>
 }

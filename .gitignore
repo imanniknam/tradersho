@@ -22,3 +22,5 @@ dist/
 # Brand-owned deployment fonts; public redistribution license not supplied
 /app/public/fonts/*.woff
 /app/public/fonts/*.woff2
+
+__pycache__/

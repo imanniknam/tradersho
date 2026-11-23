@@ -48,6 +48,7 @@ jobs:
       - run: node --test ../deploy/owner-mail/security.test.mjs
       - run: python3 -m unittest discover -s scripts -p "test_calendar.py"
       - run: npm run build
+      - run: python3 -m unittest discover -s ../deploy/vps -p "test_google_jwks.py"
       - name: Database and API integration
         run: |
           node server/index.mjs > /tmp/tradersho-ci-server.log 2>&1 &

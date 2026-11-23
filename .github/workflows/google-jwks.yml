@@ -1,0 +1,42 @@
+name: Refresh Google public signing keys
+on:
+  schedule:
+    - cron: '25 * * * *'
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['Test and deploy VPS']
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: google-public-signing-keys
+  cancel-in-progress: false
+jobs:
+  google-keys:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fetch official Google public signing keys
+        run: python3 deploy/vps/google-jwks.py fetch /tmp/tradersho-google-jwks.json
+      - name: Refresh private server key cache over the existing deployment identity
+        env:
+          VPS_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          VPS_HOST: ${{ vars.VPS_HOST }}
+          VPS_PORT: ${{ vars.VPS_PORT }}
+        run: |
+          test -n "$VPS_KEY" && test -n "$VPS_KNOWN_HOSTS" && test -n "$VPS_HOST"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$VPS_KEY" > ~/.ssh/tradersho-google-keys
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/tradersho-google-keys ~/.ssh/known_hosts
+          ssh -i ~/.ssh/tradersho-google-keys -p "${VPS_PORT:-22}" -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 "root@$VPS_HOST" google-jwks < /tmp/tradersho-google-jwks.json
+      - name: Remove temporary deployment identity
+        if: always()
+        run: rm -f ~/.ssh/tradersho-google-keys

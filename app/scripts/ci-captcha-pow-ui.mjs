@@ -22,6 +22,7 @@ try{
   assert.equal(await page.locator('.captcha-row input').count(),0)
   assert.equal(await page.getByRole('button',{name:mode==='login'?'ورود به پنل':'ایجاد حساب',exact:true}).isDisabled(),true)
   assert.equal(await page.locator('.social-login-button').count(),2)
+  for(const provider of ['گوگل','تلگرام'])assert.equal(await page.getByRole('link',{name:(mode==='signup'?'ثبت‌نام':'ورود')+' با '+provider,exact:true}).count(),1)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
   if(width>=1001)assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),'Desktop '+mode+' fits at 720px with both Google and Telegram')
   await page.screenshot({path:`qa/captcha-pow/${width}-${theme}-${mode}.png`,fullPage:true})

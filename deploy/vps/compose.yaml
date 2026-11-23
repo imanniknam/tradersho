@@ -39,6 +39,7 @@ services:
       RECOVERY_EMAIL_URL: ${RECOVERY_EMAIL_URL:-}
       RECOVERY_EMAIL_SECRET: ${RECOVERY_EMAIL_SECRET:-}
       SIGNUP_EMAIL_VERIFICATION: ${SIGNUP_EMAIL_VERIFICATION:-1}
+      GOOGLE_JWKS_FILE: /run/tradersho-google-jwks/jwks.json
       GOOGLE_OIDC_CLIENT_ID: ${GOOGLE_OIDC_CLIENT_ID:-}
       GOOGLE_OIDC_CLIENT_SECRET: ${GOOGLE_OIDC_CLIENT_SECRET:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
@@ -58,6 +59,7 @@ services:
       db:
         condition: service_healthy
     volumes:
+      - ${DEPLOY_ROOT:-/opt/tradersho}/google-jwks:/run/tradersho-google-jwks:ro
       - ${DEPLOY_ROOT:-/opt/tradersho}/brand-fonts:/app/dist/fonts:ro
     ports:
       - 127.0.0.1:8080:3001

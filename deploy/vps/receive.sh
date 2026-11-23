@@ -2,6 +2,10 @@
 # Installed separately by the operator; forced SSH command for the CI key.
 set -Eeuo pipefail
 umask 077
+# This narrow operation accepts public signing keys only; no paths or shell arguments.
+if [[ ${SSH_ORIGINAL_COMMAND:-} == google-jwks ]]; then
+    exec timeout 30s python3 /opt/tradersho/google-jwks.py receive
+fi
 [[ ${SSH_ORIGINAL_COMMAND:-} =~ ^deploy\ ([a-f0-9]{40})$ ]] || { echo 'Only deploy <full SHA> is allowed.' >&2; exit 64; }
 sha=${BASH_REMATCH[1]}
 exec 8>/opt/tradersho/receive.lock

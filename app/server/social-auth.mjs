@@ -1,3 +1,4 @@
+import {createGoogleKeyResolver} from './google-jwks.mjs'
 import {verifyTelegramWidget,telegramWidgetPage} from './telegram-widget.mjs'
 import {responseSecurityHeaders} from './security.mjs'
 import {createHash,randomBytes,randomUUID} from 'node:crypto'
@@ -17,7 +18,7 @@ const providers={
     jwks:'https://oauth.telegram.org/.well-known/jwks.json',scope:'openid profile',basic:true,
   },
 }
-const keys=Object.fromEntries(Object.entries(providers).map(([name,provider])=>[name,createRemoteJWKSet(new URL(provider.jwks))]))
+const keys=Object.fromEntries(Object.entries(providers).map(([name,provider])=>[name,name==='google'?createGoogleKeyResolver():createRemoteJWKSet(new URL(provider.jwks))]))
 const random=()=>randomBytes(32).toString('base64url')
 const validTicket=value=>typeof value==='string'&&/^[\w-]{43}$/.test(value)
 const errorRedirect='/auth?social=failed'
