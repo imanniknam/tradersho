@@ -57,6 +57,7 @@ jobs:
           done
           node scripts/ci-smoke.mjs
           node scripts/ci-security.mjs
+          node scripts/ci-captcha-pow.mjs
           node scripts/ci-calendar.mjs
           node scripts/ci-mail.mjs
           node scripts/ci-signup-verification.mjs
@@ -65,6 +66,7 @@ jobs:
           node scripts/ci-admin-users.mjs
       - name: Desktop and mobile browser checks
         run: |
+          CHROME_BIN="$(command -v google-chrome)" node scripts/ci-captcha-pow-ui.mjs
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-admin-users-ui.mjs
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-ui.mjs
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-risk-ui.mjs

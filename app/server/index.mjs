@@ -179,7 +179,7 @@ const server = http.createServer(async (req, res) => {
       const invalidPassword = passwordError(password, { email, name })
       if (invalidPassword) return fail(res, 400, invalidPassword)
       if (password !== input.confirmPassword) return fail(res, 400, 'تکرار رمز عبور با رمز اصلی یکسان نیست.')
-      if(!await verifyCaptcha(input.captchaId,input.captchaAnswer,cookies(req).tradersho_captcha))return fail(res,400,'کد امنیتی نادرست یا منقضی است. کد جدید را وارد کنید.')
+      if(!await verifyCaptcha(input.captchaId,input.captchaAnswer,cookies(req).tradersho_captcha))return fail(res,400,'بررسی امنیتی نامعتبر یا منقضی شده است. دوباره انجام دهید.')
       const passwordHash=await hashPassword(password)
       if(verificationEnabled())return json(res,202,await startRegistration({name,email,passwordHash}))
       const id = randomUUID()
@@ -197,7 +197,7 @@ const server = http.createServer(async (req, res) => {
       if (email.length > 160 || typeof input.password !== 'string' || input.password.length > 128) return fail(res, 401, 'ایمیل یا رمز عبور نادرست است.')
       if (await rateLimit(req, res, 'login-ip', '', 30)) return
       if (await rateLimit(req, res, 'login', email, 10)) return
-      if(!await verifyCaptcha(input.captchaId,input.captchaAnswer,cookies(req).tradersho_captcha))return fail(res,400,'کد امنیتی نادرست یا منقضی است. کد جدید را وارد کنید.')
+      if(!await verifyCaptcha(input.captchaId,input.captchaAnswer,cookies(req).tradersho_captcha))return fail(res,400,'بررسی امنیتی نامعتبر یا منقضی شده است. دوباره انجام دهید.')
       const { rows } = await pool.query('SELECT * FROM users WHERE lower(email) = $1', [email])
       const user = rows[0]
       if (!user || user.account_status!=='active' || !await verifyPassword(input.password, user.password_hash)) return fail(res, 401, 'ایمیل یا رمز عبور نادرست است.')

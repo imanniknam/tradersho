@@ -30,7 +30,7 @@ services:
       NODE_ENV: production
       TRUST_PROXY: '1'
       CALENDAR_INGEST_TOKEN: ${CALENDAR_INGEST_TOKEN:-}
-      CAPTCHA_MODE: internal
+      CAPTCHA_MODE: pow
       CAPTCHA_SECRET: ${CAPTCHA_SECRET:?Set CAPTCHA_SECRET}
       HOST: 0.0.0.0
       PORT: '3001'

@@ -94,3 +94,10 @@
 .account-email .muted{font-size:12px;line-height:1.9}
 .account-verified-email{display:grid;gap:6px;margin-top:20px}
 .account-verified-email small{display:flex;gap:5px;align-items:center;color:var(--success)}
+
+/* Self-hosted nonnumeric verification inherits the form palette in both themes. */
+.captcha-proof{min-width:0;--altcha-max-width:100%;--altcha-color-base:var(--surface);--altcha-color-base-content:var(--ink);--altcha-color-primary:var(--accent);--altcha-color-primary-content:#fff;--altcha-border-color:var(--line);--altcha-border-radius:10px;--altcha-padding:12px}
+.captcha-proof altcha-widget{display:block;width:100%;font:inherit;direction:rtl}
+.captcha-proof[inert]{opacity:.7}
+
+.auth-form altcha-widget input[type=checkbox]{width:22px;min-width:22px;height:22px;min-height:22px;padding:0}.captcha-proof svg{pointer-events:none}

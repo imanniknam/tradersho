@@ -27,6 +27,8 @@
   "dependencies": {
     "@fontsource/vazirmatn": "^5.2.8",
     "@gsap/react": "^2.1.2",
+    "altcha": "3.7.0",
+    "altcha-lib": "2.10.0",
     "gsap": "^3.13.0",
     "jose": "^6.2.18",
     "lightweight-charts": "^5.2.1",

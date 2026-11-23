@@ -33,3 +33,18 @@ test('captcha raster has six digits and a fixed, small PNG without text chunks',
   const chunks=[];for(let offset=8;offset<png.length;){chunks.push(png.toString('ascii',offset+4,offset+8));offset+=png.readUInt32BE(offset)+12}assert.deepEqual(chunks,['IHDR','IDAT','IEND'])
  }
 })
+
+test('nonnumeric proof is signed, bounded, expires and rejects forged KDF parameters',async()=>{
+ const {makePowChallenge,verifyPowPayload}=await import('./captcha-pow.mjs')
+ const {solveChallenge}=await import('altcha-lib'),{deriveKey}=await import('altcha-lib/algorithms/pbkdf2')
+ const secret='unit-only-captcha-secret-not-production',id='unit-proof'
+ const challenge=await makePowChallenge(id,secret),solution=await solveChallenge({challenge,deriveKey})
+ const encode=value=>Buffer.from(JSON.stringify(value)).toString('base64'),valid={challenge,solution}
+ assert.equal(await verifyPowPayload(encode(valid),id,challenge.signature,secret),true)
+ assert.equal(await verifyPowPayload(encode(valid),'other',challenge.signature,secret),false)
+ assert.equal(await verifyPowPayload(encode(valid),id,challenge.signature,'wrong-secret'),false)
+ for(const changed of [{cost:1},{cost:1e12},{algorithm:'SCRYPT'},{keySignature:null},{expiresAt:1}]){
+  assert.equal(await verifyPowPayload(encode({...valid,challenge:{...challenge,parameters:{...challenge.parameters,...changed}}}),id,challenge.signature,secret),false)
+ }
+ for(const answer of ['','{}','0'.repeat(8193),encode({test:true}),encode({...valid,solution:{counter:0,derivedKey:'0'.repeat(64)}})])assert.equal(await verifyPowPayload(answer,id,challenge.signature,secret),false)
+})
