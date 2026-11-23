@@ -21,7 +21,7 @@
 .calendar-event-time .event-time{font-size:12px;font-weight:700;margin:0;color:var(--ink)}
 .calendar-event-country .event-country{display:inline-flex;gap:6px;align-items:center;white-space:nowrap;margin:0}
 .calendar-event-country .country-name{font-size:11px}
-.event-titles{min-width:0}.event-titles a{font-size:13px;line-height:1.8;overflow-wrap:anywhere}.event-titles .event-original{font-size:11px;line-height:1.7;margin-top:2px;max-width:none}
+.event-titles{min-width:0}.event-titles .event-title-text{font-size:13px;line-height:1.8;overflow-wrap:anywhere}.event-titles .event-original{font-size:11px;line-height:1.7;margin-top:2px;max-width:none}
 .calendar-event-meta .event-impact{margin-bottom:2px}.calendar-event-meta .event-status{font-size:10px;line-height:1.6;max-width:150px}
 .native-calendar-table thead th{padding:12px}
 @media(min-width:1800px){
@@ -42,10 +42,10 @@
  .native-calendar-table tbody td[data-label]{grid-column:auto;grid-row:4}
  .calendar-event-time time{flex-direction:column;gap:2px;align-items:flex-start;white-space:normal}
  .calendar-event-country .event-country{flex-wrap:wrap;justify-content:flex-end;white-space:normal;gap:5px}
- .event-titles a{font-size:13px}.event-titles .event-original{font-size:11px;margin-top:4px}
+ .event-titles .event-title-text{font-size:13px}.event-titles .event-original{font-size:11px;margin-top:4px}
  .calendar-event-meta .event-impact{margin-inline-end:10px}.native-calendar-table tbody tr:hover{background:transparent}
 }
-@media(min-width:2400px){.event-titles a{font-size:15px}.event-titles .event-original,.native-calendar-table tbody td[data-label]{font-size:14px}.calendar-event-country .country-name,.calendar-event-time time{font-size:12px}.calendar-event-meta .event-status{font-size:11px}.country-flag{font-size:20px}}
+@media(min-width:2400px){.event-titles .event-title-text{font-size:15px}.event-titles .event-original,.native-calendar-table tbody td[data-label]{font-size:14px}.calendar-event-country .country-name,.calendar-event-time time{font-size:12px}.calendar-event-meta .event-status{font-size:11px}.country-flag{font-size:20px}}
 
 /* Consistent two-line hierarchy at every desktop size. */
 .calendar-filters select,.calendar-filters input[type=date]{text-align:center;text-align-last:center}
@@ -147,3 +147,5 @@
 .currency-picker-compact .currency-choices{grid-template-columns:repeat(3,minmax(0,1fr))}
 .native-calendar-table tbody tr.calendar-day-alternate{background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
 @media(max-width:600px){.calendar-native .currency-choices{grid-template-columns:repeat(3,minmax(0,1fr))}.calendar-native>.calendar-sources{padding-inline:16px}}
+
+.calendar-provider-credit{font-size:11px;color:var(--secondary);margin:12px 0}.calendar-provider-credit a{color:var(--accent);text-underline-offset:3px}

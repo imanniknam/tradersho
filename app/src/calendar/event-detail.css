@@ -1,8 +1,8 @@
-.calendar-preview-card button.calendar-preview-event{width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);font:inherit;text-align:right;cursor:pointer}
-/* One emphasized event, shared by pointer, keyboard and the details dialog. */
-.calendar-preview-card .calendar-preview button.calendar-preview-event{background:transparent}
-.calendar-preview-card .calendar-preview button.calendar-preview-event.is-emphasized{background:var(--tint)}
-.calendar-preview-card button.calendar-preview-event:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.calendar-preview-card .calendar-preview-event{width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);font:inherit;text-align:right;cursor:default}
+/* One emphasized event, shared by pointer and keyboard focus. */
+.calendar-preview-card .calendar-preview .calendar-preview-event{background:transparent}
+.calendar-preview-card .calendar-preview .calendar-preview-event.is-emphasized{background:var(--tint)}
+.calendar-preview-card .calendar-preview-event:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
 .event-detail-dialog{position:fixed;inset:auto;margin:0;padding:0;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 18px 60px #061a3238;overflow:auto;overscroll-behavior:contain;font-family:inherit;direction:rtl}
 .event-detail-dialog::backdrop{background:#061a320d}
 .event-detail-dialog>header{position:sticky;top:0;z-index:1;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700}
@@ -23,7 +23,7 @@
 .event-detail-values .outcome-positive dd{color:var(--success)}.event-detail-values .outcome-negative dd{color:var(--danger)}
 .event-detail-revised{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:12px;color:var(--secondary);padding:8px 0}
 .event-detail-note{font-size:11px;line-height:1.9;margin:8px 0;color:var(--secondary)}
-.event-detail-refresh{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:10px;line-height:1.8;color:var(--secondary);min-height:25px}.event-detail-refresh button{display:inline-flex;align-items:center;gap:5px;background:transparent;color:var(--accent);border:0;font:inherit;font-size:11px;padding:8px;cursor:pointer}
+.event-detail-refresh{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:10px;line-height:1.8;color:var(--secondary);min-height:25px}.event-detail-refresh button{display:inline-flex;align-items:center;gap:5px;background:transparent;color:var(--accent);border:0;font:inherit;font-size:11px;padding:8px;cursor:default}
 .event-detail-dialog>footer{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 20px}
 .event-detail-dialog>footer a{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:12px;min-height:32px}.event-detail-dialog>footer a:last-child{margin-inline-start:auto}
 @media(max-width:600px){.event-detail-dialog{border-radius:18px}.event-detail-content{padding:14px 16px 10px}.event-detail-dialog h3{font-size:16px}.event-detail-values dd{font-size:16px}.event-detail-dialog>footer{padding:10px 16px}.event-detail-dialog>footer a{min-height:36px}}

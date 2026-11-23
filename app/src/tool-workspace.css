@@ -144,3 +144,18 @@
 .analysis-risk .risk-workspace .risk-intro{top:calc(var(--risk-heading-height,80px) + 10px)}
 .tools-shell .main-scroll:has(.analysis-risk){scroll-padding-block-start:calc(var(--risk-heading-height,80px) + 100px)}
 @media(max-width:900px){.analysis-risk .risk-workspace .risk-intro{position:static}}
+
+/* November feedback: only the risk title stays pinned; the caption scrolls normally. */
+.analysis-risk .analysis-heading{margin-bottom:0}
+.analysis-risk-caption{max-width:1880px;width:100%;margin:8px auto 18px;padding-inline:17px;font-size:13px;line-height:1.8;color:var(--secondary)}
+@media(min-width:1500px){.analysis-risk-caption{width:calc(100% - clamp(32px,5vw,160px))}}
+@media(min-width:901px){
+ .tools-shell .topbar{padding-inline:18px}
+ .analysis-top-brand{gap:14px}
+ .analysis-top-brand>.brand{display:flex;align-items:center;justify-content:center;flex:0 0 86px;width:86px;height:48px}
+ .analysis-top-brand .brand-logo{display:block;width:78px;height:auto;max-height:44px;object-fit:contain}
+ .analysis-top-brand strong{display:flex;align-items:center;min-height:32px;padding-inline-start:14px}
+ .tools-shell .analysis-center>.analysis-rail{bottom:auto;gap:4px;box-shadow:0 6px 24px #00000008}
+ .tools-shell .analysis-center>.analysis-rail a{flex:0 0 76px;border:1px solid transparent;border-radius:10px}
+ .tools-shell .analysis-center>.analysis-rail a.selected{border-color:color-mix(in srgb,var(--accent) 32%,var(--line))}
+}

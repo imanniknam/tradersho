@@ -19,7 +19,7 @@ try{
   assert.equal(await page.locator('.analysis-rail [aria-current=page]').innerText(),'پنل مدیریت ریسک');assert.equal(await page.locator('.risk-table-scroll tbody tr').count(),6)
   const heading=await page.locator('.analysis-risk .analysis-heading').evaluate(node=>{
    const bounds=node.getBoundingClientRect(),workspace=document.querySelector('.risk-workspace').getBoundingClientRect()
-   const title=node.querySelector('h1').getBoundingClientRect(),subtitle=node.querySelector('p').getBoundingClientRect()
+   const title=node.querySelector('h1').getBoundingClientRect(),subtitle=document.querySelector('.analysis-risk-caption span').getBoundingClientRect()
    return {leftGap:bounds.left-workspace.left,rightGap:bounds.right-workspace.right,
     textAlignment:title.right-subtitle.right,textSpacing:subtitle.top-title.bottom}
   })
