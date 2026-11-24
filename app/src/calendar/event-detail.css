@@ -1,4 +1,4 @@
-.calendar-preview-card .calendar-preview-event{width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);font:inherit;text-align:right;cursor:default}
+.calendar-preview-card .calendar-preview-event{width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);font:inherit;text-align:right;cursor:pointer}
 /* One emphasized event, shared by pointer and keyboard focus. */
 .calendar-preview-card .calendar-preview .calendar-preview-event{background:transparent}
 .calendar-preview-card .calendar-preview .calendar-preview-event.is-emphasized{background:var(--tint)}
