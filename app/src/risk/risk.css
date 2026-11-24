@@ -143,12 +143,11 @@
 .risk-results button:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:600px){.risk-workspace .risk-intro{padding:12px;gap:8px}.risk-intro p{font-size:11px}.risk-setup-tools{width:100%}.risk-setup-tools select{flex:1;min-width:90px;max-width:none;font-size:16px}.risk-setup-tools>label{font-size:11px}.risk-setup-tools .button{font-size:11px;padding-inline:10px}.risk-setup-dialog form{padding:16px}.risk-setup-dialog .risk-plan-fields{display:block}.risk-setup-dialog .risk-input-group+.risk-input-group{margin-top:12px}.risk-setup-dialog footer{bottom:-16px}.risk-capacity-trades.risk-bars{padding-inline:16px;grid-template-columns:repeat(auto-fill,minmax(min(100%,90px),1fr));gap:10px}}
 
-/* A readable planner with breathing room on large displays. */
-.risk-workspace,.analysis-risk .analysis-heading{max-width:1880px;width:100%;margin-inline:auto}
+/* Match the shared tool content edges; keep the inner typography bounded. */
+.risk-workspace,.analysis-risk .analysis-heading{max-width:none;width:100%;margin-inline:0}
 .analysis-risk .analysis-heading{flex-direction:column;align-items:flex-start;gap:5px}
 .risk-capacity-trades.risk-bars{grid-template-columns:repeat(auto-fit,minmax(min(100%,100px),1fr))}
 .risk-table-scroll{max-height:none;overflow-x:auto;overflow-y:visible}
-@media(min-width:1500px){.risk-workspace,.analysis-risk .analysis-heading{width:calc(100% - clamp(32px,5vw,160px))}}
 @media(min-width:1900px){
  .risk-workspace .risk-layout{grid-template-columns:360px minmax(0,1fr);gap:24px}
  .risk-workspace .risk-intro{padding:18px}

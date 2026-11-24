@@ -109,9 +109,11 @@ try{
    const label=link.querySelector('.analysis-tool-icon + span').getBoundingClientRect()
    return icon.bottom<=label.top+1&&Math.abs(icon.left+icon.width/2-label.left-label.width/2)<=2
   })),`Tool labels sit below their icons at ${width} ${theme}`)
+  const marketBounds=await page.locator('.analysis-body').boundingBox()
   const railBefore=await page.locator('.analysis-rail').boundingBox()
   const mountedChart=await page.locator('.tv-host iframe').elementHandle()
   await page.getByRole('navigation',{name:'ابزارهای تحلیل'}).getByRole('link',{name:'پنل مدیریت ریسک'}).click();await page.locator('.risk-stats').waitFor();assert.equal(await page.locator('.tv-host').isVisible(),false)
+  const riskBounds=await page.locator('.risk-workspace').boundingBox();assert.ok(Math.abs(riskBounds.x-marketBounds.x)<2&&Math.abs(riskBounds.width-marketBounds.width)<2,'Market and risk share the same content edges '+JSON.stringify({width,theme,marketBounds,riskBounds}))
   if(width>=1201){const railAfter=await page.locator('.analysis-rail').boundingBox();assert.ok(Math.abs(railBefore.height-railAfter.height)<2&&Math.abs(railBefore.width-railAfter.width)<2&&Math.abs(railBefore.x-railAfter.x)<2&&Math.abs(railBefore.y-railAfter.y)<2,'Tool rail must keep its size and position across tabs '+JSON.stringify({width,theme,railBefore,railAfter}))}
   await page.getByRole('navigation',{name:'ابزارهای تحلیل'}).getByRole('link',{name:'نمای بازار',exact:true}).click();await page.locator('.tv-host iframe').waitFor();assert.ok(await mountedChart.evaluate(n=>n===document.querySelector('.tv-host iframe')),'Tool navigation keeps the same chart iframe')
  }

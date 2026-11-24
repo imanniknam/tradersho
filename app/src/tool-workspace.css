@@ -145,8 +145,7 @@
 
 /* November feedback: only the risk title stays pinned; the caption scrolls normally. */
 .analysis-risk .analysis-heading{margin-bottom:0}
-.analysis-risk-caption{max-width:1880px;width:100%;margin:8px auto 18px;padding-inline:17px;font-size:13px;line-height:1.8;color:var(--secondary)}
-@media(min-width:1500px){.analysis-risk-caption{width:calc(100% - clamp(32px,5vw,160px))}}
+.analysis-risk-caption{max-width:none;width:100%;margin:8px 0 18px;padding-inline:17px;font-size:13px;line-height:1.8;color:var(--secondary)}
 @media(min-width:901px){
  .tools-shell .topbar{padding-inline:18px}
  .analysis-top-brand{gap:14px}
@@ -173,3 +172,14 @@
 @media(min-width:1900px){.tools-shell{--tool-rail-width:112px;--tool-rail-font:14px;--tool-rail-icon:40px;--tool-rail-min:101px}}
 @media(min-width:3000px){.tools-shell{--tool-rail-width:128px;--tool-rail-font:15px;--tool-rail-icon:42px;--tool-rail-min:104px}}
 @media(min-width:4500px){.tools-shell{--tool-rail-width:144px;--tool-rail-font:16px;--tool-rail-icon:44px;--tool-rail-min:110px}}
+
+/* All tool pages share the same outer limits and title inset. */
+.tools-shell .main-scroll>.main-inner:has(>.analysis-center){max-width:2200px}
+.analysis-center>.analysis-body{width:100%;max-width:none;margin-inline:0}
+.analysis-center>.analysis-body>.analysis-heading{width:100%;max-width:none;margin-inline:0;margin-block-start:0}
+.analysis-center:not(.analysis-risk):not(.analysis-expert)>.analysis-body>.analysis-heading{padding:13px 17px}
+@media(min-width:901px){
+ .tools-shell .main-scroll>.main-inner:has(>.analysis-center){padding-inline-start:calc(var(--tool-rail-width) + 32px);padding-inline-end:22px;padding-block:12px}
+}
+
+@media(max-width:900px){.analysis-center>.analysis-body>.analysis-heading{align-items:flex-start}}

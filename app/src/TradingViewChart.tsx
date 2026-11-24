@@ -30,7 +30,7 @@ export default function TradingViewChart({resizeHandles,visible=true}:{resizeHan
     const script=document.createElement('script')
     script.src='https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js'
     script.async=true
-    script.textContent=JSON.stringify({autosize:true,symbol:'OANDA:XAUUSD',interval:'60',timezone:'Etc/UTC',theme,style:'1',locale:'en',allow_symbol_change:true,hide_top_toolbar:false,hide_side_toolbar:false,withdateranges:true,calendar:false,save_image:true,support_host:'https://www.tradingview.com',backgroundColor:chartBackground[theme]})
+    script.textContent=JSON.stringify({autosize:true,symbol:'OANDA:XAUUSD',interval:'60',timezone:'Asia/Tehran',theme,style:'1',locale:'en',allow_symbol_change:true,hide_top_toolbar:false,hide_side_toolbar:false,withdateranges:true,calendar:false,save_image:true,support_host:'https://www.tradingview.com',backgroundColor:chartBackground[theme]})
     script.onerror=()=>{if(alive)setStatus('error')}
     // Mounting confirms embedding only; cross-origin feed availability stays with TradingView.
     const observer=new MutationObserver(()=>{
