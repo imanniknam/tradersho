@@ -157,3 +157,19 @@
  .tools-shell .analysis-center>.analysis-rail a{flex:0 0 76px;border:1px solid transparent;border-radius:10px}
  .tools-shell .analysis-center>.analysis-rail a.selected{border-color:color-mix(in srgb,var(--accent) 32%,var(--line))}
 }
+
+/* Restore the full-height tool rail and keep its labels readable on large monitors. */
+@media(min-width:901px){
+ .tools-shell{--tool-rail-width:100px;--tool-rail-font:13px;--tool-rail-icon:36px;--tool-rail-min:95px}
+ .tools-shell:has(.analysis-center) .main-inner{padding-inline-start:calc(var(--tool-rail-width) + 32px)}
+ .tools-shell .analysis-center>.analysis-rail{bottom:18px;width:var(--tool-rail-width);gap:3px}
+ .tools-shell .analysis-center>.analysis-rail a{flex:1 0 var(--tool-rail-min);min-height:var(--tool-rail-min);font-size:var(--tool-rail-font);gap:5px}
+ .tools-shell .analysis-center>.analysis-rail .analysis-tool-icon{width:var(--tool-rail-icon);height:var(--tool-rail-icon)}
+ .tools-shell .analysis-center>.analysis-rail .analysis-tool-icon svg{width:calc(var(--tool-rail-icon) - 12px);height:calc(var(--tool-rail-icon) - 12px)}
+ .tools-shell .analysis-center>.analysis-rail small{font-size:11px;line-height:1.4}
+ .analysis-top-brand>.brand{flex-basis:var(--tool-rail-width);width:var(--tool-rail-width)}
+ .analysis-top-brand .brand-logo{width:calc(var(--tool-rail-width) - 8px)}
+}
+@media(min-width:1900px){.tools-shell{--tool-rail-width:112px;--tool-rail-font:14px;--tool-rail-icon:40px;--tool-rail-min:101px}}
+@media(min-width:3000px){.tools-shell{--tool-rail-width:128px;--tool-rail-font:15px;--tool-rail-icon:42px;--tool-rail-min:104px}}
+@media(min-width:4500px){.tools-shell{--tool-rail-width:144px;--tool-rail-font:16px;--tool-rail-icon:44px;--tool-rail-min:110px}}
