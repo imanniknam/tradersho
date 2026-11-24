@@ -14,6 +14,7 @@ test('fresh trusted cache verifies real RSA JWTs during an upstream outage and n
  try{
   await writeFile(file,JSON.stringify(snapshot));const resolve=createGoogleKeyResolver({file:()=>file,now:()=>now,fetcher:async()=>new Response('unavailable',{status:403})})
   const token=await sign(pair.privateKey);assert.equal((await jwtVerify(token,resolve,options)).payload.sub,'qa-user')
+  await assert.rejects(resolve({alg:'RS256',kid:'new-key-during-outage'},{}),e=>e.code==='GOOGLE_KEYS_UNAVAILABLE')
   await assert.rejects(jwtVerify(token,resolve,{...options,audience:'other-client'}),e=>e.code==='ERR_JWT_CLAIM_VALIDATION_FAILED')
   const attacker=await generateKeyPair('RS256');await assert.rejects(jwtVerify(await sign(attacker.privateKey),resolve,options),e=>e.code==='ERR_JWS_SIGNATURE_VERIFICATION_FAILED')
   // Even the key already cached by jose cannot survive the snapshot's expiry.

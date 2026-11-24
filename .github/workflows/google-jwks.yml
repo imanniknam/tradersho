@@ -1,7 +1,7 @@
 name: Refresh Google public signing keys
 on:
   schedule:
-    - cron: '25 * * * *'
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
   workflow_run:
     workflows: ['Test and deploy VPS']

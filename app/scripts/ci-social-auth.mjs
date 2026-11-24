@@ -12,24 +12,25 @@ Object.assign(process.env,{APP_PUBLIC_URL:'https://panel.example.test',
  GOOGLE_OIDC_CLIENT_ID:'qa-google',GOOGLE_OIDC_CLIENT_SECRET:'qa-only',
  TELEGRAM_OIDC_CLIENT_ID:'qa-telegram',TELEGRAM_OIDC_CLIENT_SECRET:'qa-only'})
 const {pool,migrate}=await import('../server/db.mjs')
-const {socialRoute}=await import('../server/social-auth.mjs')
+let {socialRoute}=await import('../server/social-auth.mjs')
 await migrate()
 const {publicKey,privateKey}=await generateKeyPair('RS256')
 const jwk={...await exportJWK(publicKey),kid:'qa',alg:'RS256',use:'sig'}
 const keyDir=await mkdtemp(join(tmpdir(),'social-google-keys-'));process.env.GOOGLE_JWKS_FILE=join(keyDir,'jwks.json')
 await writeFile(process.env.GOOGLE_JWKS_FILE,JSON.stringify({source:'https://www.googleapis.com/oauth2/v3/certs',fetchedAt:Date.now(),expiresAt:Date.now()+3600000,keys:[jwk]}))
 const id=randomUUID(),session='a'.repeat(64),newSubject=randomUUID(),newEmail='google-signup-'+randomUUID()+'@example.test',sessionIds=new Set([id]);let registrationId
-let claims={}
+let claims={},googleKid='qa',userInfoCalls=0,userInfoMismatch=false
 globalThis.fetch=async (request,options)=>{
  const url=new URL(request)
+ if(url.href==='https://openidconnect.googleapis.com/v1/userinfo'){userInfoCalls++;assert.equal(options.headers.Authorization,'Bearer qa-google-access');assert.equal(options.redirect,'error');return Response.json({sub:userInfoMismatch?'different-google-subject':claims.subject,email:claims.email,email_verified:claims.emailVerified,name:'Google UserInfo QA'})}
  if(url.hostname==='www.googleapis.com')return new Response('upstream blocked',{status:403})
  if(url.pathname.endsWith('jwks.json'))return Response.json({keys:[jwk]})
  assert.ok(['oauth2.googleapis.com','oauth.telegram.org'].includes(url.hostname))
  assert.equal(options.body.get('code'),'qa-code')
  assert.match(options.body.get('code_verifier'),/^[\w-]{43}$/)
- const token=await new SignJWT({nonce:claims.nonce,email:claims.email,email_verified:claims.emailVerified,name:'Google signup QA'}).setProtectedHeader({alg:'RS256',kid:'qa'})
+ const token=await new SignJWT({nonce:claims.nonce,email:claims.email,email_verified:claims.emailVerified,name:'Google signup QA'}).setProtectedHeader({alg:'RS256',kid:url.hostname==='oauth2.googleapis.com'?googleKid:'qa'})
    .setIssuer(claims.issuer).setAudience(claims.audience).setSubject(claims.subject).setIssuedAt().setExpirationTime('5m').sign(privateKey)
- return Response.json({id_token:token})
+ return Response.json({id_token:token,access_token:'qa-google-access',token_type:'Bearer'})
 }
 const call=async(path,{method='GET',query='',cookies={},user=null,input={}}={})=>{
  let result
@@ -65,7 +66,10 @@ try{
    claims.audience='another-application'
    assert.equal((await forged()).location,'/auth?social=failed')
  }
- // Exercise a new Google account through signed callback, email confirmation and the next login.
+ // Expired snapshot + blocked JWKS: new code flow still binds to official UserInfo.
+ await writeFile(process.env.GOOGLE_JWKS_FILE,JSON.stringify({source:'https://www.googleapis.com/oauth2/v3/certs',fetchedAt:Date.now()-14400000,expiresAt:Date.now()-7200000,keys:[jwk]}));googleKid='qa-rotated'
+ socialRoute=(await import('../server/social-auth.mjs?qa-expired-snapshot')).socialRoute
+ // Exercise a new Google account through callback, email confirmation and the next login.
  const newFlow=await start('google');claims.subject=newSubject;claims.email=newEmail;claims.emailVerified=true
  const pending=await newFlow();assert.equal(pending.location,'/auth?social=register')
  const ticket=pending.headers.find(v=>v.startsWith('tradersho_social_registration=')).match(/^tradersho_social_registration=([^;]+)/)[1]
@@ -82,9 +86,12 @@ try{
  assert.equal((await pool.query("SELECT user_id FROM social_identities WHERE provider='google' AND subject=$1",[newSubject])).rows[0].user_id,verified.account.id)
  const returning=await start('google');claims.subject=newSubject
  assert.ok((await returning()).headers.includes('qa_session=created'))
+ assert.equal(userInfoCalls,2)
+ const mismatch=await start('google');claims.subject=newSubject;userInfoMismatch=true;assert.equal((await mismatch()).location,'/auth?social=failed');userInfoMismatch=false
+ const badNonce=await start('google');claims.nonce+='wrong';const callsBefore=userInfoCalls;assert.equal((await badNonce()).location,'/auth?social=failed');assert.equal(userInfoCalls,callsBefore)
  const {body}=await call('providers',{user:{id}})
  assert.deepEqual(body.linked.sort(),['google','telegram'])
- console.log('PASS Google cached-key outage: signed callback, new signup, email confirmation and returning session; Telegram linking/login preserved')
+ console.log('PASS Google code flow: expired/blocked JWKS with official UserInfo, new signup/email verification/returning session, identity and nonce mismatch rejection; fresh-key signature and Telegram login preserved')
 }finally{
  if(registrationId){await pool.query('DELETE FROM mail_outbox WHERE registration_id=$1',[registrationId]);await pool.query('DELETE FROM pending_registrations WHERE id=$1',[registrationId])}
  await pool.query('DELETE FROM users WHERE email=$1',[newEmail])

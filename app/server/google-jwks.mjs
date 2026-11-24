@@ -1,5 +1,6 @@
 import {readFile} from 'node:fs/promises'
 import {createRemoteJWKSet,customFetch} from 'jose'
+export class GoogleKeysUnavailableError extends Error {constructor(){super('Google signing keys unavailable or expired');this.code='GOOGLE_KEYS_UNAVAILABLE'}}
 export const GOOGLE_JWKS_URL='https://www.googleapis.com/oauth2/v3/certs'
 export function validateGoogleSnapshot(data,now=Date.now()){
  if(!data||data.source!==GOOGLE_JWKS_URL||!Number.isSafeInteger(data.fetchedAt)||!Number.isSafeInteger(data.expiresAt)||
@@ -14,20 +15,21 @@ export function validateGoogleSnapshot(data,now=Date.now()){
  return data
 }
 export function createGoogleKeyResolver({file=()=>process.env.GOOGLE_JWKS_FILE,fetcher=(...args)=>fetch(...args),now=()=>Date.now()}={}){
- let snapshotExpiresAt=0
+ let snapshotExpiresAt=0,usingSnapshot=false
  const remote=createRemoteJWKSet(new URL(GOOGLE_JWKS_URL),{[customFetch]:async(url,options)=>{
-  let response,error
-  try{response=await fetcher(url,options)}catch(cause){error=cause}
-  if(response?.status===200){snapshotExpiresAt=0;return response}
-  const path=file()
-  if(!path){if(error)throw error;return response}
-  const raw=await readFile(path);if(raw.length>65536)throw Error('Google key snapshot is too large')
-  const snapshot=validateGoogleSnapshot(JSON.parse(raw.toString('utf8')),now());snapshotExpiresAt=snapshot.expiresAt
-  return new Response(JSON.stringify({keys:snapshot.keys}),{status:200,headers:{'Content-Type':'application/json'}})
+  let response
+  try{response=await fetcher(url,options)}catch{}
+  if(response?.status===200){snapshotExpiresAt=0;usingSnapshot=false;return response}
+  try{
+   const path=file();if(!path)throw Error('No key snapshot')
+   const raw=await readFile(path);if(raw.length>65536)throw Error('Google key snapshot is too large')
+   const snapshot=validateGoogleSnapshot(JSON.parse(raw.toString('utf8')),now());snapshotExpiresAt=snapshot.expiresAt;usingSnapshot=true
+   return new Response(JSON.stringify({keys:snapshot.keys}),{status:200,headers:{'Content-Type':'application/json'}})
+  }catch{throw new GoogleKeysUnavailableError()}
  }})
  return async(header,token)=>{
   // A key retained in jose's memory may never outlive the trusted snapshot's expiry.
   if(snapshotExpiresAt&&now()>=snapshotExpiresAt)await remote.reload()
-  return remote(header,token)
+  try{return await remote(header,token)}catch(error){if(usingSnapshot&&error.code==='ERR_JWKS_NO_MATCHING_KEY')throw new GoogleKeysUnavailableError();throw error}
  }
 }

@@ -18,7 +18,7 @@ try{
  await mkdir('qa/captcha-pow',{recursive:true})
  for(const width of [320,390,901,1440])for(const theme of ['light','dark'])for(const mode of ['login','signup']){
   await page.setViewportSize({width,height:width<1001?844:720});await page.goto(base+'/auth');if(mode==='signup')await page.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
-  await page.locator('altcha-widget').getByRole('checkbox').waitFor()
+  await page.locator('altcha-widget').getByRole('checkbox').waitFor();assert.equal(await page.locator('.auth-motion-toggle').count(),0)
   assert.equal(await page.locator('.captcha-row input').count(),0)
   assert.equal(await page.getByRole('button',{name:mode==='login'?'ورود به پنل':'ایجاد حساب',exact:true}).isDisabled(),true)
   assert.equal(await page.locator('.social-login-button').count(),2)
@@ -45,7 +45,7 @@ try{
  await context.clearCookies({name:'tradersho_session'});await page.goto(base+'/auth');await page.locator('altcha-widget').getByRole('checkbox').focus();await page.keyboard.press('Space')
  await page.waitForFunction(()=>document.querySelector('altcha-widget')?.getState()==='verified',{},{timeout:45000})
  await page.getByRole('alert').filter({hasText:'منقضی'}).waitFor({timeout:12000});assert.equal(await page.getByRole('button',{name:'ورود به پنل',exact:true}).isDisabled(),true)
- await page.getByRole('button',{name:'دریافت کد امنیتی جدید',exact:true}).click();await page.locator('altcha-widget').getByRole('checkbox').waitFor();assert.equal(await page.getByRole('button',{name:'ورود به پنل',exact:true}).isDisabled(),true)
+ await page.getByRole('button',{name:'دریافت کد امنیتی جدید',exact:true}).click();await page.locator('altcha-widget').getByRole('checkbox').waitFor();assert.equal(await page.locator('.auth-motion-toggle').count(),0);assert.equal(await page.getByRole('button',{name:'ورود به پنل',exact:true}).isDisabled(),true)
  assert.deepEqual(errors,[]);assert.deepEqual(violations,[])
  console.log('PASS actual nonnumeric widget: 16 layouts, blocked submit before proof, real worker solve + signup + replay rejection, keyboard, expiry and refresh; solve ms',solveDuration)
 }catch(error){console.error('Browser errors:',errors);console.error('Form errors:',await page?.locator('.form-error').allTextContents());await page?.screenshot({path:'qa/captcha-pow/failure.png',fullPage:true});throw error}finally{

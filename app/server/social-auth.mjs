@@ -1,3 +1,4 @@
+import {exchangeGoogleCode} from './google-code.mjs'
 import {createGoogleKeyResolver} from './google-jwks.mjs'
 import {verifyTelegramWidget,telegramWidgetPage} from './telegram-widget.mjs'
 import {responseSecurityHeaders} from './security.mjs'
@@ -76,6 +77,7 @@ export async function telegramAccount(identity){
 }
 
 async function exchange(provider,oidc,flow,code){
+  if(provider==='google'){const payload=await exchangeGoogleCode({clientId:oidc.clientId,secret:oidc.secret,callback:oidc.callback,code,verifier:flow.verifier,nonce:flow.nonce,keyResolver:keys.google});return {subject:payload.sub,name:nameFrom(payload.name),email:payload.email_verified===true?emailFrom(payload.email):''}}
   const form=new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:oidc.callback,
     client_id:oidc.clientId,code_verifier:flow.verifier})
   const headers={'Content-Type':'application/x-www-form-urlencoded'}
@@ -182,7 +184,8 @@ export async function socialRoute({path,method,req,res,body,json,fail,rateLimit,
     await pool.query('INSERT INTO social_registrations(ticket,provider,subject,name,email) VALUES ($1,$2,$3,$4,$5)',
       [tokenHash(registration),provider,identity.subject,identity.name,usableEmail(identity.email)?identity.email:''])
     redirect('/auth?social=register',[...headers,cookie('tradersho_social_registration',registration,900)])
-  }catch{
+  }catch(error){
+    console.error(JSON.stringify({event:'social_auth_failed',provider,code:['GOOGLE_KEYS_UNAVAILABLE','ERR_JWS_SIGNATURE_VERIFICATION_FAILED','ERR_JWT_EXPIRED','ERR_JWT_CLAIM_VALIDATION_FAILED','ERR_JWKS_NO_MATCHING_KEY'].includes(error?.code)?error.code:'SOCIAL_AUTH_VALIDATION_FAILED'}))
     redirect(failed,headers)
   }
   return true
