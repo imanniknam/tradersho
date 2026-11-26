@@ -1,7 +1,8 @@
 import {exchangeGoogleCode} from './google-code.mjs'
 import {createGoogleKeyResolver} from './google-jwks.mjs'
 import {verifyTelegramWidget,telegramWidgetPage} from './telegram-widget.mjs'
-import {responseSecurityHeaders} from './security.mjs'
+import {responseSecurityHeaders,sessionCookieName} from './security.mjs'
+import {hasRecentAuth} from './reauth.mjs'
 import {createHash,randomBytes,randomUUID} from 'node:crypto'
 import {createRemoteJWKSet,jwtVerify} from 'jose'
 import {pool} from './db.mjs'
@@ -140,11 +141,14 @@ export async function socialRoute({path,method,req,res,body,json,fail,rateLimit,
     if(await rateLimit(req,res,'social-start','',40))return true
     const user=link&&await sessionUser(req)
     if(link&&!user){fail(res,401,'برای اتصال ابتدا وارد حساب شوید.');return true}
+    const sessionDigest=user?tokenHash(cookies(req)[sessionCookieName(req)]):null
+    // A form navigation lands here, so explain on the account page instead of showing JSON.
+    if(link&&!await hasRecentAuth(sessionDigest)){redirect('/panel/account?social=reauth',[]);return true}
     const ticket=random(),state=random(),verifier=random(),nonce=random()
     await pool.query('DELETE FROM social_auth_flows WHERE expires_at<=now()')
     await pool.query(`INSERT INTO social_auth_flows(ticket,provider,state_hash,verifier,nonce,link_user,session_hash)
       VALUES ($1,$2,$3,$4,$5,$6,$7)`,[tokenHash(ticket),provider,tokenHash(state),verifier,nonce,
-      user?user.id:null,user?tokenHash(cookies(req).tradersho_session):null])
+      user?user.id:null,sessionDigest])
     if(oidc.widget){
       const callback=new URL(oidc.callback)
       callback.searchParams.set('state',state)

@@ -32,6 +32,7 @@ jobs:
       CALENDAR_INGEST_TOKEN: qa-only-calendar-ingest-secret-not-production
       CAPTCHA_MODE: internal
       CAPTCHA_SECRET: qa-only-captcha-secret-for-isolated-ci
+      STAFF_MFA_KEY: 5151515151515151515151515151515151515151515151515151515151515151
     defaults:
       run:
         working-directory: app
@@ -67,6 +68,7 @@ jobs:
           node scripts/ci-telegram-account.mjs
           node scripts/ci-social-auth.mjs
           node scripts/ci-admin-users.mjs
+          node scripts/ci-staff-mfa.mjs
       - name: Desktop and mobile browser checks
         run: |
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-captcha-pow-ui.mjs

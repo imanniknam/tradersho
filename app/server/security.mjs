@@ -52,6 +52,8 @@ export function allowedOrigin(req,publicUrl=process.env.APP_PUBLIC_URL){
 export const browserBindingHash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value)
   ?createHash('sha256').update(value).digest('hex'):null
 
+export const sessionCookieName=req=>secureCookie(req)?'__Host-tradersho_session':'tradersho_session'
+
 export function secureCookie(req){
   if(process.env.NODE_ENV!=='production')return false
   if(process.env.APP_PUBLIC_URL)return new URL(process.env.APP_PUBLIC_URL).protocol==='https:'

@@ -1,4 +1,5 @@
 import {migrateAdminUsers} from './admin-users.mjs'
+import {migrateStaffMfa} from './staff-mfa.mjs'
 import {migrateRegistration} from './registration.mjs'
 import {migrateSocialAuth} from './social-auth.mjs'
 import {migrateRiskSetups} from './risk-setups.mjs'
@@ -44,6 +45,8 @@ export async function migrate() {
         expires_at timestamptz NOT NULL,
         created_at timestamptz NOT NULL DEFAULT now()
       );
+      ALTER TABLE sessions ADD COLUMN IF NOT EXISTS reauth_at timestamptz;
+      ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mfa_at timestamptz;
       CREATE INDEX IF NOT EXISTS sessions_user_id_idx ON sessions (user_id);
       CREATE INDEX IF NOT EXISTS sessions_expires_at_idx ON sessions (expires_at);
 
@@ -165,6 +168,7 @@ export async function migrate() {
     await migrateCaptcha(client)
     await migrateCalendar(client)
     await migrateAdminUsers(client)
+    await migrateStaffMfa(client)
     await client.query('COMMIT')
   } catch (error) {
     await client.query('ROLLBACK')

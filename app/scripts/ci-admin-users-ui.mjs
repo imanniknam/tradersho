@@ -14,7 +14,8 @@ try{
  for(const [userId,name,address] of [[id,'مدیر آزمایشی',id+'@example.test'],[target,'کاربر آزمایشی',email]])
    await pool.query('INSERT INTO users(id,name,email,password_hash) VALUES($1,$2,$3,$4)',[userId,name,address,'social-only'])
  await pool.query('INSERT INTO user_admins(user_id) VALUES($1)',[id])
- await pool.query("INSERT INTO sessions(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '1 hour')",[tokenHash(token),id])
+ await pool.query("INSERT INTO sessions(token_hash,user_id,expires_at,mfa_at) VALUES($1,$2,now()+interval '1 hour',now())",[tokenHash(token),id])
+ await pool.query("INSERT INTO staff_mfa(user_id,secret) VALUES($1,'qa-enrolled')",[id])
  for(const width of [1440,390])for(const theme of ['light','dark']){
    const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'})
    await context.addCookies([{name:'tradersho_session',value:token,url:base,httpOnly:true,sameSite:'Strict'}])

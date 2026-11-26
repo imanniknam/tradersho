@@ -16,6 +16,7 @@ COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/server ./server
 COPY --from=build --chown=node:node /app/shared ./shared
 COPY --from=build --chown=node:node /app/scripts/support-agent.mjs ./scripts/support-agent.mjs
+COPY --from=build --chown=node:node /app/scripts/user-admin.mjs ./scripts/user-admin.mjs
 COPY --from=build --chown=node:node /app/scripts/collect-persianfx.py ./scripts/collect-persianfx.py
 USER node
 EXPOSE 3001

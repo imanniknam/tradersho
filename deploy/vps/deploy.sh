@@ -6,6 +6,8 @@ sha=${1:?Expected full Git commit SHA}
 [[ $sha =~ ^[a-f0-9]{40}$ ]] || exit 64
 release="$root/releases/$sha"
 [[ -s "$root/.env" && -d "$release" ]] || exit 66
+# Staff second-factor key: generated once, kept stable (changing it forces re-enrolment).
+grep -q '^STAFF_MFA_KEY=' "$root/.env" || printf '\nSTAFF_MFA_KEY=%s\n' "$(openssl rand -hex 32)" >> "$root/.env"
 exec 9>"$root/deploy.lock"
 flock -w 600 9
 previous=$(readlink -f "$root/current" || true)

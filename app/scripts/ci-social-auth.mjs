@@ -12,6 +12,7 @@ Object.assign(process.env,{APP_PUBLIC_URL:'https://panel.example.test',
  GOOGLE_OIDC_CLIENT_ID:'qa-google',GOOGLE_OIDC_CLIENT_SECRET:'qa-only',
  TELEGRAM_OIDC_CLIENT_ID:'qa-telegram',TELEGRAM_OIDC_CLIENT_SECRET:'qa-only'})
 const {pool,migrate}=await import('../server/db.mjs')
+const {sessionCookieName}=await import('../server/security.mjs')
 let {socialRoute}=await import('../server/social-auth.mjs')
 await migrate()
 const {publicKey,privateKey}=await generateKeyPair('RS256')
@@ -34,7 +35,7 @@ globalThis.fetch=async (request,options)=>{
 }
 const call=async(path,{method='GET',query='',cookies={},user=null,input={}}={})=>{
  let result
- await socialRoute({path:'/api/auth/social/'+path,method,req:{url:'/api/auth/social/'+path+query},res:{},
+ await socialRoute({path:'/api/auth/social/'+path,method,req:{headers:{},url:'/api/auth/social/'+path+query},res:{},
   json:(_,status,body)=>{result={status,body}},fail:(_,status,error)=>{result={status,error}},
   body:async()=>input,cookies:()=>cookies,sessionUser:async()=>user,rateLimit:async()=>false,
   createSession:async(_,userId)=>{assert.ok(sessionIds.has(userId));return 'qa_session=created'},
@@ -42,7 +43,7 @@ const call=async(path,{method='GET',query='',cookies={},user=null,input={}}={})=
  return result
 }
 const start=async (provider,link=false)=>{
- const result=await call(provider+'/start',link?{method:'POST',user:{id},cookies:{tradersho_session:session}}:{})
+ const result=await call(provider+'/start',link?{method:'POST',user:{id},cookies:{[sessionCookieName({headers:{}})]:session}}:{})
  const authorization=new URL(result.location)
  const ticket=result.headers[0].match(/^tradersho_social_flow=([^;]+)/)[1]
  const state=authorization.searchParams.get('state')

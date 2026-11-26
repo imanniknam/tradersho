@@ -1,5 +1,7 @@
 import {adminUsersRoute,isUserAdmin} from './admin-users.mjs'
-import {allowedOrigin,browserBindingHash,secureCookie,responseSecurityHeaders} from './security.mjs'
+import {allowedOrigin,browserBindingHash,secureCookie,sessionCookieName,responseSecurityHeaders} from './security.mjs'
+import {hasRecentAuth} from './reauth.mjs'
+import {staffMfaRoute,staffMfaState} from './staff-mfa.mjs'
 import {startRegistration,verificationEnabled,verifyRegistration} from './registration.mjs'
 import {socialRoute} from './social-auth.mjs'
 import {getFlickerStatus} from './flicker-status.mjs'
@@ -59,8 +61,9 @@ const cookies = req => Object.fromEntries((req.headers.cookie || '').split(';').
 }))
 const digest = tokenHash
 const setCookie = (req, token, age) => {
-  return 'tradersho_session=' + token + '; HttpOnly; SameSite=Strict; Path=/; Max-Age=' + age + (secureCookie(req) ? '; Secure' : '')
+  return sessionCookieName(req) + '=' + token + '; HttpOnly; SameSite=Strict; Path=/; Max-Age=' + age + (secureCookie(req) ? '; Secure' : '')
 }
+const sessionToken = req => cookies(req)[sessionCookieName(req)]
 const clientAddress = req => {
   const direct = String(req.socket.remoteAddress || '')
   // Enabled only behind the VPS proxy, which overwrites this header.
@@ -92,7 +95,7 @@ const publicUser = async user => {
   return { ...access, hasPassword:user.password_hash.startsWith('scrypt$')||user.password_hash.includes(':'), id: user.id, name: user.name, email: user.email, emailVerifiedAt:user.email_verified_at, createdAt: user.created_at }
 }
 const sessionUser = async req => {
-  const token = cookies(req).tradersho_session
+  const token = sessionToken(req)
   if (!token || !/^[a-f0-9]{64}$/.test(token)) return null
   const { rows } = await pool.query("SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = $1 AND s.expires_at > now() AND u.account_status='active' AND s.created_at + make_interval(secs => $2) > now()", [digest(token), sessionAge])
   return rows[0] || null
@@ -215,14 +218,35 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { user: await publicUser(user) }, { 'Set-Cookie': await createSession(req, user.id) })
     }
     if (path === '/api/auth/logout' && method === 'POST') {
-      const token = cookies(req).tradersho_session
+      const token = sessionToken(req)
       if (token) await pool.query('DELETE FROM sessions WHERE token_hash = $1', [digest(token)])
       return json(res, 200, { ok: true }, { 'Set-Cookie': setCookie(req, '', 0) })
     }
     const user = await sessionUser(req)
     if (!user) return fail(res, 401, 'برای ادامه وارد حساب خود شوید.')
+    if(path==='/api/account/reauth'&&method==='POST'){
+      if(await rateLimit(req,res,'reauth',user.id,5))return
+      const input=await body(req)
+      if(typeof input.password!=='string'||input.password.length>128||!await verifyPassword(input.password,user.password_hash))return fail(res,400,'رمز عبور نادرست است.')
+      await pool.query('UPDATE sessions SET reauth_at=now() WHERE token_hash=$1',[digest(sessionToken(req))])
+      return json(res,200,{ok:true})
+    }
+    if(path==='/api/account/identities'&&method==='DELETE'){
+      const input=await body(req)
+      if(!['google','telegram'].includes(input.provider))return fail(res,400,'روش ورود نامعتبر است.')
+      if(!await hasRecentAuth(digest(sessionToken(req))))return fail(res,403,'برای این تغییر دوباره هویت خود را تأیید کنید.')
+      const linked=(await pool.query('SELECT provider FROM social_identities WHERE user_id=$1',[user.id])).rows.map(row=>row.provider)
+      if(!linked.includes(input.provider))return fail(res,404,'این روش ورود متصل نیست.')
+      if(!hasPasswordHash(user.password_hash)&&linked.length<2)return fail(res,409,'این تنها راه ورود شماست. ابتدا با ایمیل رمز عبور تعیین کنید.')
+      await pool.query('DELETE FROM social_identities WHERE user_id=$1 AND provider=$2',[user.id,input.provider])
+      await pool.query('DELETE FROM social_auth_flows WHERE link_user=$1',[user.id])
+      // Whoever came in through the removed method is signed out; this device stays.
+      await pool.query('DELETE FROM sessions WHERE user_id=$1 AND token_hash<>$2',[user.id,digest(sessionToken(req))])
+      return json(res,200,{ok:true})
+    }
     if(path==='/api/account/email/start'&&method==='POST'){
       if(user.email)return fail(res,409,'این حساب قبلاً ایمیل دارد.')
+      if(!await hasRecentAuth(digest(sessionToken(req))))return fail(res,403,'برای افزودن ایمیل، یک بار خارج شوید و دوباره وارد شوید.')
       const input=await body(req),email=typeof input.email==='string'?input.email.trim().toLowerCase():''
       if(email.length>160||!mailAddress(email))return fail(res,400,'ایمیل معتبر وارد کنید.')
       if(await rateLimit(req,res,'account-email',user.id,5)||await rateLimit(req,res,'account-email-target',email,5))return
@@ -231,6 +255,10 @@ const server = http.createServer(async (req, res) => {
     if(['/api/account/email/verify','/api/account/email/resend'].includes(path)&&method==='POST')
       return await verifyRegistration({input:await body(req),path,req,res,rateLimit,fail,json,user,
         login:async updated=>json(res,200,{user:await publicUser(updated)})})
+    if(await staffMfaRoute({path,method,user,tokenDigest:digest(sessionToken(req)),req,res,body,json,fail,rateLimit}))return
+    // Every other staff API needs a second factor on this session. Role checks stay in each route.
+    if(path.startsWith('/api/admin/')&&path!=='/api/admin/session'&&!(await staffMfaState(user.id,digest(sessionToken(req)))).verified)
+      return fail(res,403,'برای پنل مدیریت، احراز دومرحله‌ای را تأیید کنید.')
     if(await adminUsersRoute({path,method,user,req,res,body,json,fail,rateLimit}))return
     if(path==='/api/news')return fail(res,410,'بخش خبرها حذف شده است.')
     if(await riskSetupsRoute({path,method,user,req,res,body,json,fail,rateLimit}))return
@@ -240,7 +268,7 @@ const server = http.createServer(async (req, res) => {
     if (path === '/api/admin/session' && method === 'GET') {
       const agent=await pool.query('SELECT 1 FROM support_agents WHERE user_id=$1',[user.id])
       const administrator=await isUserAdmin(user.id)
-      return agent.rowCount||administrator ? json(res,200,{allowed:true,isAdmin:administrator,isSupportAgent:agent.rowCount>0}) : fail(res,403,'دسترسی به پنل مدیریت مجاز نیست.')
+      return agent.rowCount||administrator ? json(res,200,{allowed:true,isAdmin:administrator,isSupportAgent:agent.rowCount>0,mfa:await staffMfaState(user.id,digest(sessionToken(req)))}) : fail(res,403,'دسترسی به پنل مدیریت مجاز نیست.')
     }
     if (path === '/api/tools' && method === 'GET') return json(res, 200, { tools: toolCatalog })
     if (!subscriptionsEnabled && ['/api/subscription', '/api/plan-interest'].includes(path)) return fail(res, 409, 'بخش اشتراک فعلاً فعال نیست.')
@@ -336,6 +364,7 @@ server.keepAliveTimeout=5_000
 server.maxRequestsPerSocket=1000
 server.maxConnections=256
 
+if(process.env.NODE_ENV==='production'&&!/^[a-f0-9]{64}$/i.test(process.env.STAFF_MFA_KEY||''))console.warn('STAFF_MFA_KEY is not configured; staff areas stay locked.')
 if(!mailConfig()&&verificationEnabled())throw Error('Email verification requires SMTP')
 await migrate()
 const stopMailWorker=startMailWorker(pool)
