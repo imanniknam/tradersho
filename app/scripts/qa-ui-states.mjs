@@ -33,7 +33,7 @@ try{
  let catalogAttempt=0
  await ui.route('**/api/tools',r=>r.fulfill({status:++catalogAttempt===1?503:200,contentType:'application/json',body:JSON.stringify(catalogAttempt===1?{error:'دریافت ابزارها ممکن نیست.'}:{tools:[{id:'chart',status:'active',label:'فعال'},{id:'expert',status:'coming_soon',label:'به‌زودی'}]})}))
  await ui.route('**/api/tools/chart/access',r=>r.fulfill({json:{allowed:true}}))
- await ui.route('**/s3.tradingview.com/tv.js',r=>r.fulfill({contentType:'application/javascript',body:'window.TradingView={widget:function(c){const host=document.getElementById(c.container_id);const frame=document.createElement("iframe");frame.title="QA chart";host.append(frame);}}'}))
+ await ui.route('https://www.tradingview-widget.com/embed-widget/advanced-chart/**',r=>r.fulfill({contentType:'text/html',body:'<title>QA chart</title><body>XAUUSD · 1h</body>'}))
  await q.goto(base+'/panel/tools');await q.getByRole('alert').waitFor();await q.getByRole('button',{name:'تلاش دوباره',exact:true}).click();await q.locator('.tv-host').waitFor();assert.equal(await q.getByRole('alert').count(),0)
 
  let adminAttempt=0

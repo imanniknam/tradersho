@@ -27,20 +27,21 @@ export default function TradingViewChart({resizeHandles,visible=true}:{resizeHan
     link.href='https://www.tradingview.com/symbols/XAUUSD/?utm_source=tradersho&utm_medium=widget_new&utm_campaign=advanced-chart'
     link.target='_blank';link.rel='noopener nofollow';link.textContent='XAUUSD chart by TradingView'
     credit.append(link)
-    const script=document.createElement('script')
-    script.src='https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js'
-    script.async=true
-    script.textContent=JSON.stringify({autosize:true,symbol:'OANDA:XAUUSD',interval:'60',timezone:'Asia/Tehran',theme,style:'1',locale:'en',allow_symbol_change:true,hide_top_toolbar:false,hide_side_toolbar:false,withdateranges:true,calendar:false,save_image:true,support_host:'https://www.tradingview.com',backgroundColor:chartBackground[theme]})
-    script.onerror=()=>{if(alive)setStatus('error')}
-    // Mounting confirms embedding only; cross-origin feed availability stays with TradingView.
-    const observer=new MutationObserver(()=>{
-      const frame=node.querySelector('iframe')
-      if(frame && !frame.dataset.observed){frame.dataset.observed='true';if(alive)setStatus('embedded');frame.title='نمودار تحلیل بازار TradingView';frame.addEventListener('load',()=>{if(alive)setStatus('embedded')},{once:true})}
-    })
-    observer.observe(node,{childList:true,subtree:true})
-    node.replaceChildren(widget,credit,script)
+    // Provider code executes only inside its cross-origin frame.
+    const frame=document.createElement('iframe')
+    const config={autosize:true,symbol:'OANDA:XAUUSD',interval:'60',timezone:'Asia/Tehran',theme,style:'1',locale:'en',allow_symbol_change:true,hide_top_toolbar:false,hide_side_toolbar:false,withdateranges:true,calendar:false,save_image:true,support_host:'https://www.tradingview.com',backgroundColor:chartBackground[theme]}
+    frame.src='https://www.tradingview-widget.com/embed-widget/advanced-chart/?locale=en#'+encodeURIComponent(JSON.stringify(config))
+    frame.title='نمودار تحلیل بازار TradingView'
+    frame.style.cssText='width:100%;height:100%;border:0'
+    frame.sandbox.add('allow-scripts','allow-same-origin','allow-forms','allow-popups','allow-popups-to-escape-sandbox','allow-downloads')
+    frame.referrerPolicy='no-referrer'
+    // Load confirms embedding only, not cross-origin feed availability.
+    frame.onload=()=>{if(alive)setStatus('embedded')}
+    frame.onerror=()=>{if(alive)setStatus('error')}
+    widget.append(frame)
+    node.replaceChildren(widget,credit)
     const timer=window.setTimeout(()=>{if(alive)setStatus(s=>s==='loading'?'slow':s)},20000)
-    return ()=>{alive=false;clearTimeout(timer);observer.disconnect();node.replaceChildren()}
+    return ()=>{alive=false;clearTimeout(timer);node.replaceChildren()}
   },[theme,attempt])
   useEffect(()=>{if(!visible)setExpanded(false)},[visible])
   useEffect(()=>{

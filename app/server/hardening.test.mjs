@@ -16,5 +16,6 @@ test('CSP never allows arbitrary inline script',()=>{
   assert.equal(scriptHash('a\r\nb'),`'sha256-${createHash('sha256').update('a\nb').digest('base64')}'`)
   const scripts=responseSecurityHeaders['Content-Security-Policy'].split('; ').find(d=>d.startsWith('script-src'))
   assert.ok(!scripts.includes('unsafe-'))
+  assert.ok(!scripts.includes('tradingview'))
   assert.match(scripts,/'sha256-/)
 })

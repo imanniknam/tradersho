@@ -18,7 +18,7 @@ export const responseSecurityHeaders={
   'Referrer-Policy':'strict-origin-when-cross-origin',
   'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
   // Official widgets and React style attributes still need inline styles.
-  'Content-Security-Policy':"default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self' "+scriptHashes+" https://s3.tradingview.com https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tradingview.com https://telegram.org https://*.telegram.org; font-src 'self' data:; connect-src 'self' https://*.tradingview.com; frame-src 'self' https://*.tradingview-widget.com https://*.tradingview.com https://tradingview.com https://flicker.finance https://oauth.telegram.org; worker-src 'self' blob:; form-action 'self' https://oauth.telegram.org https://accounts.google.com",
+  'Content-Security-Policy':"default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self' "+scriptHashes+" https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tradingview.com https://telegram.org https://*.telegram.org; font-src 'self' data:; connect-src 'self'; frame-src 'self' https://*.tradingview-widget.com https://*.tradingview.com https://tradingview.com https://flicker.finance https://oauth.telegram.org; worker-src 'self' blob:; form-action 'self' https://oauth.telegram.org https://accounts.google.com",
   ...(process.env.NODE_ENV==='production'&&process.env.APP_PUBLIC_URL?.startsWith('https://')?{'Strict-Transport-Security':'max-age=31536000'}:{}),
 }
 

@@ -21,7 +21,7 @@ try{
  await page.getByRole('button',{name:'فعال کردن حالت تیره'}).click()
  await page.reload();assert.equal(await page.locator('html').getAttribute('data-theme'),'dark')
  await page.getByRole('button',{name:'فعال کردن حالت روشن'}).click()
- await page.getByRole('tab',{name:'ثبت‌نام',exact:true}).click()await page.getByPlaceholder('نام و نام خانوادگی',{exact:true}).fill('آزمون کاربر');
+ await page.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await page.getByPlaceholder('نام و نام خانوادگی',{exact:true}).fill('آزمون کاربر');
  await page.getByPlaceholder('name@example.com').fill(email)
  await page.getByPlaceholder('رمز عبور قوی').fill(password)
  await page.getByPlaceholder('رمز عبور را دوباره وارد کنید').fill(password)
@@ -60,10 +60,10 @@ try{
   if(width===390){await page.frameLocator('.tv-host iframe').getByText('Gold',{exact:false}).first().waitFor({timeout:30000});await page.waitForTimeout(1500);await shot('chart-mobile');await page.getByRole('button',{name:'نمای تمام‌صفحه'}).click();await overflow();await page.waitForTimeout(1500);await shot('chart-mobile-fullscreen');await page.keyboard.press('Escape');await page.goto(base+'/panel');await shot('dashboard-mobile');await page.getByRole('button',{name:'باز کردن منو'}).click();await page.getByRole('navigation',{name:'ناوبری اصلی'}).getByRole('link',{name:/مدرسه فارکس/}).click();await page.getByRole('heading',{name:'مدرسه فارکس',exact:true}).waitFor()}
  }
  await page.goto(base+'/panel/tools/chart')
- await context.route('https://s3.tradingview.com/**',route=>route.abort())
- await page.getByRole('button',{name:'بارگذاری دوباره نمودار'}).click();await page.getByRole('alert').filter({hasText:'اتصال به TradingView برقرار نشد'}).waitFor()
- await context.unroute('https://s3.tradingview.com/**')
- await page.getByRole('button',{name:'تلاش دوباره',exact:true}).click();await page.locator('.tv-host iframe').waitFor()
+ await context.route('https://www.tradingview-widget.com/**',route=>route.abort())
+ await page.getByRole('button',{name:'بارگذاری دوباره نمودار'}).click();await page.locator('.tv-host iframe').waitFor() // Frame load cannot establish feed health.
+ await context.unroute('https://www.tradingview-widget.com/**')
+ await page.getByRole('button',{name:'بارگذاری دوباره نمودار',exact:true}).click();await page.locator('.tv-host iframe').waitFor()
  await page.getByRole('button',{name:'خروج از حساب',exact:true}).click();await page.waitForURL(base+'/auth')
  assert.equal((await api('/session')).status,401)
  for(const width of [360,390,768,1440]){await page.setViewportSize({width,height:900});await overflow();if(width===390)await shot('login-mobile')}

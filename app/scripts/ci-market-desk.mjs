@@ -17,7 +17,8 @@ try{
 
  await context.route('**/api/market/gold-sentiment/status**',r=>r.fulfill({json:{availability:'unknown',checkedAt:new Date().toISOString()}}))
  await context.route('https://flicker.finance/**',r=>r.fulfill({contentType:'text/html',body:'<style>body{margin:0;height:280px}</style><div>Gold sentiment QA</div><script>parent.postMessage({type:"flicker-widget:resize",height:280},"*")</script>'}))
- await context.route('https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',r=>r.fulfill({contentType:'application/javascript',body:`{window.__chartMounts=(window.__chartMounts||0)+1;const s=document.currentScript,f=document.createElement('iframe');f.style='width:100%;height:100%;border:0';f.srcdoc='<title>Chart QA</title>';s.parentElement.querySelector('.tradingview-widget-container__widget').append(f)}`}))
+ let chartMounts=0
+ await context.route('https://www.tradingview-widget.com/embed-widget/advanced-chart/**',r=>{chartMounts++;return r.fulfill({contentType:'text/html',body:'<html><title>Chart QA</title><body>XAUUSD · 1h · QA widget</body></html>'})})
  await page.setViewportSize({width:1920,height:1080});await page.goto(base+'/panel/tools');await page.locator('.tv-host iframe').waitFor();await page.getByText('رویداد فردا',{exact:true}).waitFor();assert.deepEqual(await page.locator('.preview-event-title strong').allTextContents(),['رویداد فردا','رویداد دوشنبه']);assert.ok(await page.locator('.calendar-preview-event time small').first().isVisible())
  assert.ok((await rect('.calendar-preview-card')).height>=220&&(await rect('.risk-widget')).height>=200)
  const limited=await rect('.calendar-preview-card');
@@ -40,7 +41,7 @@ try{
  const fixedContext=await rect('.analysis-context'); const chart=await rect('.tv-chart');await drag('چارت','پایین',0,80);assert.ok((await rect('.tv-chart')).height>chart.height+60);assert.ok(Math.abs((await rect('.analysis-context')).height-fixedContext.height)<2,'Chart resize leaves context height unchanged')
  const cancelled=await rect('.analysis-context');await drag('تقویم','راست',60,0,true);assert.ok(Math.abs((await rect('.analysis-context')).width-cancelled.width)<2)
  await page.getByRole('button',{name:'تغییر اندازهٔ تقویم از راست',exact:true}).focus();const keyboard=await rect('.analysis-context');await page.keyboard.press('ArrowRight');assert.ok((await rect('.analysis-context')).width>keyboard.width+5)
- assert.equal(await page.evaluate(()=>window.__chartMounts),1,'Resizing must preserve TradingView')
+ assert.equal(chartMounts,1,'Resizing must preserve TradingView')
  const saved=await rect('.analysis-context'),savedChart=await rect('.tv-chart');await page.reload();await page.locator('.tv-host iframe').waitFor();await settle();assert.ok(Math.abs((await rect('.analysis-context')).width-saved.width)<2);assert.ok(Math.abs((await rect('.tv-chart')).height-savedChart.height)<2,'Independent chart height persists')
  await page.getByRole('button',{name:'چیدمان پیش‌فرض',exact:true}).click();await settle();assert.ok(Math.abs((await rect('.analysis-context')).width-sidebar.width)<2)
  await mkdir('qa/market-desk',{recursive:true})
