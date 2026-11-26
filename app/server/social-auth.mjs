@@ -112,7 +112,7 @@ export async function socialRoute({path,method,req,res,body,json,fail,rateLimit,
   if(!path.startsWith('/api/auth/social/'))return false
   if(path==='/api/auth/social/providers'&&method==='GET'){
     const available=Object.keys(providers).filter(name=>config(name))
-    const user=available.length&&await sessionUser(req)
+    const user=await sessionUser(req)
     const linked=user?(await pool.query('SELECT provider FROM social_identities WHERE user_id=$1',[user.id])).rows.map(row=>row.provider):[]
     json(res,200,{providers:available,linked})
     return true
