@@ -60,7 +60,7 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
     setConfirmPassword('')
     setCode('')
     setResendAt(Date.now()+60000)
-    setDelivery('کد تأیید در صف ارسال است. صندوق ورودی و پوشهٔ هرزنامه را بررسی کنید.')
+    setDelivery('اگر این ایمیل امکان ثبت‌نام داشته باشد و سهمیهٔ ارسال باقی باشد، کد تأیید ارسال می‌شود. صندوق ورودی و پوشهٔ هرزنامه را بررسی کنید.')
   }
   const submitVerification = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -87,7 +87,7 @@ export default function AuthScreen({ user, loading, setUser, brand, mobileBrand,
       await api('/auth/signup/resend','POST',{verificationToken})
       setCode('')
       setResendAt(Date.now()+60000)
-      setDelivery('کد جدید در صف ارسال است.')
+      setDelivery('درخواست ارسال مجدد ثبت شد؛ در صورت امکان کد جدید ارسال می‌شود.')
     } catch (cause) { setError((cause as Error).message) }
     finally { setBusy(false) }
   }

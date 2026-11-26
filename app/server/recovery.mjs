@@ -23,7 +23,24 @@ export async function recoveryRoute({path,method,req,res,body,json,fail,rateLimi
   const delivery=smtp?null:new URL(endpoint),base=new URL(origin)
   if((delivery&&delivery.protocol!=='https:')||(base.protocol!=='https:'&&!(base.protocol==='http:'&&['localhost','127.0.0.1'].includes(base.hostname))))throw new Error('Invalid recovery configuration')
   const client=await pool.connect();let token,user
-  try{await client.query('BEGIN');user=(await client.query("SELECT id,password_hash FROM users WHERE lower(email)=$1 AND account_status<>'suspended' FOR UPDATE",[email])).rows[0];await client.query('DELETE FROM password_recovery WHERE expires_at<now()');if(user){token=randomBytes(32).toString('hex');await client.query('DELETE FROM password_recovery WHERE user_id=$1',[user.id]);await client.query("INSERT INTO password_recovery VALUES($1,$2,$3,now()+interval '15 minutes')",[tokenHash(token),user.id,tokenHash(user.password_hash)]);if(smtp){const link=new URL('/reset-password',base);link.hash=token;await enqueueMail(client,{id:'recovery-'+tokenHash(token),userId:user.id,purpose:'recovery',to:email,subject:'بازیابی رمز عبور تریدر شو',text:`برای تعیین رمز جدید از لینک زیر استفاده کنید. اعتبار لینک ۱۵ دقیقه است.\n${link.href}\nاگر این درخواست از شما نیست، آن را نادیده بگیرید.`,recoveryHash:tokenHash(token)})}}await client.query('COMMIT')}catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}
+  try{
+    await client.query('BEGIN')
+    user=(await client.query("SELECT id,password_hash FROM users WHERE lower(email)=$1 AND account_status<>'suspended' FOR UPDATE",[email])).rows[0]
+    await client.query('DELETE FROM password_recovery WHERE expires_at<now()')
+    if(user){
+      await client.query('SAVEPOINT recovery_issue')
+      token=randomBytes(32).toString('hex')
+      await client.query('DELETE FROM password_recovery WHERE user_id=$1',[user.id])
+      await client.query("INSERT INTO password_recovery VALUES($1,$2,$3,now()+interval '15 minutes')",[tokenHash(token),user.id,tokenHash(user.password_hash)])
+      if(smtp){
+        const link=new URL('/reset-password',base);link.hash=token
+        const queued=await enqueueMail(client,{id:'recovery-'+tokenHash(token),userId:user.id,purpose:'recovery',to:email,subject:'بازیابی رمز عبور تریدر شو',text:`برای تعیین رمز جدید از لینک زیر استفاده کنید. اعتبار لینک ۱۵ دقیقه است.\n${link.href}\nاگر این درخواست از شما نیست، آن را نادیده بگیرید.`,recoveryHash:tokenHash(token)})
+        // A silently suppressed replacement must not invalidate a delivered link.
+        if(!queued)await client.query('ROLLBACK TO SAVEPOINT recovery_issue')
+      }
+    }
+    await client.query('COMMIT')
+  }catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}
   // Dispatch outside the response path so mail-provider latency cannot reveal account existence.
   if(user&&!smtp){const link=new URL('/reset-password',base);link.hash=token;void deliverRecovery(delivery,secret,email,link.href,token)}
   json(res,202,accepted);return true

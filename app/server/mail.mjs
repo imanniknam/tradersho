@@ -43,16 +43,46 @@ export async function migrateMail(client){
   );
   CREATE INDEX IF NOT EXISTS mail_outbox_registration ON mail_outbox(registration_id) WHERE registration_id IS NOT NULL;
   CREATE INDEX IF NOT EXISTS mail_outbox_pending ON mail_outbox(next_attempt_at) WHERE status='pending';
+  CREATE TABLE IF NOT EXISTS mail_admissions (
+    id text PRIMARY KEY, recipient_hash char(64) NOT NULL, purpose text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now()
+  );
+  CREATE INDEX IF NOT EXISTS mail_admissions_recipient ON mail_admissions(recipient_hash,created_at);
   CREATE TABLE IF NOT EXISTS mail_dispatch_clock (id integer PRIMARY KEY CHECK(id=1), next_at timestamptz NOT NULL);
   INSERT INTO mail_dispatch_clock VALUES(1,now()) ON CONFLICT DO NOTHING;`)
 }
-export async function enqueueMail(client,{id,userId=null,purpose,to,subject,text,recoveryHash=null,messageId=null,registrationId=null}){
+// All callers share a transaction lock; the ledger survives replacement/deletion of jobs.
+// Pool callers get their own transaction. Existing transaction callers keep atomicity
+// with registration/recovery/ticket writes.
+export async function enqueueMail(db,job){
+  if(typeof db.connect==='function'&&typeof db.release!=='function'){
+    const client=await db.connect()
+    try{await client.query('BEGIN');const queued=await enqueueMail(client,job);await client.query('COMMIT');return queued}
+    catch(error){await client.query('ROLLBACK');throw error}finally{client.release()}
+  }
+  const {id,userId=null,purpose,to,subject,text,recoveryHash=null,messageId=null,registrationId=null}=job
   const config=mailConfig()
-  if(!config)return false
-  if(!mailAddress(to)){console.warn('Mail recipient invalid');return false}
-  await client.query(`INSERT INTO mail_outbox(id,user_id,purpose,recovery_hash,message_id,payload,registration_id,expires_at)
+  if(!config||!mailAddress(to))return false
+  await db.query('SELECT id FROM mail_dispatch_clock WHERE id=1 FOR UPDATE')
+  if((await db.query('SELECT 1 FROM mail_outbox WHERE id=$1',[id])).rowCount)return true
+  await db.query("DELETE FROM mail_admissions WHERE created_at<now()-interval '1 day'")
+  const recipient=tokenHash(config.key.toString('hex')+':recipient:'+to.trim().toLowerCase())
+  const auth=purpose==='recovery'||purpose==='signup_verification'
+  const counts=(await db.query(`SELECT
+    count(*) FILTER(WHERE created_at>now()-interval '15 minutes')::int AS recent,
+    count(*)::int AS daily FROM mail_admissions WHERE recipient_hash=$1
+    AND (($2 AND purpose IN ('recovery','signup_verification')) OR (NOT $2 AND purpose='support_reply'))`,[recipient,auth])).rows[0]
+  if(counts.recent>=(auth?3:10)||counts.daily>=(auth?10:30))return false
+  const backlog=(await db.query(`SELECT count(*)::int AS total,
+    count(*) FILTER(WHERE purpose IN ('recovery','signup_verification'))::int AS auth
+    FROM mail_outbox WHERE status='pending' AND expires_at>now()`)).rows[0]
+  // At the slowest supported cadence these limits leave time for authentication mail.
+  const slots=Math.max(1,Math.floor((purpose==='recovery'?12:8)*60000/config.interval))
+  if(backlog.total>=100||(auth&&backlog.auth>=slots))return false
+  await db.query(`INSERT INTO mail_outbox(id,user_id,purpose,recovery_hash,message_id,payload,registration_id,expires_at)
     VALUES($1,$2,$3,$4,$5,$6,$7,now()+CASE WHEN $3 IN ('recovery','signup_verification') THEN interval '14 minutes' ELSE interval '24 hours' END)
     ON CONFLICT(id) DO NOTHING`,[id,userId,purpose,recoveryHash,messageId,sealMail({to,subject,text},config.key,id),registrationId])
+  await db.query('INSERT INTO mail_admissions(id,recipient_hash,purpose) VALUES($1,$2,$3)',[id,recipient,purpose])
   return true
 }
 export function supportReplyMail(base,ticketId){

@@ -36,6 +36,12 @@ try{
  const second=await job()
  assert.notEqual(first.id,second.id)
  assert.equal((await pool.query('SELECT 1 FROM mail_outbox WHERE id=$1',[first.id])).rowCount,0)
+ // Exhaust the send quota and verify a suppressed resend keeps the delivered code/job.
+ const recipient=tokenHash(config.key.toString('hex')+':recipient:'+email)
+ await pool.query("INSERT INTO mail_admissions(id,recipient_hash,purpose) VALUES($1,$2,'signup_verification')",['qa-admission-'+registration,recipient])
+ await pool.query("UPDATE pending_registrations SET issued_at=now()-interval '2 minutes' WHERE id=$1",[registration])
+ assert.equal((await resend()).status,202)
+ assert.equal((await job()).id,second.id)
  const code=openMail(second.payload,config.key,second.id).text.match(/\b\d{6}\b/)[0]
  const wrong=code==='000000'?'111111':'000000'
  assert.equal((await verify(wrong)).status,400)
@@ -53,6 +59,7 @@ try{
  assert.equal((await verify(code)).status,400)
  console.log('Email verification and encrypted delivery passed')
 }finally{
+ await pool.query('DELETE FROM mail_admissions WHERE id=$1',['qa-admission-'+registration])
  await pool.query('DELETE FROM pending_registrations WHERE id=$1',[registration])
  await pool.query('DELETE FROM users WHERE email=$1',[email])
  await pool.end()

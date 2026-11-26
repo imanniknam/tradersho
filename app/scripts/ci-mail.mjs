@@ -63,6 +63,16 @@ try{
  assert.equal(job.status,'pending');assert.equal(job.attempts,1);assert.ok(job.payload)
  await pool.query('UPDATE mail_outbox SET next_attempt_at=now() WHERE id=$1',[job.id]);await dispatch({sendMail:async()=>{throw Object.assign(Error('Permanent'),{responseCode:550})}})
  job=(await pool.query('SELECT * FROM mail_outbox WHERE id=$1',[job.id])).rows[0];assert.equal(job.status,'failed');assert.equal(job.payload,null)
+ // Simulate the previous sends leaving the recipient admission window.
+ await pool.query("UPDATE mail_admissions SET created_at=now()-interval '1 day 1 second' WHERE recipient_hash=$1",[tokenHash(config.key.toString('hex')+':recipient:'+email)])
+ // Admission suppression must preserve the last deliverable link.
+ await recover(email)
+ await recover(email)
+ await recover(email)
+ const preserved=(await pool.query('SELECT token_hash FROM password_recovery WHERE user_id=$1',[owner.id])).rows[0].token_hash
+ await recover(email)
+ assert.equal((await pool.query('SELECT token_hash FROM password_recovery WHERE user_id=$1',[owner.id])).rows[0].token_hash,preserved)
+ await pool.query("UPDATE mail_admissions SET created_at=now()-interval '1 day 1 second' WHERE recipient_hash=$1",[tokenHash(config.key.toString('hex')+':recipient:'+email)])
  // Expired and stale recovery jobs must never send.
  await recover(email);await pool.query("UPDATE mail_outbox SET expires_at=now()-interval '1 second' WHERE user_id=$1 AND purpose='recovery'",[owner.id]);await dispatch();assert.equal(sent.length,2)
  await recover(email);await pool.query("UPDATE users SET password_hash='changed-after-request' WHERE id=$1",[owner.id]);await dispatch();assert.equal(sent.length,2)

@@ -20,7 +20,7 @@ export default function AccountEmail({user,onUpdate}:{user:User;onUpdate:(user:U
      if(!token){
        const result=await api<{verificationToken:string}>('/account/email/start','POST',{email})
        setToken(result.verificationToken);setCooldown(true)
-       setMessage('کد تأیید در صف ارسال است. صندوق ورودی و پوشهٔ هرزنامه را بررسی کنید.')
+       setMessage('اگر این ایمیل امکان ثبت‌نام داشته باشد و سهمیهٔ ارسال باقی باشد، کد تأیید ارسال می‌شود. صندوق ورودی و پوشهٔ هرزنامه را بررسی کنید.')
      }else{
        const result=await api<{user:User}>('/account/email/verify','POST',{verificationToken:token,code})
        onUpdate(result.user);setToken('');setCode('')
@@ -33,7 +33,7 @@ export default function AccountEmail({user,onUpdate}:{user:User;onUpdate:(user:U
    setBusy(true);setError('')
    try{
      await api('/account/email/resend','POST',{verificationToken:token})
-     setCode('');setCooldown(true);setMessage('کد جدید در صف ارسال است.')
+     setCode('');setCooldown(true);setMessage('درخواست ارسال مجدد ثبت شد؛ در صورت امکان کد جدید ارسال می‌شود.')
    }catch(cause){setError((cause as Error).message)}
    finally{setBusy(false)}
  }

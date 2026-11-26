@@ -16,6 +16,7 @@ export async function migrateRegistration(client){
       issued_at timestamptz NOT NULL DEFAULT now(), attempts integer NOT NULL DEFAULT 0,
       provider text, subject text
     );
+    ALTER TABLE pending_registrations ADD COLUMN IF NOT EXISTS is_decoy boolean NOT NULL DEFAULT false;
     ALTER TABLE pending_registrations ADD COLUMN IF NOT EXISTS account_user_id text REFERENCES users(id) ON DELETE CASCADE;`)
 }
 
@@ -33,15 +34,22 @@ async function transaction(operation){
 }
 
 async function issueCode(client,mail,row,insert){
+  await client.query('SAVEPOINT verification_issue')
   const code=String(randomInt(1000000)).padStart(6,'0')
   await insert(codeHash(mail.key,row.id,code))
   await client.query("DELETE FROM mail_outbox WHERE registration_id=$1 AND status='pending'",[row.id])
+  if(row.is_decoy)return // Identical token lifecycle, but existing accounts never receive signup codes.
   const queued=await enqueueMail(client,{
     id:'verification-'+randomUUID(), registrationId:row.id, purpose:'signup_verification',
     to:row.email,subject:'کد تأیید ایمیل تریدر شو',
     text:`کد تأیید ایمیل شما: ${code}\nاین کد ۱۵ دقیقه اعتبار دارد. اگر شما درخواست ثبت‌نام نداده‌اید، این پیام را نادیده بگیرید.`,
   })
-  if(!queued)throw invalid(503,'ارسال کد تأیید در دسترس نیست. دوباره تلاش کنید.')
+  // Suppression must preserve the previously delivered code and pending job.
+  if(!queued&&row.code_hash){
+    await client.query('ROLLBACK TO SAVEPOINT verification_issue')
+    await client.query('UPDATE pending_registrations SET issued_at=now() WHERE id=$1',[row.id])
+  }
+  // Admission denial stays uniform; resend follows the same cooldown/token lifecycle.
 }
 
 export async function startRegistration({name,email,passwordHash,social,accountUserId=null}){
@@ -56,14 +64,13 @@ export async function startRegistration({name,email,passwordHash,social,accountU
       await client.query('DELETE FROM pending_registrations WHERE account_user_id=$1',[accountUserId])
     }
     await client.query('DELETE FROM pending_registrations WHERE expires_at<=now()')
-    if((await client.query('SELECT 1 FROM users WHERE lower(email)=$1',[email])).rowCount)
-      throw invalid(409,'این ایمیل قبلاً ثبت شده است. پس از ورود می‌توانید روش ورود جدید را از حساب کاربری متصل کنید.')
+    const isDecoy=(await client.query('SELECT 1 FROM users WHERE lower(email)=$1',[email])).rowCount>0
     if(social&&!(await client.query('DELETE FROM social_registrations WHERE ticket=$1 AND expires_at>now()',[social.ticket])).rowCount)
       throw invalid(400,'درخواست ورود منقضی شده است. دوباره وارد شوید.')
-    await issueCode(client,mail,{id,email},hash=>client.query(`INSERT INTO pending_registrations
-      (id,name,email,password_hash,code_hash,expires_at,provider,subject,account_user_id)
-      VALUES ($1,$2,$3,$4,$5,now()+interval '15 minutes',$6,$7,$8)`,
-      [id,name,email,passwordHash,hash,social?.provider??null,social?.subject??null,accountUserId]))
+    await issueCode(client,mail,{id,email,is_decoy:isDecoy},hash=>client.query(`INSERT INTO pending_registrations
+      (id,name,email,password_hash,code_hash,expires_at,provider,subject,account_user_id,is_decoy)
+      VALUES ($1,$2,$3,$4,$5,now()+interval '15 minutes',$6,$7,$8,$9)`,
+      [id,name,email,passwordHash,hash,social?.provider??null,social?.subject??null,accountUserId,isDecoy]))
   })
   return {verificationToken:token}
 }
@@ -93,7 +100,7 @@ export async function verifyRegistration({input,res,req,path,rateLimit,fail,json
         return {resent:true}
       }
       if(row.attempts>=5)return {status:429,error:'برای ادامه کد جدید درخواست کنید.'}
-      if(!timingSafeEqual(row.code_hash,codeHash(mail.key,id,code))){
+      if(!timingSafeEqual(row.code_hash,codeHash(mail.key,id,code))||row.is_decoy){
         await client.query('UPDATE pending_registrations SET attempts=attempts+1 WHERE id=$1',[id])
         return {status:400,error:'کد تأیید نادرست است.'}
       }
