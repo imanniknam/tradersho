@@ -24,6 +24,7 @@ services:
   app:
     image: ${APP_IMAGE:?Set APP_IMAGE to immutable release tag}
     pull_policy: never
+    user: '1000:1000'
     restart: unless-stopped
     init: true
     environment:
@@ -35,7 +36,7 @@ services:
       CAPTCHA_SECRET: ${CAPTCHA_SECRET:?Set CAPTCHA_SECRET}
       HOST: 0.0.0.0
       PORT: '3001'
-      DATABASE_URL: postgresql://tradersho:${POSTGRES_PASSWORD}@db:5432/tradersho
+      DATABASE_URL: postgresql://tradersho_panel:${APP_DATABASE_PASSWORD:?Provision restricted database roles first}@db:5432/tradersho
       APP_PUBLIC_URL: https://${PANEL_DOMAIN:-my.tradersho.com}
       RECOVERY_EMAIL_URL: ${RECOVERY_EMAIL_URL:-}
       RECOVERY_EMAIL_SECRET: ${RECOVERY_EMAIL_SECRET:-}
