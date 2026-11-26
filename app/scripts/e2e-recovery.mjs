@@ -33,7 +33,7 @@ try{
  for(const width of [320,390,768,1440])for(const theme of ['light','dark']){
   await page.setViewportSize({width,height:900});await page.goto(base+'/forgot-password');await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth))
-  await page.addScriptTag({content:axe});const violations=await page.evaluate(async()=> (await window.axe.run()).violations.filter(v=>['serious','critical'].includes(v.impact)));assert.deepEqual(violations.map(v=>v.id),[])
+  await page.evaluate(axe);const violations=await page.evaluate(async()=> (await window.axe.run()).violations.filter(v=>['serious','critical'].includes(v.impact)));assert.deepEqual(violations.map(v=>v.id),[])
   await page.getByLabel('ایمیل',{exact:true}).fill('view-'+randomUUID()+'@example.test');await page.getByRole('button',{name:'ارسال لینک بازیابی'}).click();await page.getByRole('alert').waitFor();assert.match(await page.getByRole('alert').innerText(),/فعال نشده|تلاش/)
   await page.screenshot({path:`qa/recovery/${theme}-${width}.png`,fullPage:true})
  }
@@ -42,7 +42,7 @@ try{
   await page.setViewportSize({width,height:720});await page.goto(base+'/reset-password#'+token);await page.evaluate(t=>document.documentElement.dataset.theme=t,theme)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth))
   await page.waitForFunction(()=>location.hash==='')
-  await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['serious','critical'].includes(v.impact)).map(v=>v.id)),[])
+  await page.evaluate(axe);assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['serious','critical'].includes(v.impact)).map(v=>v.id)),[])
   await page.getByRole('button',{name:'ذخیرهٔ رمز جدید'}).scrollIntoViewIfNeeded();assert.ok(await page.getByRole('button',{name:'ذخیرهٔ رمز جدید'}).isVisible())
  }
  await page.goto(base+'/reset-password#'+token);await page.getByLabel('رمز عبور جدید',{exact:true}).fill('NewSecure#2027');await page.getByLabel('تکرار رمز عبور جدید').fill('NewSecure#2027');await page.getByRole('button',{name:'ذخیرهٔ رمز جدید'}).click();await page.getByRole('status').waitFor();assert.match(await page.getByRole('status').innerText(),/تغییر کرد/)

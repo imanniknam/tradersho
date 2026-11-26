@@ -31,6 +31,9 @@ const host = process.env.HOST || '0.0.0.0'
 const sessionAge = 3 * 24 * 60 * 60
 const courseLengths = { basics: 8, risk: 6, psychology: 5 }
 const securityHeaders = responseSecurityHeaders
+// A login for an unknown or password-less account must cost the same as a wrong password.
+const decoyPasswordHash = await hashPassword(randomBytes(32).toString('hex'))
+const hasPasswordHash = value => typeof value === 'string' && (value.startsWith('scrypt$') || value.includes(':'))
 const json = (res, status, data, headers = {}) => {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...securityHeaders, ...headers })
   res.end(JSON.stringify(data))
@@ -66,14 +69,14 @@ const clientAddress = req => {
   return ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(direct) && typeof cloudflare === 'string' ? cloudflare : direct
 }
 const throttleKey = (req, action, account = '') => digest(`${action}:${account || clientAddress(req)}`)
-const rateLimit = async (req, res, action, account = '', limit = 10) => {
+const rateLimit = async (req, res, action, account = '', limit = 10, silent = false) => {
   const key = throttleKey(req, action, account)
   const { rows } = await pool.query(`INSERT INTO auth_throttle (key_hash, attempts, expires_at) VALUES ($1, 1, now() + interval '15 minutes')
     ON CONFLICT (key_hash) DO UPDATE SET attempts = CASE WHEN auth_throttle.expires_at < now() THEN 1 ELSE auth_throttle.attempts + 1 END,
     expires_at = CASE WHEN auth_throttle.expires_at < now() THEN now() + interval '15 minutes' ELSE auth_throttle.expires_at END
     RETURNING attempts`, [key])
   if (rows[0].attempts <= limit) return false
-  fail(res, 429, 'تعداد تلاش‌ها زیاد است. ۱۵ دقیقهٔ دیگر دوباره تلاش کنید.')
+  if (!silent) fail(res, 429, 'تعداد تلاش‌ها زیاد است. ۱۵ دقیقهٔ دیگر دوباره تلاش کنید.')
   return true
 }
 const activePlan = async userId => {
@@ -143,7 +146,7 @@ const staticFile = async (path, req, res) => {
 
 const server = http.createServer(async (req, res) => {
   try {
-    const path = new URL(req.url, 'http://' + (req.headers.host || 'localhost')).pathname
+    const path = new URL(req.url, 'http://localhost').pathname
     if (!path.startsWith('/api/')) return await staticFile(path, req, res)
     const method = req.method || 'GET'
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && (req.headers['sec-fetch-site'] === 'cross-site' || !sameOrigin(req))) return fail(res, 403, 'مبدأ درخواست مجاز نیست.')
@@ -159,7 +162,7 @@ const server = http.createServer(async (req, res) => {
     }
     if(await calendarIntegration({path,method,req,res,body,json,fail,rateLimit}))return
     if(path.startsWith('/api/integrations/news'))return fail(res,410,'بخش خبرها حذف شده است.')
-    if(await recoveryRoute({path,method,req,res,body,json,fail,rateLimit}))return
+    if(await recoveryRoute({path,method,req,res,body,json,fail,rateLimit,clientKey:clientAddress,captchaBinding:cookies(req).tradersho_captcha}))return
     const login=async (user,status=200)=>json(res,status,{user:await publicUser(user)},{'Set-Cookie':await createSession(req,user.id)})
     const redirect=(location,setCookies)=>{
       res.writeHead(303,{...securityHeaders,'Referrer-Policy':'no-referrer','Cache-Control':'no-store',Location:location,'Set-Cookie':setCookies})
@@ -175,11 +178,12 @@ const server = http.createServer(async (req, res) => {
       const password = input.password
       if (email.length>160 || !mailAddress(email)) return fail(res, 400, 'ایمیل معتبر نیست.')
       if (await rateLimit(req, res, 'signup-ip', '', 15)) return
-      if (await rateLimit(req, res, 'signup', email, 10)) return
       const invalidPassword = passwordError(password, { email, name })
       if (invalidPassword) return fail(res, 400, invalidPassword)
       if (password !== input.confirmPassword) return fail(res, 400, 'تکرار رمز عبور با رمز اصلی یکسان نیست.')
       if(!await verifyCaptcha(input.captchaId,input.captchaAnswer,cookies(req).tradersho_captcha))return fail(res,400,'بررسی امنیتی نامعتبر یا منقضی شده است. دوباره انجام دهید.')
+      // Per-address buckets are charged only after CAPTCHA, so junk requests cannot lock an address out.
+      if (await rateLimit(req, res, 'signup', email, 10)) return
       const passwordHash=await hashPassword(password)
       if(verificationEnabled())return json(res,202,await startRegistration({name,email,passwordHash}))
       const id = randomUUID()
@@ -196,13 +200,18 @@ const server = http.createServer(async (req, res) => {
       const email = String(input.email || '').trim().toLowerCase()
       if (email.length > 160 || typeof input.password !== 'string' || input.password.length > 128) return fail(res, 401, 'ایمیل یا رمز عبور نادرست است.')
       if (await rateLimit(req, res, 'login-ip', '', 30)) return
-      if (await rateLimit(req, res, 'login', email, 10)) return
       if(!await verifyCaptcha(input.captchaId,input.captchaAnswer,cookies(req).tradersho_captcha))return fail(res,400,'بررسی امنیتی نامعتبر یا منقضی شده است. دوباره انجام دهید.')
+      // Strict limit per (email, client) so a third party cannot lock the owner out;
+      // the wider per-email ceiling still bounds guessing spread over many addresses.
+      const attemptSource = `${email}|${clientAddress(req)}`
+      if (await rateLimit(req, res, 'login', attemptSource, 10)) return
+      if (await rateLimit(req, res, 'login-account', email, 50)) return
       const { rows } = await pool.query('SELECT * FROM users WHERE lower(email) = $1', [email])
       const user = rows[0]
-      if (!user || user.account_status!=='active' || !await verifyPassword(input.password, user.password_hash)) return fail(res, 401, 'ایمیل یا رمز عبور نادرست است.')
+      const passwordMatches = await verifyPassword(input.password, hasPasswordHash(user?.password_hash) ? user.password_hash : decoyPasswordHash)
+      if (!user || user.account_status!=='active' || !passwordMatches) return fail(res, 401, 'ایمیل یا رمز عبور نادرست است.')
       if (!user.password_hash.startsWith('scrypt$')) await pool.query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [await hashPassword(input.password), user.id])
-      await pool.query('DELETE FROM auth_throttle WHERE key_hash = $1', [throttleKey(req, 'login', email)])
+      await pool.query('DELETE FROM auth_throttle WHERE key_hash = ANY($1::text[])', [[throttleKey(req, 'login', attemptSource), throttleKey(req, 'login-account', email)]])
       return json(res, 200, { user: await publicUser(user) }, { 'Set-Cookie': await createSession(req, user.id) })
     }
     if (path === '/api/auth/logout' && method === 'POST') {
@@ -216,7 +225,7 @@ const server = http.createServer(async (req, res) => {
       if(user.email)return fail(res,409,'این حساب قبلاً ایمیل دارد.')
       const input=await body(req),email=typeof input.email==='string'?input.email.trim().toLowerCase():''
       if(email.length>160||!mailAddress(email))return fail(res,400,'ایمیل معتبر وارد کنید.')
-      if(await rateLimit(req,res,'account-email',user.id,5)||await rateLimit(req,res,'signup',email,5))return
+      if(await rateLimit(req,res,'account-email',user.id,5)||await rateLimit(req,res,'account-email-target',email,5))return
       return json(res,202,await startRegistration({name:user.name,email,passwordHash:user.password_hash,accountUserId:user.id}))
     }
     if(['/api/account/email/verify','/api/account/email/resend'].includes(path)&&method==='POST')
@@ -330,6 +339,10 @@ server.maxConnections=256
 if(!mailConfig()&&verificationEnabled())throw Error('Email verification requires SMTP')
 await migrate()
 const stopMailWorker=startMailWorker(pool)
+// Expired throttle rows are attacker-creatable; do not keep them forever.
+const sweepThrottle = () => pool.query('DELETE FROM auth_throttle WHERE expires_at < now()').catch(() => console.warn('Throttle cleanup failed'))
+void sweepThrottle()
+setInterval(sweepThrottle, 3600000).unref()
 server.listen(port, host, () => console.log('Tradersho API listening on http://' + host + ':' + port))
 const shutdown = () => { void stopMailWorker().then(()=>server.close(() => pool.end())) }
 process.on('SIGTERM', shutdown)

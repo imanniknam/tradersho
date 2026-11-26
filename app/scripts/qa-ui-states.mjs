@@ -17,7 +17,7 @@ try{
   await p.getByAltText('تصویر کد امنیتی پنج‌رقمی').waitFor();await p.getByLabel('کد امنیتی',{exact:true}).fill('00000');await p.getByRole('button',{name:'ایجاد حساب',exact:true}).click();await p.getByRole('alert').filter({hasText:'این ایمیل قبلاً ثبت شده است.'}).waitFor()
   const fit=await p.evaluate(()=>({height:innerHeight,scroll:document.documentElement.scrollHeight,submit:document.querySelector('.auth-submit').getBoundingClientRect().bottom,footer:document.querySelector('.auth-side-bottom').getBoundingClientRect().bottom}))
   results.push({label:theme+'-signup-error-desktop',...fit})
-  await p.addScriptTag({content:axe.source});const a=await p.evaluate(()=>axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa']}}));assert.deepEqual(a.violations.map(v=>v.id),[])
+  await p.evaluate(axe.source);const a=await p.evaluate(()=>axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa']}}));assert.deepEqual(a.violations.map(v=>v.id),[])
   await p.screenshot({path:new URL(`../qa/audit/${theme}-signup-error.png`,import.meta.url).pathname})
   assert.ok(fit.scroll<=fit.height+2,JSON.stringify(fit))
   await p.getByRole('button',{name:'نمایش رمز',exact:true}).click();assert.equal(await p.getByPlaceholder('رمز عبور قوی').getAttribute('type'),'text');await p.getByRole('button',{name:'پنهان کردن رمز',exact:true}).click();assert.equal(await p.getByPlaceholder('رمز عبور قوی').getAttribute('type'),'password')

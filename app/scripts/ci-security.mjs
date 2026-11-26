@@ -14,6 +14,8 @@ const challenge=async()=>{
 }
 const login=(cap,cookie=cap.cookie,answer='123456')=>fetch(base+'/api/auth/login',{method:'POST',headers:{Origin:base,'Content-Type':'application/json',Cookie:cookie},body:JSON.stringify({email,password:'WrongPassword#2026',captchaId:cap.id,captchaAnswer:answer})})
 try{
+ // Requests without a solved CAPTCHA must not consume this address's login allowance.
+ for(let i=0;i<12;i++)assert.equal((await login({id:'junk',cookie:''})).status,400)
  const a=await challenge(),b=await challenge()
  // A different browser cannot solve or consume the owner's challenge.
  assert.equal((await login(a,b.cookie)).status,400)
@@ -28,6 +30,9 @@ try{
  assert.equal((await fetch(base+'/api/admin/users')).status,401)
  const home=await fetch(base+'/'),html=await home.text()
  assert.match(home.headers.get('content-security-policy'),/object-src 'none'/)
+ assert.doesNotMatch(home.headers.get('content-security-policy').match(/script-src[^;]*/)[0],/unsafe-/)
+ const forgot=await fetch(base+'/api/auth/forgot-password',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({email})})
+ assert.ok([400,503].includes(forgot.status),'forgot-password must not send mail without CAPTCHA')
  assert.match(home.headers.get('content-security-policy'),/frame-ancestors 'none'/)
  assert.equal(home.headers.get('x-content-type-options'),'nosniff')
  const script=html.match(/src="([^\"]+\.js)"/)[1]

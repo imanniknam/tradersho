@@ -158,7 +158,7 @@ export async function adminUsersRoute({path,method,user,req,res,body,json,fail,r
        if(id===user.id&&changedEmail)throw error(400,'ایمیل مدیر فعلی را از این فرم تغییر ندهید.')
        if(target.activation_required&&input.status==='active')throw error(400,'فعال‌سازی حساب دعوت‌شده با تأیید ایمیل انجام می‌شود.')
        if(input.status==='invited'&&!target.activation_required&&!changedEmail)throw error(400,'برای دعوت دوباره از ارسال لینک استفاده کنید.')
-       const status=changedEmail?'invited':input.status
+       const status=changedEmail&&input.status!=='suspended'?'invited':input.status
        if(input.isAdmin&&status!=='active')throw error(400,'مدیر باید حساب فعال داشته باشد.')
        await db.query(`UPDATE users SET name=$2,email=$3,account_status=$4,email_verified_at=CASE WHEN $5 THEN NULL ELSE email_verified_at END,activation_required=CASE WHEN $5 THEN true ELSE activation_required END,
          updated_at=now() WHERE id=$1`,[id,input.name.trim(),email,status,changedEmail])
@@ -171,7 +171,7 @@ export async function adminUsersRoute({path,method,user,req,res,body,json,fail,r
          await db.query('DELETE FROM social_auth_flows WHERE link_user=$1',[id])
          await db.query('DELETE FROM password_recovery WHERE user_id=$1',[id])
        }
-       if(changedEmail)await sendAccessLink(db,{...target,email},true)
+       if(changedEmail&&status!=='suspended')await sendAccessLink(db,{...target,email},true)
        await audit(db,user.id,id,'update',{status,isAdmin:input.isAdmin,isSupportAgent:input.isSupportAgent,emailChanged:changedEmail})
      }else throw error(405,'این عملیات مجاز نیست.')
      await db.query('UPDATE users SET admin_version=admin_version+1 WHERE id=$1',[id])

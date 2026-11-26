@@ -43,18 +43,29 @@ printf '\nRelease %s is healthy. Previous: %s\n' "$sha" "$previous"
 
 # The daily results collector runs on the VPS instead of depending on GitHub cron latency.
 # Python/curl already exist on this host; credentials remain in the private environment file.
-docker cp tradersho-app-1:/app/scripts/collect-persianfx.py "$root/calendar-collector.new.py"
-chmod 600 "$root/calendar-collector.new.py"
-mv -f "$root/calendar-collector.new.py" "$root/calendar-collector.py"
+# It parses third-party data every minute: run it unprivileged and give it only its
+# own token, never the full environment (database, CAPTCHA, OAuth and SMTP secrets).
+install -d -m 755 /usr/local/lib/tradersho
+docker cp tradersho-app-1:/app/scripts/collect-persianfx.py /usr/local/lib/tradersho/calendar-collector.new.py
+chmod 644 /usr/local/lib/tradersho/calendar-collector.new.py
+mv -f /usr/local/lib/tradersho/calendar-collector.new.py /usr/local/lib/tradersho/calendar-collector.py
+{ grep '^CALENDAR_INGEST_TOKEN=' "$root/.env" || true; } > "$root/calendar.env"
+chmod 600 "$root/calendar.env"
 cat > /etc/systemd/system/tradersho-calendar.service <<'UNIT'
 [Unit]
 Description=Tradersho daily economic calendar refresh
 After=network-online.target docker.service
 [Service]
 Type=oneshot
-EnvironmentFile=/opt/tradersho/.env
+EnvironmentFile=/opt/tradersho/calendar.env
 Environment=CALENDAR_PANEL_URL=https://my.tradersho.com
-ExecStart=/usr/bin/python3 /opt/tradersho/calendar-collector.py --past-days 0 --future-days 0
+ExecStart=/usr/bin/python3 /usr/local/lib/tradersho/calendar-collector.py --past-days 0 --future-days 0
+DynamicUser=true
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
 TimeoutStartSec=150
 NoNewPrivileges=true
 PrivateTmp=true
@@ -74,3 +85,4 @@ UNIT
 systemctl daemon-reload
 systemctl enable --now tradersho-calendar.timer
 systemctl start --no-block tradersho-calendar.service
+rm -f "$root/calendar-collector.py"

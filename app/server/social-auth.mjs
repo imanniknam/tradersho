@@ -47,6 +47,9 @@ export async function migrateSocialAuth(client){
     user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     PRIMARY KEY(provider,subject), UNIQUE(user_id,provider)
   );
+  CREATE TABLE IF NOT EXISTS telegram_used_logins (
+    hash text PRIMARY KEY, expires_at timestamptz NOT NULL DEFAULT now()+interval '10 minutes'
+  );
   CREATE TABLE IF NOT EXISTS social_auth_flows (
     ticket text PRIMARY KEY, provider text NOT NULL, state_hash text NOT NULL,
     verifier text NOT NULL, nonce text NOT NULL, link_user text, session_hash text,
@@ -58,6 +61,14 @@ export async function migrateSocialAuth(client){
   );`)
 }
 
+
+// A signed widget result is not bound to our state, so whoever obtains the callback
+// URL could replay it into their own flow while it is still fresh.
+async function consumeTelegramLogin(hash){
+  await pool.query('DELETE FROM telegram_used_logins WHERE expires_at<=now()')
+  const used=await pool.query('INSERT INTO telegram_used_logins(hash) VALUES($1) ON CONFLICT DO NOTHING',[tokenHash(hash)])
+  if(!used.rowCount)throw Error('Telegram authorization already used')
+}
 
 export async function telegramAccount(identity){
   const db=await pool.connect()
@@ -161,6 +172,7 @@ export async function socialRoute({path,method,req,res,body,json,fail,rateLimit,
   if(!oidc.widget&&(!code||code.length>4096)){redirect(failed,headers);return true}
   try{
     const identity=oidc.widget?verifyTelegramWidget(url.searchParams,process.env.TELEGRAM_BOT_TOKEN):await exchange(provider,oidc,flow,code)
+    if(oidc.widget)await consumeTelegramLogin(url.searchParams.get('hash'))
     if(flow.link_user){
       const inserted=await pool.query(`INSERT INTO social_identities(provider,subject,user_id)
         SELECT $1,$2,user_id FROM sessions WHERE user_id=$3 AND token_hash=$4 AND expires_at>now() AND EXISTS(SELECT 1 FROM users u WHERE u.id=$3 AND u.account_status='active')

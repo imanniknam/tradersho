@@ -40,7 +40,7 @@ async function geometry(p,label,{desktopFit=false}={}){
  cases.push({label,type:'geometry'})
 }
 async function access(p,label,context){
- if(!await p.evaluate(()=>!!window.axe))await p.addScriptTag({content:axe.source})
+ if(!await p.evaluate(()=>!!window.axe))await p.evaluate(axe.source)
  const results=await p.evaluate(async ({context})=>window.axe.run(context||document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']}}),{context})
  for(const v of results.violations)failures.push({label,type:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary,html:n.html.slice(0,220)}))})
  cases.push({label,type:'axe'})

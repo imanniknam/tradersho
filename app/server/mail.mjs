@@ -78,7 +78,7 @@ export async function dispatchMail(pool,config,transport){
       UPDATE mail_outbox SET status='failed',payload=NULL,last_error='expired' WHERE status='pending' AND expires_at<=now();`)
     if(!(await client.query('SELECT 1 FROM mail_dispatch_clock WHERE id=1 AND next_at<=now()')).rowCount)return false
     const row=(await client.query(`SELECT o.* FROM mail_outbox o WHERE status='pending' AND next_attempt_at<=now()
-      ORDER BY CASE WHEN purpose IN ('recovery','signup_verification') THEN 0 ELSE 1 END,created_at,id LIMIT 1`)).rows[0]
+      ORDER BY CASE purpose WHEN 'recovery' THEN 0 WHEN 'signup_verification' THEN 1 ELSE 2 END,created_at,id LIMIT 1`)).rows[0]
     if(!row)return false
     // Password changes invalidate recovery before sending, not only before redemption.
     if(row.recovery_hash&&!(await client.query(`SELECT 1 FROM password_recovery r JOIN users u ON u.id=r.user_id

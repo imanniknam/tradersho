@@ -3,6 +3,7 @@ import {randomUUID} from 'node:crypto'
 if(!process.env.DATABASE_URL?.endsWith('_qa'))throw Error('Dedicated QA database required')
 // Never connect to real SMTP: exercise the real transactions with a fake transport.
 Object.assign(process.env,{MAIL_TRANSPORT:'smtp',SMTP_HOST:'smtp.example.test',SMTP_PORT:'587',SMTP_USER:'sender@example.test',SMTP_PASSWORD:'qa-only',MAIL_FROM:'sender@example.test',MAIL_REPLY_TO:'support@example.test',MAIL_ENCRYPTION_KEY:'ab'.repeat(32),APP_PUBLIC_URL:'https://panel.example.test'})
+delete process.env.CAPTCHA_MODE // the forgot-password CAPTCHA gate is covered by ci-security
 const {pool,migrate}=await import('../server/db.mjs')
 const {recoveryRoute}=await import('../server/recovery.mjs')
 const {supportRoute}=await import('../server/support.mjs')

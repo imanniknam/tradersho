@@ -12,6 +12,14 @@ const common = new Set([
   '000000000000000', 'abcdefghijklmnop', 'asdfghjkl1234567', 'letmein123456789',
 ])
 const normalize = value => value.normalize('NFC')
+// "Password1!" satisfies every character class. Judge the word that is left after
+// removing the digit/symbol padding and undoing the usual letter substitutions.
+const weakWords = new Set(['password', 'passwd', 'pass', 'admin', 'administrator', 'qwerty', 'qwertyuiop', 'asdfgh', 'welcome', 'iloveyou', 'letmein', 'changeme', 'secret', 'login', 'user', 'test', 'aa', 'ab', 'abc', 'abcd', 'abcde'])
+const substitutions = { '@': 'a', '0': 'o', '1': 'i', '3': 'e', '$': 's', '5': 's' }
+const isPaddedWeakWord = lower => {
+  const core = lower.replace(/^[^a-z]+|[^a-z]+$/g, '')
+  return weakWords.has(core.replace(/[@013$5]/g, c => substitutions[c]).replace(/[^a-z]/g, ''))
+}
 export const tokenHash = value => createHash('sha256').update(value).digest('hex')
 
 export function passwordError(password, { email = '', name = '' } = {}) {
@@ -22,7 +30,7 @@ export function passwordError(password, { email = '', name = '' } = {}) {
   if (!/[a-z]/.test(value) || !/[A-Z]/.test(value) || !/[0-9]/.test(value) || !/[^A-Za-z0-9\s]/u.test(value)) return 'رمز باید شامل حرف کوچک و بزرگ انگلیسی، عدد و کاراکتر خاص باشد.'
   const lower = value.toLocaleLowerCase('en-US')
   const local = email.split('@')[0]?.toLocaleLowerCase('en-US') || ''
-  if (common.has(lower) || (local.length >= 4 && lower.includes(local)) || lower.includes('tradersho')) return 'این رمز قابل حدس است؛ عبارت عبور متفاوت و اختصاصی انتخاب کنید.'
+  if (common.has(lower) || isPaddedWeakWord(lower) || (local.length >= 4 && lower.includes(local)) || lower.includes('tradersho')) return 'این رمز قابل حدس است؛ عبارت عبور متفاوت و اختصاصی انتخاب کنید.'
   if (name.trim().length >= 4 && lower.includes(name.trim().toLocaleLowerCase('en-US'))) return 'رمز عبور نباید شامل نام شما باشد.'
   if (/^(.)\1{7,}$/u.test(value)) return 'این رمز بسیار قابل حدس است؛ رمز متفاوت انتخاب کنید.'
   return null

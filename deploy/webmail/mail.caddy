@@ -2,6 +2,7 @@ mx.tradersho.com {
     encode zstd gzip
     header {
         X-Content-Type-Options nosniff
+        Strict-Transport-Security max-age=31536000
         Referrer-Policy same-origin
         X-Frame-Options SAMEORIGIN
         -Server

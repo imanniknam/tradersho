@@ -2,9 +2,10 @@ import {useCallback,useContext,useEffect,useRef,useState} from 'react'
 import {ArrowLeft,BookOpen,Bot,Check,ChevronDown,Download,Grip,Layers,Maximize2,Minimize2,Pin,RotateCcw,Search,ShieldCheck,X} from 'lucide-react'
 import simulatorTemplate from './simulator.html?raw'
 import demoMarketSource from './demo-market.mjs?raw'
+import {buildSimulator} from './build-simulator.mjs'
 import {createDemoMarket} from './demo-market.mjs'
 const demoMarket=createDemoMarket()
-const simulator=simulatorTemplate.replaceAll('__EXPERT_VERSION__',download.version).replace('/* SHARED_DEMO_MARKET */',demoMarketSource.replace(/^export /gm,''))
+const simulator=buildSimulator(simulatorTemplate,download.version,demoMarketSource)
 import download from './download.json'
 import mt4 from './download-mt4.json'
 import {advancedTopics,expertTabs,topicTab} from './content'

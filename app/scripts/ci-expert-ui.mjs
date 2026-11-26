@@ -57,7 +57,7 @@ try{
    const minimize=page.getByRole('button',{name:'جمع‌کردن مانیتور آموزشی'});await minimize.click();assert.equal(await page.getByRole('button',{name:'بازکردن مانیتور آموزشی'}).getAttribute('aria-expanded'),'false');await page.getByRole('button',{name:'بازکردن مانیتور آموزشی'}).click()
   }
   await page.locator('.expert-lab').scrollIntoViewIfNeeded();await page.screenshot({path:`qa/expert/${width}-${theme}.png`})
-  await page.addScriptTag({content:axe});const issues=await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})));assert.deepEqual(issues,[],width+' '+theme)
+  await page.evaluate(axe);const issues=await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})));assert.deepEqual(issues,[],width+' '+theme)
   assert.equal(await page.locator('iframe').getAttribute('sandbox'),'allow-scripts');assert.equal(await page.locator('.expert-help-window').count(),0)
   await page.locator('.expert-downloads').scrollIntoViewIfNeeded();
   assert.ok(await page.locator('.analysis-heading').evaluate(n=>{const r=n.getBoundingClientRect(),s=document.querySelector('.main-scroll'),b=s.getBoundingClientRect();return s.scrollTop>0&&getComputedStyle(n).position==='sticky'&&Math.abs(r.top-b.top)<=2&&r.bottom<b.bottom&&n.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))}),'Expert heading remains at the scroll viewport top and above content '+width+' '+theme);

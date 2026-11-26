@@ -19,8 +19,9 @@ jobs:
     environment: production
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          persist-credentials: false
           ref: main
       - name: Fetch official Google public signing keys
         run: python3 deploy/vps/google-jwks.py fetch /tmp/tradersho-google-jwks.json

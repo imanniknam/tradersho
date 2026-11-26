@@ -1,12 +1,24 @@
 import {createHash} from 'node:crypto'
+import {readFileSync} from 'node:fs'
+import {inlineScripts,scriptHash} from './csp-hash.mjs'
+import {telegramWidgetPage} from './telegram-widget.mjs'
+
+const built=name=>{try{return readFileSync(new URL('../dist/'+name,import.meta.url),'utf8')}catch{return ''}}
+// Only the exact inline scripts we ship may run. index.html and the Telegram page are
+// hashed here; vite writes the hashes of the expert simulator (a srcdoc frame, which
+// inherits this policy) to csp-hashes.json.
+const scriptHashes=[...new Set([
+  ...[built('index.html'),telegramWidgetPage('bot','https://invalid.example/')].flatMap(inlineScripts).map(scriptHash),
+  ...JSON.parse(built('csp-hashes.json')||'[]'),
+])].join(' ')
 
 export const responseSecurityHeaders={
   'X-Content-Type-Options':'nosniff',
   'X-Frame-Options':'DENY',
   'Referrer-Policy':'strict-origin-when-cross-origin',
   'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
-  // The training srcdoc and official widgets require inline scripts/styles.
-  'Content-Security-Policy':"default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' https://s3.tradingview.com https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tradingview.com https://telegram.org https://*.telegram.org; font-src 'self' data:; connect-src 'self' https://*.tradingview.com; frame-src 'self' https://*.tradingview-widget.com https://*.tradingview.com https://tradingview.com https://flicker.finance https://oauth.telegram.org; worker-src 'self' blob:; form-action 'self' https://oauth.telegram.org https://accounts.google.com",
+  // Official widgets and React style attributes still need inline styles.
+  'Content-Security-Policy':"default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; script-src 'self' "+scriptHashes+" https://s3.tradingview.com https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tradingview.com https://telegram.org https://*.telegram.org; font-src 'self' data:; connect-src 'self' https://*.tradingview.com; frame-src 'self' https://*.tradingview-widget.com https://*.tradingview.com https://tradingview.com https://flicker.finance https://oauth.telegram.org; worker-src 'self' blob:; form-action 'self' https://oauth.telegram.org https://accounts.google.com",
   ...(process.env.NODE_ENV==='production'&&process.env.APP_PUBLIC_URL?.startsWith('https://')?{'Strict-Transport-Security':'max-age=31536000'}:{}),
 }
 

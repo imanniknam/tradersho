@@ -22,7 +22,7 @@ try{
   await loginPage.setViewportSize({width,height:720});await loginPage.goto(base+'/auth');if(mode==='signup')await loginPage.getByRole('tab',{name:'ثبت‌نام',exact:true}).click();await loginPage.getByAltText('تصویر کد امنیتی شش‌رقمی').waitFor();await loginPage.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(350)
   assert.ok(await loginPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
   if(width===1440)assert.ok(await loginPage.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),'CAPTCHA desktop authentication must fit at 720px height')
-  await loginPage.addScriptTag({content:axe});assert.deepEqual(await loginPage.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))),[])
+  await loginPage.evaluate(axe);assert.deepEqual(await loginPage.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))),[])
  }
  await guest.close()
  await page.context().request.post(base+'/api/auth/logout')
@@ -59,7 +59,7 @@ try{
  for(const width of [320,390,768,1024,1280,1440,1920,2560,3840])for(const theme of ['light','dark'])for(const path of ['/panel','/panel/tools','/panel/market','/panel/support','/panel/support/new','/panel/support/'+auditTicket.id,'/panel/account','/panel/wallet','/panel/rebate','/forgot-password','/privacy']){
   await page.setViewportSize({width,height:900});try{await page.goto(base+path);await page.locator('h1,.coming-soon h2').first().waitFor()}catch(error){await page.screenshot({path:'qa/panel/navigation-failure.png'});console.error('Navigation failure',{width,theme,path,url:page.url(),errors});throw error}await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(350)
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${width} ${theme} ${path}`)
-  await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))),[],`${width} ${theme} ${path}`)
+  await page.evaluate(axe);assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))),[],`${width} ${theme} ${path}`)
   if(process.env.QA_BRAND_FONTS){await page.evaluate(()=>document.fonts.ready);assert.ok(await page.evaluate(()=>document.fonts.check('16px "Yekan Bakh"')),'Brand font loaded')}
   if(path.startsWith('/panel'))assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1),'No outer page tail '+width+' '+theme+' '+path)
   const spills=await page.evaluate(()=>[...document.querySelectorAll('.main-inner input:not([type=checkbox]),.main-inner select,.main-inner textarea,.calendar-search-box,.currency-filter')].filter(n=>{const r=n.getBoundingClientRect(),p=n.parentElement.getBoundingClientRect();return r.width>0&&(r.left<p.left-2||r.right>p.right+2)}).map(n=>({tag:n.tagName,cls:n.className,label:n.getAttribute('aria-label')})));assert.deepEqual(spills,[],`Control alignment ${width} ${theme} ${path}`)
@@ -101,7 +101,7 @@ try{
   assert.ok(await page.locator('.risk-widget').isVisible());assert.equal(await page.locator('.analysis-context > section').count(),2);assert.ok(await page.locator('.preview-filters .currency-picker>summary').isVisible(),'Multi-currency preview picker is visible')
   assert.ok(await page.evaluate(()=>{const cards=document.querySelectorAll('.analysis-context > section');return cards[1].getBoundingClientRect().top>=cards[0].getBoundingClientRect().bottom}),'Risk widget stays beneath calendar')
   assert.equal(await page.evaluate(()=>window.__chartConfig.symbol),'OANDA:XAUUSD');assert.equal(await page.evaluate(()=>window.__chartConfig.interval),'60')
-  await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))),[])
+  await page.evaluate(axe);assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))),[])
   await page.screenshot({path:`qa/tools/workspace-${width}-${theme}.png`,fullPage:true})
   await page.getByRole('button',{name:'نمای تمام‌صفحه',exact:true}).click();await page.getByRole('dialog',{name:'محیط تحلیل بازار'}).waitFor();await page.keyboard.press('Escape');assert.equal(await page.locator('.tv-expanded').count(),0)
   assert.ok(await page.locator('.analysis-rail a').evaluateAll(links=>links.every(link=>{
@@ -174,7 +174,7 @@ try{
   assert.ok(pinned,`Calendar command remains sticky at ${width} ${theme}`)
   if(width<=900)assert.ok(await page.evaluate(()=>{const rail=document.querySelector('.analysis-rail').getBoundingClientRect(),link=document.querySelector('.analysis-rail .selected').getBoundingClientRect();return link.left>=rail.left-1&&link.right<=rail.right+1}),'Active tool remains visible on the mobile rail')
   if(width>=1100)assert.ok(await page.evaluate(()=>Math.abs(document.querySelector('.native-calendar-table thead th').getBoundingClientRect().top-document.querySelector('.calendar-command').getBoundingClientRect().bottom)<4),'Desktop table headings stay below command bar')
-  await page.addScriptTag({content:axe});assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))),[])
+  await page.evaluate(axe);assert.deepEqual(await page.evaluate(async()=>(await window.axe.run()).violations.filter(v=>['critical','serious'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))),[])
   await page.screenshot({path:`qa/tools/calendar-native-${width}-${theme}.png`})
  }
  assert.deepEqual(errors,[]);console.log('PASS: registration through browser, 198 dashboard/support/account/privacy/calendar page/theme combinations, overflow and axe serious/critical checks; 12 banner separation checks; 18 tool-workspace sizes/themes with fullscreen, navigation and coming-soon checks; 18 native-calendar variants with sticky controls, unit isolation and school/news routing checks; 14 desktop viewport-fit checks with long calendar titles and an always-visible Persian guide; upcoming-only preview expiration, flat backgrounds and chart theme configuration plus risk widget layout checks. CI uses the published fallback font; private brand fonts are mounted on the VPS.')
