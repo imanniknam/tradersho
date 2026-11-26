@@ -32,7 +32,7 @@ jobs:
       CALENDAR_INGEST_TOKEN: qa-only-calendar-ingest-secret-not-production
       CAPTCHA_MODE: internal
       CAPTCHA_SECRET: qa-only-captcha-secret-for-isolated-ci
-      STAFF_MFA_KEY: 5151515151515151515151515151515151515151515151515151515151515151
+      STAFF_MFA_KEY: '5151515151515151515151515151515151515151515151515151515151515151'
     defaults:
       run:
         working-directory: app
