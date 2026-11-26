@@ -51,7 +51,7 @@ jobs:
       - run: node --test ../deploy/owner-mail/security.test.mjs
       - run: python3 -m unittest discover -s scripts -p "test_calendar.py"
       - run: npm run build
-      - run: python3 -m unittest discover -s ../deploy/vps -p "test_google_jwks.py"
+      - run: python3 -m unittest discover -s ../deploy/vps -p "test_*.py"
       - name: Database and API integration
         run: |
           node server/index.mjs > /tmp/tradersho-ci-server.log 2>&1 &
@@ -64,15 +64,19 @@ jobs:
           node scripts/ci-captcha-pow.mjs
           node scripts/ci-calendar.mjs
           node scripts/ci-mail.mjs
+          node scripts/ci-mail-admission.mjs
           node scripts/ci-signup-verification.mjs
           node scripts/ci-telegram-account.mjs
           node scripts/ci-social-auth.mjs
           node scripts/ci-admin-users.mjs
           node scripts/ci-staff-mfa.mjs
+          node scripts/ci-database-roles.mjs
+          node scripts/ci-owner-mail-local.mjs
       - name: Desktop and mobile browser checks
         run: |
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-captcha-pow-ui.mjs
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-admin-users-ui.mjs
+          CHROME_BIN="$(command -v google-chrome)" node scripts/ci-security-flows-ui.mjs
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-ui.mjs
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-risk-ui.mjs
           CHROME_BIN="$(command -v google-chrome)" node scripts/ci-expert-ui.mjs
@@ -105,11 +109,8 @@ jobs:
       - name: Package release
         run: |
           mkdir -p /tmp/tradersho-release
-          docker pull postgres:17-alpine
-          docker pull caddy:2-alpine
-          docker save "tradersho:$GITHUB_SHA" postgres:17-alpine caddy:2-alpine | gzip -1 > /tmp/tradersho-release/image.tar.gz
-          cp deploy/vps/{compose.yaml,Caddyfile,deploy.sh,backup.sh} /tmp/tradersho-release/
-          tar -C /tmp/tradersho-release -cf /tmp/tradersho-bundle.tar image.tar.gz compose.yaml Caddyfile deploy.sh backup.sh
+          docker save "tradersho:$GITHUB_SHA" | gzip -1 > /tmp/tradersho-release/image.tar.gz
+          tar -C /tmp/tradersho-release -cf /tmp/tradersho-bundle.tar image.tar.gz
       - name: Deploy over authenticated SSH
         env:
           VPS_KEY: ${{ secrets.VPS_SSH_KEY }}

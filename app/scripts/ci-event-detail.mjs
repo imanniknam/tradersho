@@ -15,6 +15,7 @@ try{
 
  await context.route('**/api/market/gold-sentiment/status**',r=>r.fulfill({json:{availability:'unknown',checkedAt:new Date().toISOString()}}))
  let chartMounts=0
+ page.on('framenavigated',frame=>{if(frame===page.mainFrame())chartMounts=0})
  await context.route('https://www.tradingview-widget.com/embed-widget/advanced-chart/**',r=>{chartMounts++;return r.fulfill({contentType:'text/html',body:'<html><title>Chart QA</title><body>XAUUSD · 1h · QA widget</body></html>'})})
  // The nearest release is emphasized until pointer/keyboard focus moves to another row.
  previewEvents=[event,{...event,id:'b'.repeat(64),title:'رویداد دوم'},{...event,id:'c'.repeat(64),title:'رویداد سوم'}]

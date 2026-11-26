@@ -6,10 +6,15 @@ sha=${1:?Expected full Git commit SHA}
 [[ $sha =~ ^[a-f0-9]{40}$ ]] || exit 64
 release="$root/releases/$sha"
 [[ -s "$root/.env" && -d "$release" ]] || exit 66
-# Staff second-factor key: generated once, kept stable (changing it forces re-enrolment).
-grep -q '^STAFF_MFA_KEY=' "$root/.env" || printf '\nSTAFF_MFA_KEY=%s\n' "$(openssl rand -hex 32)" >> "$root/.env"
 exec 9>"$root/deploy.lock"
 flock -w 600 9
+# Generate once under the deployment lock; an invalid nonempty key needs operator review.
+if grep -q '^STAFF_MFA_KEY=.' "$root/.env"; then
+    grep -Eq '^STAFF_MFA_KEY=[a-fA-F0-9]{64}$' "$root/.env" || { echo 'Invalid staff MFA key configuration.' >&2; exit 66; }
+else
+    sed -i '/^STAFF_MFA_KEY=/d' "$root/.env"
+    printf '\nSTAFF_MFA_KEY=%s\n' "$(openssl rand -hex 32)" >> "$root/.env"
+fi
 previous=$(readlink -f "$root/current" || true)
 compose() { docker compose --project-name tradersho --env-file "$root/.env" --env-file "$1/image.env" -f "$1/compose.yaml" "${@:2}"; }
 printf 'APP_IMAGE=tradersho:%s\n' "$sha" > "$release/image.env"
@@ -19,7 +24,7 @@ compose "$release" config --quiet
 # Validate proxy configuration before touching the running release.
 compose "$release" run --rm --no-deps proxy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 if [[ -n "$previous" && -f "$previous/image.env" ]]; then
-    "$previous/backup.sh"
+    "$root/approved/backup.sh"
 fi
 rollback() {
     status=$?
@@ -48,7 +53,7 @@ printf '\nRelease %s is healthy. Previous: %s\n' "$sha" "$previous"
 # It parses third-party data every minute: run it unprivileged and give it only its
 # own token, never the full environment (database, CAPTCHA, OAuth and SMTP secrets).
 install -d -m 755 /usr/local/lib/tradersho
-docker cp tradersho-app-1:/app/scripts/collect-persianfx.py /usr/local/lib/tradersho/calendar-collector.new.py
+install -m 644 "$root/approved/calendar-collector.py" /usr/local/lib/tradersho/calendar-collector.new.py
 chmod 644 /usr/local/lib/tradersho/calendar-collector.new.py
 mv -f /usr/local/lib/tradersho/calendar-collector.new.py /usr/local/lib/tradersho/calendar-collector.py
 { grep '^CALENDAR_INGEST_TOKEN=' "$root/.env" || true; } > "$root/calendar.env"

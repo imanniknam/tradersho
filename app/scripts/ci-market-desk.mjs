@@ -18,6 +18,7 @@ try{
  await context.route('**/api/market/gold-sentiment/status**',r=>r.fulfill({json:{availability:'unknown',checkedAt:new Date().toISOString()}}))
  await context.route('https://flicker.finance/**',r=>r.fulfill({contentType:'text/html',body:'<style>body{margin:0;height:280px}</style><div>Gold sentiment QA</div><script>parent.postMessage({type:"flicker-widget:resize",height:280},"*")</script>'}))
  let chartMounts=0
+ page.on('framenavigated',frame=>{if(frame===page.mainFrame())chartMounts=0})
  await context.route('https://www.tradingview-widget.com/embed-widget/advanced-chart/**',r=>{chartMounts++;return r.fulfill({contentType:'text/html',body:'<html><title>Chart QA</title><body>XAUUSD · 1h · QA widget</body></html>'})})
  await page.setViewportSize({width:1920,height:1080});await page.goto(base+'/panel/tools');await page.locator('.tv-host iframe').waitFor();await page.getByText('رویداد فردا',{exact:true}).waitFor();assert.deepEqual(await page.locator('.preview-event-title strong').allTextContents(),['رویداد فردا','رویداد دوشنبه']);assert.ok(await page.locator('.calendar-preview-event time small').first().isVisible())
  assert.ok((await rect('.calendar-preview-card')).height>=220&&(await rect('.risk-widget')).height>=200)

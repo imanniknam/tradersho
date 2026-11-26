@@ -25,9 +25,9 @@ jobs:
           ref: main
       - name: Fetch official Google public signing keys
         run: python3 deploy/vps/google-jwks.py fetch /tmp/tradersho-google-jwks.json
-      - name: Refresh private server key cache over the existing deployment identity
+      - name: Refresh private server key cache over its dedicated restricted identity
         env:
-          VPS_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KEY: ${{ secrets.GOOGLE_JWKS_SSH_KEY }}
           VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
           VPS_HOST: ${{ vars.VPS_HOST }}
           VPS_PORT: ${{ vars.VPS_PORT }}
