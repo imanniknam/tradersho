@@ -149,3 +149,21 @@
 @media(max-width:600px){.calendar-native .currency-choices{grid-template-columns:repeat(3,minmax(0,1fr))}.calendar-native>.calendar-sources{padding-inline:16px}}
 
 .calendar-provider-credit{font-size:11px;color:var(--secondary);margin:12px 0}.calendar-provider-credit a{color:var(--accent);text-underline-offset:3px}
+
+/* Calendar controls follow RTL reading order: search, range, importance. */
+@media(min-width:1201px){
+ .calendar-native .calendar-filters{grid-template-columns:minmax(220px,1.3fr) repeat(2,minmax(145px,.8fr)) minmax(250px,1.5fr)}
+}
+/* Keep the eight primary currencies and More in nine equal cells. Expanded
+   choices continue on later rows; the compact market picker keeps its layout. */
+.calendar-native .currency-choices{grid-template-columns:repeat(9,minmax(0,1fr));gap:6px}
+.calendar-native .currency-choices label,.calendar-native .currency-choices>.currency-more{display:flex;align-items:center;justify-content:center;min-width:0;min-height:44px;margin:0;padding:6px 4px;gap:4px;font-size:12px;border-radius:9px;white-space:nowrap}
+.calendar-native .currency-choices .event-country{gap:4px}
+.calendar-native .currency-choices .country-flag{width:18px;height:14px}
+.calendar-native .currency-choices input{width:14px;height:14px}
+.calendar-native .currency-choices .event-currency{font-size:12px}
+.calendar-native .currency-choices>.currency-more{border:1px solid var(--line);background:var(--canvas);color:var(--accent);font-family:inherit;cursor:pointer}
+.calendar-native .currency-choices>.currency-more:hover{border-color:var(--accent)}
+@media(max-width:900px){.calendar-native .currency-choices{grid-template-columns:repeat(auto-fit,minmax(76px,1fr))}}
+@media(max-width:600px){.calendar-native .currency-choices{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.calendar-native .currency-choices label[hidden]{display:none}
